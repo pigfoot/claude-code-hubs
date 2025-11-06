@@ -1,0 +1,98 @@
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun-debug.log*
+lerna-debug.log*
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Dependencies (if any plugin uses them)
+node_modules/
+.pnp
+.pnp.js
+.bun/
+bun.lockb
+
+# Build outputs (if any plugin builds)
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env*.local
+
+# Cache directories
+.cache/
+.parcel-cache/
+.npm
+.eslintcache
+.stylelintcache
+
+# Testing coverage
+coverage/
+*.lcov
+.nyc_output
+
+# Spec-kit: Ignore all except constitution
+# .specify contains user-specific workflow state and generated artifacts
+.specify/*
+!.specify/memory/
+.specify/memory/*
+!.specify/memory/constitution.md
+
+# Claude Code session files
+.claude/
+
+# Temporary test/debug files (never commit these to root)
+test-*.ts
+test-*.js
+test-*.py
+test-*.md
+debug-*.ts
+debug-*.js
+debug-*.py
+debug-*.md
+temp-*.ts
+temp-*.js
+temp-*.py
+temp-*.md
+scratch-*.*
+*-test.ts
+*-test.js
+*-test.py
+*-debug.ts
+*-debug.js
+*-debug.py
+
+# Blocked/progress tracking (session-specific)
+BLOCKED.md
+PROGRESS.md
+PLAN.md
