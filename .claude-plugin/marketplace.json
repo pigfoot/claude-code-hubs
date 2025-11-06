@@ -1,0 +1,33 @@
+{
+  "name": "pigfoot-marketplace",
+  "owner": {
+    "name": "Chih-Chia Chen, pigfoot",
+    "email": "pigfoot@gmail.com"
+  },
+  "metadata": {
+    "description": "Curated Claude Code plugins: skills, workflows, and productivity tools",
+    "version": "0.0.1"
+  },
+  "plugins": [
+    {
+      "name": "git-commit",
+      "source": "./plugins/git-commit",
+      "description": "Generate conventional commit messages automatically. Use when user runs git commit, stages changes, or asks for commit message help. Analyzes git diff to create clear, descriptive conventional commit messages. Triggers on git commit, staged changes, commit message requests.",
+      "version": "0.0.1",
+      "author": {
+        "name": "pigfoot",
+        "email": "pigfoot@gmail.com"
+      }
+    },
+    {
+      "name": "context7",
+      "source": "./plugins/context7",
+      "description": "Up-to-date documentation and code examples for any library or framework using Context7 MCP server",
+      "version": "0.0.1",
+      "author": {
+        "name": "Upstash",
+        "url": "https://github.com/upstash"
+      }
+    }
+  ]
+}
