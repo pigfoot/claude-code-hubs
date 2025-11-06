@@ -1,5 +1,5 @@
 ---
-name: git-commit
+name: commit
 description: Smart commit creation with conventional commits, emoji, and GPG signing. Use when user says "commit" or requests committing changes. Handles staged file detection, suggests splits for multi-concern changes, and applies proper commit format.
 allowed-tools: "Bash(git *)"
 version: 1.0.0
