@@ -112,7 +112,7 @@ jq "$(cat <<'EOF'
   "Bash(mkdir:*)", "Bash(mv:*)", "Bash(cat:*)", "Bash(cp:*)", "Bash(chmod:*)", "Bash(touch:*)",
   "Bash(grep:*)", "Bash(rg:*)", "Bash(find:*)", "Bash(sed:*)", "Bash(head:*)",
   "Bash(xargs:*)",
-  "Bash(git:*)", "Bash(jq:*)", "Bash(curl:*)",
+  "Bash(git:*)", "Bash(gh:*)", "Bash(jq:*)", "Bash(curl:*)",
   "Bash(node:*)", "Bash(npm:*)", "Bash(pnpm:*)", "Bash(npx:*)", "Bash(bun:*)", "Bash(bunx:*)",
   "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(uvx:*)",
   "Bash(docker:*)", "Bash(podman:*)", "Bash(buildah:*)",
