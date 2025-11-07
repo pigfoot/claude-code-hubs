@@ -28,6 +28,17 @@
         "name": "Upstash",
         "url": "https://github.com/upstash"
       }
+    },
+    {
+      "name": "superpowers",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/obra/superpowers.git"
+      },
+      "description": "Core skills library: TDD, debugging, collaboration patterns, and proven techniques",
+      "version": "3.4.0",
+      "keywords": ["skills", "tdd", "debugging", "collaboration", "best-practices", "workflows"],
+      "strict": true
     }
   ]
 }
