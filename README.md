@@ -10,8 +10,8 @@ A curated collection of plugins, skills, and configuration templates for [Claude
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
 - **[context7](./plugins/context7/)** - Access up-to-date documentation and code examples for any library or framework
 
-**Recommended 3rd-party marketplace:**
-- **[superpowers](https://github.com/obra/superpowers)** (from obra/superpowers-marketplace) - Comprehensive skills library with proven development workflows (TDD, debugging, code review)
+**Recommended third-party plugins (available in this marketplace):**
+- **[superpowers](https://github.com/obra/superpowers)** - Comprehensive skills library with proven development workflows (TDD, debugging, code review)
 
 ### 🎯 Skills
 
@@ -143,16 +143,13 @@ echo "✅ Permissions configured successfully!"
 **Inside Claude Code**, run these commands:
 
 ```bash
-# Add marketplaces
-/plugin marketplace add pigfoot/claude-code-hubs               # This marketplace
-/plugin marketplace add obra/superpowers-marketplace            # 3rd-party marketplace
+# Add marketplace
+/plugin marketplace add pigfoot/claude-code-hubs
 
-# Install plugins from pigfoot marketplace
+# Install plugins (all available from pigfoot marketplace)
 /plugin install commit@pigfoot
 /plugin install context7@pigfoot
-
-# Install plugin from 3rd-party marketplace
-/plugin install superpowers@superpowers-marketplace
+/plugin install superpowers@pigfoot
 ```
 
 ### Step 3: Setup Configuration Template (Optional but Recommended)
@@ -211,6 +208,10 @@ cp .CLAUDE.md ~/.claude/CLAUDE.md
 
 ### 🎯 commit Plugin - Smart Git Commits
 
+```bash
+/plugin install commit@pigfoot
+```
+
 **What it does:**
 Automates the tedious parts of creating well-formatted commits.
 
@@ -238,6 +239,10 @@ User: "commit changes"
 
 ### 📚 context7 Plugin - Up-to-Date Library Docs
 
+```bash
+/plugin install context7@pigfoot
+```
+
 **What it does:**
 Fetches current documentation and code examples from any library or framework.
 
@@ -263,7 +268,12 @@ Claude automatically fetches documentation from Context7's curated database.
 ---
 
 ### 🦸 superpowers Plugin - Proven Development Workflows
-> **Note:** This is a 3rd-party plugin from [obra/superpowers-marketplace](https://github.com/obra/superpowers)
+
+```bash
+/plugin install superpowers@pigfoot
+```
+
+> **Note:** This is a third-party plugin originally from [obra/superpowers](https://github.com/obra/superpowers), available in this marketplace for convenient installation
 
 **What it does:**
 Provides a comprehensive library of battle-tested skills that enforce systematic development practices.
@@ -335,7 +345,7 @@ Once configured, Claude will:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| [git-commit](./plugins/git-commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
+| [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
 | [context7](./plugins/context7/) | Library documentation via Context7 MCP server | 0.0.1 |
 
 ## Project Structure
@@ -345,7 +355,7 @@ claude-code-hubs/
 ├── .claude-plugin/
 │   └── marketplace.json      # Marketplace registry
 ├── plugins/
-│   ├── git-commit/           # Git commit automation plugin
+│   ├── commit/               # Git commit automation plugin
 │   └── context7/             # Documentation plugin
 ├── .CLAUDE.md                # Global configuration template
 ├── .specify/                 # Spec-kit templates and memory
@@ -406,11 +416,13 @@ Browse available plugins in `plugins/` directory, then:
 
 ## Available Plugins
 
-| Plugin | Marketplace | Description | Skills Included |
-|--------|-------------|-------------|-----------------|
+| Plugin | Origin | Description | Skills Included |
+|--------|--------|-------------|-----------------|
 | [commit](./plugins/commit/) | pigfoot | Conventional commits with emoji and GPG signing | `commit:commit` |
 | [context7](./plugins/context7/) | pigfoot | Library documentation via Context7 MCP | `context7:skills` |
 | [superpowers](https://github.com/obra/superpowers) | 3rd-party (obra) | Proven development workflows (TDD, debugging, review) | 17+ skills (brainstorming, TDD, systematic-debugging, etc.) |
+
+**Installation:** All plugins can be installed from this marketplace using `/plugin install <name>@pigfoot`
 
 ## Contributing
 
