@@ -21,6 +21,39 @@ Reusable workflow patterns included in plugins - automatically available after p
 
 - **[.CLAUDE.md](./.CLAUDE.md)** - Comprehensive development guidelines template with language detection, workflow patterns, and best practices
 
+## Install Claude Code
+
+Before using this marketplace, you need Claude Code installed.
+
+**Homebrew (macOS, Linux):**
+```bash
+brew install --cask claude-code
+```
+
+**macOS, Linux, WSL:**
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+**Windows PowerShell:**
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+### Running Claude Code on Windows
+
+For the best experience, we recommend using [Windows Terminal](https://aka.ms/terminal):
+
+- **Windows 11:** Windows Terminal is pre-installed. Just open it and run `claude`.
+- **Windows 10:** Install Windows Terminal first:
+  ```powershell
+  # Using winget
+  winget install Microsoft.WindowsTerminal
+
+  # Or using Scoop
+  scoop install windows-terminal
+  ```
+
 ## Prerequisites
 
 ### Required Tools
@@ -79,19 +112,18 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 #### Windows
 
-**Recommended: Use WSL2 (Windows Subsystem for Linux)**
+Install tools using [Scoop](https://scoop.sh/):
 
 ```powershell
-# In PowerShell (Administrator)
-wsl --install
+# Install Scoop if you don't have it
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+
+# Install required tools
+scoop install jq
+scoop install bun
+scoop install uv
 ```
-
-After WSL2 installation, restart and follow the Linux (Ubuntu) instructions above.
-
-**Alternative: Native Windows (not recommended)**
-
-- Install [Git Bash](https://git-scm.com/downloads)
-- Install tools manually or use [Scoop](https://scoop.sh/)
 
 ## Quick Start
 
