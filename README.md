@@ -21,38 +21,6 @@ Reusable workflow patterns included in plugins - automatically available after p
 
 - **[.CLAUDE.md](./.CLAUDE.md)** - Comprehensive development guidelines template with language detection, workflow patterns, and best practices
 
-## Install Claude Code
-
-Before using this marketplace, you need Claude Code installed.
-
-**Homebrew (macOS, Linux):**
-```bash
-brew install --cask claude-code
-```
-
-**macOS, Linux, WSL:**
-```bash
-curl -fsSL https://claude.ai/install.sh | bash
-```
-
-**Windows PowerShell:**
-```powershell
-irm https://claude.ai/install.ps1 | iex
-```
-
-### Running Claude Code on Windows
-
-For the best experience, we recommend using [Windows Terminal](https://aka.ms/terminal):
-
-- **Windows 11:** Windows Terminal is pre-installed. Just open it and run `claude`.
-- **Windows 10:** Install Windows Terminal first:
-  ```powershell
-  # Using winget
-  winget install Microsoft.WindowsTerminal
-
-  # Or using Scoop
-  scoop install windows-terminal
-  ```
 
 ## Prerequisites
 
@@ -61,6 +29,8 @@ For the best experience, we recommend using [Windows Terminal](https://aka.ms/te
 Before using this marketplace, ensure you have these tools installed:
 
 #### macOS (using Homebrew)
+
+Recommended to use [Homebrew](https://brew.sh/):
 
 ```bash
 # Install Homebrew if you don't have it
@@ -74,43 +44,37 @@ brew install uv
 
 #### Linux
 
-**Debian/Ubuntu:**
+Use `apt`, `apt-get`, `yum`, `pacman`, `apk` or any native package manager tool.
+
+**Example (Debian/Ubuntu):**
 ```bash
-# jq
 sudo apt-get update && sudo apt-get install -y jq
 
-# bun
+# bun for javascript/typescript
 curl -fsSL https://bun.sh/install | bash
-
-# uv
+# uv for python
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-**Fedora/RHEL:**
-```bash
-# jq
-sudo dnf install -y jq
+<details>
+<summary>Running Claude Code on Windows</summary>
 
-# bun
-curl -fsSL https://bun.sh/install | bash
+For the best experience, we recommend using [Windows Terminal](https://aka.ms/terminal):
 
-# uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+- **Windows 11:** Windows Terminal is pre-installed. Just open it and run `claude`.
+- **Windows 10:** Install Windows Terminal first:
+  ```powershell
+  # Using winget
+  winget install Microsoft.WindowsTerminal
 
-**Arch Linux:**
-```bash
-# jq
-sudo pacman -S jq
+  # Or using Scoop
+  scoop install windows-terminal
+  ```
 
-# bun
-curl -fsSL https://bun.sh/install | bash
+</details>
 
-# uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-#### Windows
+<details>
+<summary>Windows (Scoop)</summary>
 
 Install tools using [Scoop](https://scoop.sh/):
 
@@ -125,13 +89,52 @@ scoop install bun
 scoop install uv
 ```
 
-## Quick Start
+> **Note:** Windows built-in `winget` is also possible, however Scoop is recommended for better compatibility with command line tools.
 
-### Step 1: Configure Permissions
+</details>
 
-This one-time setup grants Claude Code necessary permissions for optimal workflow.
+## Install Claude Code
 
-**Copy and run this script in your terminal:**
+Follow the [official installation guide](https://code.claude.com/docs/en/setup) or use one of the methods below:
+
+**Homebrew (macOS, Linux):**
+```bash
+brew install --cask claude-code
+```
+
+**macOS, Linux, WSL, Git Bash:**
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+<details>
+<summary>Windows PowerShell</summary>
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+
+# Add to PATH (if needed)
+[Environment]::SetEnvironmentVariable(
+    "Path",
+    [Environment]::GetEnvironmentVariable("Path", "User") + ";$env:USERPROFILE\.local\bin",
+    "User"
+)
+```
+
+</details>
+
+## Custom Settings for Optimal Workflow (Optional)
+
+This one-time setup grants Claude Code necessary permissions and configures `CLAUDE.md` for optimal workflow.
+
+### Step 1: Configure Allow Permissions
+
+**What this does:**
+- Grants permissions for common commands (git, file operations, package managers)
+- Enables skills and MCP tools
+- Optimizes Claude Code settings
+
+**macOS, Linux, WSL, Git Bash:**
 
 ```bash
 # Create settings file if it doesn't exist
@@ -158,6 +161,7 @@ jq "$(cat <<'EOF'
 ] | unique)
   | .alwaysThinkingEnabled = true
   | .includeCoAuthoredBy = false
+  | .model = "opusplan"
   | .spinnerTipsEnabled = false
 EOF
 )" "${HOME}/.claude/settings.json" > /tmp/temp.json && mv -f /tmp/temp.json "${HOME}/.claude/settings.json"
@@ -165,14 +169,60 @@ EOF
 echo "✅ Permissions configured successfully!"
 ```
 
-**What this does:**
-- Grants permissions for common commands (git, file operations, package managers)
-- Enables skills and MCP tools
-- Optimizes Claude Code settings
+<details>
+<summary>Windows PowerShell</summary>
+
+```powershell
+# Create settings file if it doesn't exist
+$settingsPath = "$env:USERPROFILE\.claude\settings.json"
+if (-not (Test-Path $settingsPath)) {
+    New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude" | Out-Null
+    "{}" | Out-File -Encoding utf8 $settingsPath
+}
+
+$settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
+
+if (-not $settings.permissions) {
+    $settings | Add-Member -Type NoteProperty -Name "permissions" -Value ([PSCustomObject]@{}) -Force
+}
+
+if (-not $settings.permissions.allow) {
+    $settings.permissions | Add-Member -Type NoteProperty -Name "allow" -Value @() -Force
+}
+
+$newPermissions = @(
+    "Bash(node:*)", "Bash(npm:*)", "Bash(pnpm:*)", "Bash(npx:*)", "Bash(bun:*)", "Bash(bunx:*)",
+    "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(uvx:*)",
+    "Bash(docker:*)", "Bash(podman:*)", "Bash(buildah:*)",
+    "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch", "SlashCommand",
+    "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
+    "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+    "Bash(.specify/scripts/bash/setup-plan.sh:*)",
+    "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
+    "Skill(context7:*)",
+    "mcp__plugin_context7_context7__get-library-docs",
+    "mcp__plugin_context7_context7__resolve-library-id",
+    "Skill(commit:*)", "Skill(superpowers:*)"
+)
+
+$merged = @($settings.permissions.allow) + $newPermissions | Select-Object -Unique
+$settings.permissions.allow = $merged
+
+$settings | Add-Member -Type NoteProperty -Name "alwaysThinkingEnabled" -Value $true -Force
+$settings | Add-Member -Type NoteProperty -Name "includeCoAuthoredBy" -Value $false -Force
+$settings | Add-Member -Type NoteProperty -Name "model" -Value "opusplan" -Force
+$settings | Add-Member -Type NoteProperty -Name "spinnerTipsEnabled" -Value $false -Force
+
+$settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
+
+Write-Host "✅ Permissions configured successfully!"
+```
+
+</details>
 
 ### Step 2: Install Plugins
 
-**Inside Claude Code**, run these commands:
+**Inside Claude Code**, run these commands to install plugins from [pigfoot/claude-code-hubs](https://github.com/pigfoot/claude-code-hubs):
 
 ```bash
 # Add marketplace
@@ -184,57 +234,32 @@ echo "✅ Permissions configured successfully!"
 /plugin install superpowers@pigfoot
 ```
 
-### Step 3: Setup Configuration Template (Optional but Recommended)
+### Step 3: Setup CLAUDE.md Template (Optional but Recommended)
 
-The `.CLAUDE.md` template provides comprehensive development guidelines that work with installed plugins.
+The [CLAUDE.md](https://github.com/pigfoot/claude-code-hubs/blob/main/.CLAUDE.md) template provides comprehensive development guidelines that work with installed plugins.
 
-#### Option A: Global Configuration (applies to all projects)
+**For global configuration (applies to all projects):**
 
-**macOS/Linux:**
+**macOS, Linux, WSL, Git Bash:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pigfoot/claude-code-hubs/main/.CLAUDE.md -o ~/.claude/CLAUDE.md
+claudeDir="${HOME}/.claude"
+curl -fsSL https://raw.githubusercontent.com/pigfoot/claude-code-hubs/main/.CLAUDE.md -o "${claudeDir}/CLAUDE.md"
 ```
 
-**Windows (WSL/Git Bash):**
-```bash
-curl -fsSL https://raw.githubusercontent.com/pigfoot/claude-code-hubs/main/.CLAUDE.md -o ~/.claude/CLAUDE.md
-```
+<details>
+<summary>Windows PowerShell</summary>
 
-**Windows (PowerShell):**
 ```powershell
 $claudeDir = "$env:USERPROFILE\.claude"
 if (-not (Test-Path $claudeDir)) { New-Item -ItemType Directory -Path $claudeDir }
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/pigfoot/claude-code-hubs/main/.CLAUDE.md" -OutFile "$claudeDir\CLAUDE.md"
 ```
 
-#### Option B: Project-Specific Configuration
+</details>
 
-**macOS/Linux:**
-```bash
-cd /path/to/your/project
-curl -fsSL https://raw.githubusercontent.com/pigfoot/claude-code-hubs/main/.CLAUDE.md -o ./CLAUDE.md
-```
+**For project-specific configuration:**
 
-**Windows (WSL/Git Bash):**
-```bash
-cd /path/to/your/project
-curl -fsSL https://raw.githubusercontent.com/pigfoot/claude-code-hubs/main/.CLAUDE.md -o ./CLAUDE.md
-```
-
-**Windows (PowerShell):**
-```powershell
-cd \path\to\your\project
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/pigfoot/claude-code-hubs/main/.CLAUDE.md" -OutFile ".\CLAUDE.md"
-```
-
-**Manual Copy (if you cloned this repo):**
-```bash
-# From this repository to your project
-cp .CLAUDE.md /path/to/your/project/CLAUDE.md
-
-# Or for global use
-cp .CLAUDE.md ~/.claude/CLAUDE.md
-```
+Change `claudeDir` to your project root folder (e.g., `claudeDir="."` or `$claudeDir = "."`) in the commands above.
 
 ## Usage
 
@@ -396,6 +421,9 @@ claude-code-hubs/
 
 ## Troubleshooting
 
+<details>
+<summary>Click to expand troubleshooting guide</summary>
+
 ### Permission Issues
 
 If Claude asks for permissions repeatedly:
@@ -426,6 +454,8 @@ which jq bun uv
 
 # If not found, reinstall following Prerequisites section
 ```
+
+</details>
 
 ## Advanced Configuration
 
