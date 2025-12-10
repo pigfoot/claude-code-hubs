@@ -36,7 +36,6 @@ node_modules/
 .pnp
 .pnp.js
 .bun/
-bun.lockb
 
 # Build outputs (if any plugin builds)
 dist/
@@ -61,15 +60,17 @@ coverage/
 *.lcov
 .nyc_output
 
-# Spec-kit: Ignore all except constitution
+# Spec-kit: Ignore all except constitution & memory
 # .specify contains user-specific workflow state and generated artifacts
 .specify/*
 !.specify/memory/
-.specify/memory/*
-!.specify/memory/constitution.md
 
 # Claude Code session files
 .claude/
+
+# gemini cli/antigravity session files
+.agent/
+.gemini/
 
 # Temporary test/debug files (never commit these to root)
 test-*.ts
@@ -91,8 +92,3 @@ scratch-*.*
 *-debug.ts
 *-debug.js
 *-debug.py
-
-# Blocked/progress tracking (session-specific)
-BLOCKED.md
-PROGRESS.md
-PLAN.md

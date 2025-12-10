@@ -1,0 +1,76 @@
+# syntax=docker/dockerfile:1
+
+# Global ARG for runtime image selection
+# - latest: Production (no shell, minimal, most secure)
+# - latest-dev: Development/debugging (includes shell and basic tools)
+ARG RUNTIME_TAG=latest
+
+###############################
+# Builder stage
+###############################
+FROM docker.io/node:lts-slim AS builder
+
+# Install system dependencies first
+RUN <<EOT
+apt update -qqy
+DEBIAN_FRONTEND=noninteractive \
+  apt install -qyy --no-install-recommends --no-install-suggests \
+  tini curl \
+  ca-certificates
+rm -rf /var/lib/apt/lists/*
+EOT
+
+# Install bun using official distroless image (best practice)
+COPY --from=docker.io/oven/bun:slim /usr/bin/bun /usr/bin/
+
+RUN <<EOT
+# Create app directory and set ownership
+mkdir /app && chmod -R 2755 /app && chown -R node:node /app
+ln -sf ./bun /usr/bin/bunx
+EOT
+
+# Add main project and install it
+COPY --chown=node:node package.json bun.lockb* /app/
+
+# Then, add the rest of the project source code and install it
+COPY --chown=node:node ./src /app/src
+
+RUN <<EOT
+su node -c 'cd /app \
+  && bun install --frozen-lockfile'
+
+# Optional: Compiling to standalone binary (including Bun runtime)
+# su node -c 'cd /app \
+#   && bun build ./src/index.ts --compile --outfile ./bin/app'
+EOT
+
+###############################
+# Runtime stage (Wolfi glibc-dynamic)
+###############################
+FROM cgr.dev/chainguard/glibc-dynamic:${RUNTIME_TAG} AS runtime
+
+# Copy tini from builder (Wolfi doesn't include it)
+COPY --from=builder /usr/bin/tini-static /usr/bin/tini
+
+# Install bun using official distroless image (best practice)
+COPY --from=docker.io/oven/bun:slim /usr/local/bin/bun /usr/bin/bun
+COPY --from=builder /usr/bin/bunx /usr/bin/bunx
+
+# Copy the application from the builder
+COPY --from=builder --chown=65532:65532 /app /app
+
+# Create symlink for bunx
+
+# Switch to non-root user (Wolfi default: 65532)
+USER 65532:65532
+WORKDIR /app
+
+# Set environment variables
+ENV BUN_INSTALL="/home/nonroot/.bun" \
+    PATH="/home/nonroot/.local/bin:${BUN_INSTALL}/bin:/app/bin:$PATH"
+
+ENTRYPOINT ["tini", "--"]
+CMD ["bun", "run", "dev"]
+
+# To build for debugging with shell access:
+# podman build --build-arg RUNTIME_TAG=latest-dev -t myapp:debug .

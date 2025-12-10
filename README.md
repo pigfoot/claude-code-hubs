@@ -9,6 +9,7 @@ A curated collection of plugins, skills, and configuration templates for [Claude
 **From this marketplace (pigfoot):**
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
 - **[context7](./plugins/context7/)** - Access up-to-date documentation and code examples for any library or framework
+- **[github-actions-secure-container-build](./plugins/github-actions-secure-container-build/)** - Build secure, multi-architecture container images in GitHub Actions using Wolfi runtime, native ARM64 runners, and Podman
 
 **Recommended third-party plugins (available in this marketplace):**
 - **[superpowers](https://github.com/obra/superpowers)** - Comprehensive skills library with proven development workflows (TDD, debugging, code review)
@@ -157,7 +158,7 @@ jq "$(cat <<'EOF'
   "Bash(.specify/scripts/bash/create-new-feature.sh:*)", "Bash(.specify/scripts/bash/setup-plan.sh:*)",
   "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
   "Skill(context7:*)", "mcp__plugin_context7_context7__get-library-docs", "mcp__plugin_context7_context7__resolve-library-id",
-  "Skill(commit:*)", "Skill(superpowers:*)"
+  "Skill(commit:*)", "Skill(superpowers:*)", "Skill(github-actions-secure-container-build:*)"
 ] | unique)
   | .alwaysThinkingEnabled = true
   | .includeCoAuthoredBy = false
@@ -231,6 +232,7 @@ Write-Host "✅ Permissions configured successfully!"
 # Install plugins (all available from pigfoot marketplace)
 /plugin install commit@pigfoot
 /plugin install context7@pigfoot
+/plugin install github-actions-secure-container-build@pigfoot
 /plugin install superpowers@pigfoot
 ```
 
@@ -324,6 +326,49 @@ Claude automatically fetches documentation from Context7's curated database.
 
 ---
 
+### 🐳 github-actions-secure-container-build Plugin - Secure Container CI/CD
+
+```bash
+/plugin install github-actions-secure-container-build@pigfoot
+```
+
+**What it does:**
+Provides templates and best practices for building secure, multi-architecture container images in GitHub Actions.
+
+**Benefits:**
+- ✅ **Flexible deployment** - Public repos (free native ARM64), private repos (QEMU or larger runners)
+- ✅ **Security-first runtime** - Wolfi distroless images with minimal attack surface and no CVEs
+- ✅ **Rootless containers** - Podman-based builds with non-root user by default (UID 65532)
+- ✅ **Production-ready templates** - Complete Containerfiles for Python/uv, Bun, and Node.js/pnpm
+- ✅ **Reliable builds** - podman-static with heredoc support, AppArmor fixes, retry logic
+- ✅ **Debug support** - Separate production and debug image variants
+
+**Supported Stacks:**
+- **Python + uv** - Fast, reproducible Python builds with uv package manager
+- **Bun** - All-in-one JavaScript runtime with built-in package manager
+- **Node.js + pnpm** - Efficient workspace-friendly builds with pnpm
+
+**Usage:**
+Ask Claude to set up container builds for your project.
+
+**Examples:**
+- "Set up secure container builds for my Python app"
+- "I need multi-arch Docker images for my Bun project"
+- "Create a GitHub Actions workflow for building Node.js containers"
+- "Help me debug my container build"
+
+**What you get:**
+- Two workflow templates: native-arm64 (public repos) and qemu (private repos)
+- Production-ready Containerfiles with multi-stage builds
+- Security best practices (non-root, minimal base images, AppArmor compatible)
+- ARM64 larger runners setup guide (for paid plans)
+- Complete reference documentation and troubleshooting guides
+
+**Demo**
+[![asciicast](https://asciinema.org/a/rda4CuvQuKXcl2DsfsU9Gul3N.svg)](https://asciinema.org/a/rda4CuvQuKXcl2DsfsU9Gul3N)
+
+---
+
 ### 🦸 superpowers Plugin - Proven Development Workflows
 
 ```bash
@@ -404,19 +449,21 @@ Once configured, Claude will:
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
 | [context7](./plugins/context7/) | Library documentation via Context7 MCP server | 0.0.1 |
+| [github-actions-secure-container-build](./plugins/github-actions-secure-container-build/) | Secure multi-arch container builds in GitHub Actions | 0.0.1 |
 
 ## Project Structure
 
 ```
 claude-code-hubs/
 ├── .claude-plugin/
-│   └── marketplace.json      # Marketplace registry
+│   └── marketplace.json                        # Marketplace registry
 ├── plugins/
-│   ├── commit/               # Git commit automation plugin
-│   └── context7/             # Documentation plugin
-├── .CLAUDE.md                # Global configuration template
-├── .specify/                 # Spec-kit templates and memory
-└── README.md                 # This file
+│   ├── commit/                                 # Git commit automation plugin
+│   ├── context7/                               # Documentation plugin
+│   └── github-actions-secure-container-build/  # Container CI/CD plugin
+├── .CLAUDE.md                                  # Global configuration template
+├── .specify/                                   # Spec-kit templates and memory
+└── README.md                                   # This file
 ```
 
 ## Troubleshooting
@@ -482,6 +529,7 @@ Browse available plugins in `plugins/` directory, then:
 |--------|--------|-------------|-----------------|
 | [commit](./plugins/commit/) | pigfoot | Conventional commits with emoji and GPG signing | `commit:commit` |
 | [context7](./plugins/context7/) | pigfoot | Library documentation via Context7 MCP | `context7:skills` |
+| [github-actions-secure-container-build](./plugins/github-actions-secure-container-build/) | pigfoot | Secure multi-arch container builds in GitHub Actions | `github-actions-secure-container-build:github-actions-secure-container-build` |
 | [superpowers](https://github.com/obra/superpowers) | 3rd-party (obra) | Proven development workflows (TDD, debugging, review) | 17+ skills (brainstorming, TDD, systematic-debugging, etc.) |
 
 **Installation:** All plugins can be installed from this marketplace using `/plugin install <name>@pigfoot`
