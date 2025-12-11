@@ -22,6 +22,19 @@ EOT
 
 WORKDIR /app
 
+###############################
+# Build Options (choose one):
+#
+# Option A: With BuildKit cache [RECOMMENDED - faster rebuilds]
+#   Uses cache mounts for cargo registry and target directory.
+#   Requires: touch src/main.rs to invalidate incremental cache.
+#
+# Option B: Without cache [simpler, works everywhere]
+#   No cache mounts, simpler but slower rebuilds.
+#   Uncomment Option B and comment out Option A if you prefer.
+###############################
+
+#--- Option A: With BuildKit cache (default) ---
 # Copy manifests first (optimal layer caching)
 COPY Cargo.toml Cargo.lock ./
 
@@ -37,10 +50,19 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 COPY . .
 
 # Build the actual application
+# NOTE: touch src/main.rs forces Cargo to recompile the main binary.
+# Without this, Cargo's incremental compilation sees no changes and
+# reuses the dummy binary from the dependency caching step above.
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/target \
+    touch src/main.rs && \
     cargo build --release && \
     cp target/release/your_app /app/server
+
+#--- Option B: Without cache (simpler fallback) ---
+# COPY . .
+# RUN cargo build --release && \
+#     cp target/release/your_app /app/server
 
 ###############################
 # Runtime stage (glibc-dynamic)

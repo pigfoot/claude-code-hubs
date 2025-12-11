@@ -84,7 +84,7 @@ jobs:
       #       --password-stdin
 
       - name: Build & push python+uv image
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -127,9 +127,9 @@ jobs:
           # - Containerfile uses RUN <<EOT heredoc syntax (requires buildah >= 1.35.0)
           # - Ubuntu 24.04 podman (4.9.3) uses buildah 1.33.7 (too old, no heredoc)
 
-          # Download correct architecture binary
-          ARCH="${{ matrix.arch }}"
-          if [ "$ARCH" = "amd64" ]; then
+          # Download correct architecture binary (manifest job has no matrix)
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "x86_64" ]; then
             PODMAN_ARCH="amd64"
           else
             PODMAN_ARCH="arm64"
@@ -165,7 +165,7 @@ jobs:
       #       --password-stdin
 
       - name: Create & push python+uv manifest
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -246,7 +246,7 @@ jobs:
       #       --password-stdin
 
       - name: Build & push bun image
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -289,9 +289,9 @@ jobs:
           # - Containerfile uses RUN <<EOT heredoc syntax (requires buildah >= 1.35.0)
           # - Ubuntu 24.04 podman (4.9.3) uses buildah 1.33.7 (too old, no heredoc)
 
-          # Download correct architecture binary
-          ARCH="${{ matrix.arch }}"
-          if [ "$ARCH" = "amd64" ]; then
+          # Download correct architecture binary (manifest job has no matrix)
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "x86_64" ]; then
             PODMAN_ARCH="amd64"
           else
             PODMAN_ARCH="arm64"
@@ -327,7 +327,7 @@ jobs:
       #       --password-stdin
 
       - name: Create & push bun manifest
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -408,7 +408,7 @@ jobs:
       #       --password-stdin
 
       - name: Build & push node image
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -451,9 +451,9 @@ jobs:
           # - Containerfile uses RUN <<EOT heredoc syntax (requires buildah >= 1.35.0)
           # - Ubuntu 24.04 podman (4.9.3) uses buildah 1.33.7 (too old, no heredoc)
 
-          # Download correct architecture binary
-          ARCH="${{ matrix.arch }}"
-          if [ "$ARCH" = "amd64" ]; then
+          # Download correct architecture binary (manifest job has no matrix)
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "x86_64" ]; then
             PODMAN_ARCH="amd64"
           else
             PODMAN_ARCH="arm64"
@@ -489,7 +489,7 @@ jobs:
       #       --password-stdin
 
       - name: Create & push node manifest
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3

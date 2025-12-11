@@ -9,7 +9,7 @@ A curated collection of plugins, skills, and configuration templates for [Claude
 **From this marketplace (pigfoot):**
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
 - **[context7](./plugins/context7/)** - Access up-to-date documentation and code examples for any library or framework
-- **[github-actions-secure-container-build](./plugins/github-actions-secure-container-build/)** - Build secure, multi-architecture container images in GitHub Actions. Supports Python/uv, Bun, Node.js/pnpm, Golang, and Rust with Wolfi runtime, native ARM64 runners, and Podman
+- **[github-actions-secure-container-build](./plugins/github-actions-secure-container-build/)** - Build secure, multi-architecture container images in GitHub Actions. Supports Python/uv, Bun, Node.js/pnpm, Golang, and Rust. Public repos (native ARM64), private repos (QEMU or larger runners), Wolfi runtime, and Podman rootless builds
 
 **Recommended third-party plugins (available in this marketplace):**
 - **[superpowers](https://github.com/obra/superpowers)** - Comprehensive skills library with proven development workflows (TDD, debugging, code review)
@@ -449,7 +449,7 @@ Once configured, Claude will:
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
 | [context7](./plugins/context7/) | Library documentation via Context7 MCP server | 0.0.1 |
-| [github-actions-secure-container-build](./plugins/github-actions-secure-container-build/) | Secure multi-arch container builds in GitHub Actions | 0.0.1 |
+| [github-actions-secure-container-build](./plugins/github-actions-secure-container-build/) | Secure multi-arch container builds in GitHub Actions | 0.0.2 |
 
 ## Project Structure
 

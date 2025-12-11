@@ -1,7 +1,7 @@
 {
   "name": "github-actions-secure-container-build",
   "description": "Build secure, multi-architecture container images in GitHub Actions. Supports Python/uv, Bun, Node.js/pnpm, Golang, and Rust. Public repos (native ARM64), private repos (QEMU or larger runners), Wolfi runtime, and Podman rootless builds",
-  "version": "0.0.1",
+  "version": "0.0.2",
    "author": {
      "name": "pigfoot",
      "email": "pigfoot@gmail.com"
