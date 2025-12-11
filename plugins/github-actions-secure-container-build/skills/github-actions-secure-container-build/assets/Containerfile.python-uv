@@ -48,6 +48,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ###############################
 # Runtime stage (Wolfi glibc-dynamic)
 ###############################
+# Re-declare ARG for this stage
+ARG RUNTIME_TAG=latest
 FROM cgr.dev/chainguard/glibc-dynamic:${RUNTIME_TAG} AS runtime
 
 # Copy tini from builder (Wolfi doesn't include it)

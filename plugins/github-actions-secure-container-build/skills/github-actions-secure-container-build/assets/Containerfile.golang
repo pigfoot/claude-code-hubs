@@ -41,6 +41,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 ###############################
 # Runtime stage (static - smallest possible)
 ###############################
+# Re-declare ARG for this stage
+ARG RUNTIME_TAG=latest
 FROM cgr.dev/chainguard/static:${RUNTIME_TAG} AS runtime
 
 # Copy tini from builder

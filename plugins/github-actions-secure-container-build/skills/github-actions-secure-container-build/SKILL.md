@@ -1,6 +1,6 @@
 ---
 name: github-actions-secure-container-build
-description: Build secure, multi-architecture container images in GitHub Actions with Wolfi runtime and Podman. Supports (1) public repos with free standard ARM64 runners, (2) private repos with QEMU emulation or ARM64 larger runners, (3) Containerfiles with security best practices (Wolfi runtime, non-root, heredoc syntax), (4) Python/uv, Bun, and Node.js/pnpm builds, (5) production and debug image variants with comprehensive troubleshooting guides.
+description: Build secure, multi-architecture container images in GitHub Actions with Wolfi runtime and Podman. Supports (1) public repos with free standard ARM64 runners, (2) private repos with QEMU emulation or ARM64 larger runners, (3) Containerfiles with security best practices (Wolfi runtime, non-root, heredoc syntax), (4) Python/uv, Bun, Node.js/pnpm, Golang (static/CGO), and Rust (glibc/musl) builds with allocator optimization, (5) production and debug image variants with comprehensive troubleshooting guides.
 ---
 
 # GitHub Container CI Best Practices
@@ -216,6 +216,44 @@ CGO_ENABLED=0 go build .
 
 2. Follow steps 2-3 from Option A above.
 
+### Rust Project
+
+**Default: Use glibc template** (best compatibility)
+
+1. **Copy template**:
+   ```bash
+   cp assets/Containerfile.rust ./Containerfile
+   ```
+
+2. **Update binary name**:
+   ```dockerfile
+   CMD ["/app/server"]  # Change to your binary name
+   ```
+
+3. **Optional: Boost performance with mimalloc**
+
+   Three allocator options (see comments in Containerfile):
+   - **(a) Cargo + mimalloc** [Recommended] - Add to Cargo.toml for best performance (50% less memory)
+   - **(b) LD_PRELOAD** - Uncomment lines in Containerfile (no code changes, 50% less memory)
+   - **(c) Default malloc** - No changes needed (good for most apps)
+
+   **Why mimalloc?** Reduces memory usage by ~50% vs glibc malloc under load. See [allocator comparison](references/allocator-comparison.md) for details vs jemalloc/tcmalloc.
+
+4. Follow steps 3-4 from Python section above.
+
+**Advanced: Smallest image with musl**
+
+If you need the smallest possible image and have no C dependencies:
+
+1. **Copy musl template**:
+   ```bash
+   cp assets/Containerfile.rust-musl ./Containerfile
+   ```
+
+2. Follow steps 2-4 from default option above.
+
+⚠️ **Warning:** musl's allocator is 7-10x slower in multi-threaded workloads. You MUST add mimalloc to Cargo.toml (see Containerfile comments).
+
 ## Builder Image Selection
 
 ### Python Projects
@@ -241,6 +279,14 @@ FROM docker.io/golang:1 AS builder
 ```
 
 Use official Golang images for building Go applications. Includes Go toolchain and gcc for CGO support.
+
+### Rust Projects
+
+```dockerfile
+FROM docker.io/rust:slim AS builder
+```
+
+Use official Rust slim images for building Rust applications. Includes rustc, cargo, and rustup for target management.
 
 ## Key Patterns
 
@@ -284,6 +330,11 @@ RUN bun install --frozen-lockfile
 # pnpm
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
+
+# Rust/cargo (both registry and target dir)
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo build --release
 ```
 
 ### Multi-arch Manifest Creation

@@ -9,7 +9,7 @@ A curated collection of plugins, skills, and configuration templates for [Claude
 **From this marketplace (pigfoot):**
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
 - **[context7](./plugins/context7/)** - Access up-to-date documentation and code examples for any library or framework
-- **[github-actions-secure-container-build](./plugins/github-actions-secure-container-build/)** - Build secure, multi-architecture container images in GitHub Actions using Wolfi runtime, native ARM64 runners, and Podman
+- **[github-actions-secure-container-build](./plugins/github-actions-secure-container-build/)** - Build secure, multi-architecture container images in GitHub Actions. Supports Python/uv, Bun, Node.js/pnpm, Golang, and Rust with Wolfi runtime, native ARM64 runners, and Podman
 
 **Recommended third-party plugins (available in this marketplace):**
 - **[superpowers](https://github.com/obra/superpowers)** - Comprehensive skills library with proven development workflows (TDD, debugging, code review)
@@ -203,7 +203,7 @@ $newPermissions = @(
     "Skill(context7:*)",
     "mcp__plugin_context7_context7__get-library-docs",
     "mcp__plugin_context7_context7__resolve-library-id",
-    "Skill(commit:*)", "Skill(superpowers:*)"
+    "Skill(commit:*)", "Skill(superpowers:*)", "Skill(github-actions-secure-container-build:*)"
 )
 
 $merged = @($settings.permissions.allow) + $newPermissions | Select-Object -Unique
