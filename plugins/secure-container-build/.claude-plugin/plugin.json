@@ -1,0 +1,9 @@
+{
+  "name": "secure-container-build",
+  "description": "Build secure container images with Wolfi runtime, non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang (static/CGO), and Rust (glibc/musl) with allocator optimization",
+  "version": "0.0.1",
+  "author": {
+    "name": "pigfoot",
+    "email": "pigfoot@gmail.com"
+  }
+}
