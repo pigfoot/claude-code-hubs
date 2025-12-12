@@ -113,6 +113,7 @@ jobs:
 
             # Build multi-arch manifest (QEMU handles cross-arch)
             podman build \
+              --network=host \
               --platform "${{ env.PLATFORMS }}" \
               --format docker \
               --manifest "$IMAGE:${{ github.sha }}" \
@@ -162,3 +163,8 @@ jobs:
 #    and adding a push step:
 #    podman manifest push --all "$IMAGE:latest" \
 #      "docker://docker.io/${{ secrets.DOCKERHUB_USERNAME }}/app:latest"
+#
+# 6. --network=host flag:
+#    - Required for ubuntu-24.04 runners >= 20251208.163.1
+#    - Fixes SSL certificate errors during package installation
+#    - See: https://github.com/actions/runner-images/issues/13422

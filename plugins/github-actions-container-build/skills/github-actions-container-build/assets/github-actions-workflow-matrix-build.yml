@@ -70,6 +70,7 @@ jobs:
       - name: Build image
         run: |
           podman build \
+            --network=host \
             --format docker \
             --platform linux/${{ matrix.arch }} \
             --label "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}" \
@@ -188,3 +189,8 @@ jobs:
 # 4. Alternative approaches (see reference docs):
 #    - Architecture Tags: simpler, intermediate :amd64/:arm64 tags
 #    - QEMU: single-runner emulation for private repos
+#
+# 5. --network=host flag:
+#    - Required for ubuntu-24.04 runners >= 20251208.163.1
+#    - Fixes SSL certificate errors during package installation
+#    - See: https://github.com/actions/runner-images/issues/13422

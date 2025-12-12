@@ -94,6 +94,8 @@ Use Podman for container builds:
 - Native multi-arch manifest support
 - OCI compliant
 - **Must use `podman manifest push --all`** (not `podman push`)
+- **Format**: Use OCI (default) for modern registries; use `--format v2s2` only for Quay.io or cross-registry (see references for details)
+- **Network**: Use `--network=host` flag for builds to avoid container networking SSL issues on GitHub Actions ubuntu-24.04 (see Troubleshooting section)
 
 ### 5. podman-static for Heredoc Support
 
@@ -250,6 +252,22 @@ For Containerfile templates and security best practices, see the **secure-contai
 ## Troubleshooting
 
 ### Common Issues
+
+**Container networking SSL errors (ubuntu-24.04 runners)**:
+- **Symptom**: `UNKNOWN_CERTIFICATE_VERIFICATION_ERROR` or SSL certificate verification failures during `bun install`, `npm install`, `pip install`, etc. inside containers
+- **Cause**: GitHub Actions ubuntu-24.04 runner image 20251208.163.1+ has container networking configuration changes that break SSL/TLS connections from inside containers
+- **Solution**: Add `--network=host` flag to `podman build`:
+  ```yaml
+  podman build \
+    --network=host \
+    --format docker \
+    --platform linux/${{ matrix.arch }} \
+    -f ./Containerfile \
+    .
+  ```
+- **Verification**: Test repository at https://github.com/pigfoot/test-bun-ssl-issue
+- **GitHub Issue**: https://github.com/actions/runner-images/issues/13422
+- **Note**: This is a known issue with ubuntu-24.04 runners. The `--network=host` workaround reduces network isolation during build but is acceptable for CI/CD use cases.
 
 **Authentication failed**:
 - Ensure GITHUB_TOKEN has package write permission

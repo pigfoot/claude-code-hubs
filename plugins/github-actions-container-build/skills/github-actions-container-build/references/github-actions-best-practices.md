@@ -257,15 +257,30 @@ podman build --platform linux/arm64 -t myimage .
 
 ### Registry Format Compatibility
 
-Quay.io specifically prefers Docker v2s2 format. For maximum compatibility:
+**Podman uses OCI format by default**, which is supported by modern container registries (ghcr.io, Docker Hub, ECR, ACR, GCR).
 
+**When to specify format:**
+
+- **Modern single registry (default)**: Use OCI format (Podman default, no flag needed)
+  ```bash
+  # ghcr.io, Docker Hub, ECR, ACR, GCR - OCI format (default)
+  podman manifest push --all myimage docker://ghcr.io/user/image:tag
+  ```
+
+- **Quay.io or cross-registry**: Use v2s2 format for maximum compatibility
+  ```bash
+  # Quay.io or pushing to multiple different registries
+  podman manifest push --all --format v2s2 myimage docker://quay.io/user/image:tag
+  ```
+
+- **Avoid v2s1**: Deprecated format, many registries no longer support it
+
+**Build format**: Always use `--format docker` when building to ensure compatibility:
 ```bash
-# Build with Docker format
 podman build --format docker -t myimage .
-
-# Push manifest with v2s2 format
-podman manifest push --all --format v2s2 myimage docker://registry/myimage:tag
 ```
+
+**Simple rule**: Single modern registry → OCI (default). Cross-registry or Quay.io → v2s2.
 
 ### Tag Command Incompatibility
 
@@ -589,7 +604,29 @@ podman manifest inspect "$IMAGE:latest"
 
 ### Common Issues
 
-1. **Authentication failed**: Ensure GITHUB_TOKEN has package write permission
-2. **Manifest add failed**: Verify architecture-specific images exist
-3. **Build timeout**: Check for inefficient Containerfile layers
-4. **QEMU slow**: Consider native ARM64 runners for public repos
+1. **Container networking SSL errors (ubuntu-24.04 runners >= 20251208.163.1)**
+   - **Symptom**: `UNKNOWN_CERTIFICATE_VERIFICATION_ERROR` or SSL certificate failures during package installation (`bun install`, `npm install`, `pip install`, `cargo build`, etc.) inside containers
+   - **Root Cause**: Runner image networking configuration change affecting container bridge networking
+   - **Solution**: Add `--network=host` to `podman build`
+   - **Evidence**: [Test repository](https://github.com/pigfoot/test-bun-ssl-issue) | [GitHub Issue #13422](https://github.com/actions/runner-images/issues/13422)
+   - **Example**:
+     ```yaml
+     - name: Build image
+       run: |
+         podman build \
+           --network=host \
+           --format docker \
+           --platform linux/${{ matrix.arch }} \
+           -f ./Containerfile \
+           .
+     ```
+   - **Trade-off**: Reduces network isolation during build (acceptable for CI/CD)
+   - **Status**: Known issue, workaround required until GitHub resolves runner image networking
+
+2. **Authentication failed**: Ensure GITHUB_TOKEN has package write permission
+
+3. **Manifest add failed**: Verify architecture-specific images exist
+
+4. **Build timeout**: Check for inefficient Containerfile layers
+
+5. **QEMU slow**: Consider native ARM64 runners for public repos
