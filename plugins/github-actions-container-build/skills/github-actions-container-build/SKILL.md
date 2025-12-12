@@ -1,6 +1,6 @@
 ---
 name: github-actions-container-build
-description: Build multi-architecture container images in GitHub Actions. Matrix builds (public repos with native ARM64), QEMU emulation (private repos), or ARM64 larger runners (Team/Enterprise). Uses Podman rootless builds with manifest support
+description: Build multi-architecture container images in GitHub Actions. Matrix builds (public repos with native ARM64), QEMU emulation (private repos), or ARM64 larger runners (Team/Enterprise). Uses Podman rootless builds with push-by-digest pattern
 ---
 
 # GitHub Actions Container Build
@@ -21,7 +21,38 @@ Build multi-architecture container images in GitHub Actions using Podman and nat
 - **Yes** → Use ARM64 larger runners (custom setup required, paid per minute)
 - **No** → Use `github-actions-workflow-qemu.yml` (free QEMU emulation, slower but works on free tier)
 
-### 1. Matrix Builds (Public Repos)
+### 1. Push-by-Digest (2025 Best Practice - Default)
+
+Matrix builds use **push-by-digest** pattern:
+- Images pushed by digest without intermediate `:amd64/:arm64` tags
+- Only tiny digest files (~70 bytes) transfer as artifacts
+- Registry stays clean (no tag clutter)
+- Same debug experience with `--platform` flag
+
+```yaml
+# Build job
+- name: Push by digest
+  run: |
+    podman push \
+      --digestfile /tmp/digest \
+      localhost/build:${{ matrix.arch }} \
+      docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+# Merge job
+- name: Create manifest from digests
+  run: |
+    podman manifest create "$IMAGE:latest"
+    podman manifest add "$IMAGE:latest" "docker://$IMAGE@${AMD64_DIGEST}"
+    podman manifest add "$IMAGE:latest" "docker://$IMAGE@${ARM64_DIGEST}"
+    podman manifest push --all "$IMAGE:latest" "docker://$IMAGE:latest"
+```
+
+**Debug specific architecture:**
+```bash
+podman pull --platform linux/arm64 ghcr.io/OWNER/REPO:latest
+```
+
+### 2. Matrix Builds (Public Repos)
 
 **For public repositories** - use GitHub-hosted standard ARM64 runners:
 - 10-50x faster builds (native vs. emulation)
@@ -40,7 +71,7 @@ strategy:
         runner: ubuntu-24.04-arm  # Standard ARM64 runner (public repos only)
 ```
 
-### 2. QEMU Builds (Private Repos - Free Tier)
+### 3. QEMU Builds (Private Repos - Free Tier)
 
 **For private repositories on free tier** - use QEMU emulation:
 - Works on GitHub Free plan
@@ -55,15 +86,16 @@ steps:
   - run: podman build --platform linux/amd64,linux/arm64 --manifest ...
 ```
 
-### 3. Podman Over Docker
+### 4. Podman Over Docker
 
 Use Podman for container builds:
 - Rootless by default (better security)
 - No daemon required
 - Native multi-arch manifest support
 - OCI compliant
+- **Must use `podman manifest push --all`** (not `podman push`)
 
-### 4. podman-static for Heredoc Support
+### 5. podman-static for Heredoc Support
 
 Ubuntu 24.04's bundled podman (4.9.3) uses buildah 1.33.7 which doesn't support heredoc syntax. Install podman-static for full BuildKit compatibility:
 
@@ -94,9 +126,9 @@ Ubuntu 24.04's bundled podman (4.9.3) uses buildah 1.33.7 which doesn't support 
    cp assets/github-actions-workflow-matrix-build.yml .github/workflows/build.yml
    ```
 
-2. **Customize image name**:
+2. **Customize Containerfile path**:
    ```yaml
-   IMAGE="$REGISTRY/$IMAGE_OWNER/your-app-name"
+   -f ./Containerfile.python-uv  # or your Containerfile
    ```
 
 3. **Add your Containerfile** (see **secure-container-build** plugin for templates)
@@ -112,32 +144,24 @@ Ubuntu 24.04's bundled podman (4.9.3) uses buildah 1.33.7 which doesn't support 
 
 ## Workflow Structure
 
-Each application follows this pattern:
+### Matrix Build Workflow (Push-by-Digest)
 
-### Matrix Build Workflow
-1. **Build job** (matrix): Build and push architecture-specific images on native runners
-2. **Manifest job**: Create and push multi-arch manifest combining both architectures
+1. **Build job** (matrix): Build and push images by digest on native runners
+2. **Merge job**: Download digests, create and push multi-arch manifest
 
 ### QEMU Workflow
+
 1. **Single job**: Build multi-arch manifest directly with `--platform` flag
 
-## Multi-arch Manifest Creation
+## Multi-arch Build Approaches
 
-After building architecture-specific images, create a multi-arch manifest:
+| Approach | Artifact Size | Registry Overhead | Best For |
+|----------|---------------|-------------------|----------|
+| **Push-by-digest** (default) | ~70 bytes | 1x | Production |
+| **Architecture tags** | None | 2x (tags + manifest) | Debugging |
+| **OCI artifacts** | Full images | 3x | Maximum privacy |
 
-```bash
-IMAGE="$REGISTRY/$IMAGE_OWNER/app"
-
-# Create manifest
-podman manifest create "$IMAGE:latest" || true
-
-# Add architecture-specific images
-podman manifest add "$IMAGE:latest" "docker://$IMAGE:amd64"
-podman manifest add "$IMAGE:latest" "docker://$IMAGE:arm64"
-
-# Push manifest
-podman manifest push --all "$IMAGE:latest"
-```
+See `references/github-actions-best-practices.md` for detailed comparison.
 
 ## ARM64 Larger Runners (Private Repos with Team/Enterprise)
 
@@ -175,11 +199,11 @@ strategy:
 ```yaml
 env:
   REGISTRY: ghcr.io
-  IMAGE_OWNER: ${{ github.repository_owner }}
+  IMAGE_NAME: ${{ github.repository }}
 
 - name: Login to GHCR
   run: |
-    echo "${{ secrets.GITHUB_TOKEN }}" | podman login "$REGISTRY" \
+    echo "${{ secrets.GITHUB_TOKEN }}" | podman login "${{ env.REGISTRY }}" \
       -u "${{ github.actor }}" \
       --password-stdin
 ```
@@ -194,7 +218,21 @@ env:
       --password-stdin
 
 # Push to Docker Hub
-podman push "docker://docker.io/${{ secrets.DOCKERHUB_USERNAME }}/app:$TAG"
+podman manifest push --all "$IMAGE:latest" \
+  "docker://docker.io/${{ secrets.DOCKERHUB_USERNAME }}/app:latest"
+```
+
+## Debugging Multi-arch Images
+
+```bash
+# Pull specific architecture
+podman pull --platform linux/arm64 ghcr.io/OWNER/REPO:latest
+
+# Inspect manifest
+podman manifest inspect ghcr.io/OWNER/REPO:latest
+
+# Verify architectures
+podman manifest inspect ghcr.io/OWNER/REPO:latest | jq '.manifests[].platform'
 ```
 
 ## Reference Documentation
@@ -219,7 +257,7 @@ For Containerfile templates and security best practices, see the **secure-contai
 
 **Manifest add failed**:
 - Verify architecture-specific images exist in registry
-- Check image tags match exactly
+- Check digest format is correct (`sha256:...`)
 
 **ARM64 runner not available**:
 - Standard ARM64 runners only work for public repos
@@ -233,14 +271,6 @@ For Containerfile templates and security best practices, see the **secure-contai
 - Install binaries to `/usr/bin/` not `/usr/local/bin/`
 - Run `podman system migrate` after installation
 
-### Local Testing
-
-**Test manifest locally**:
-```bash
-podman manifest inspect "$IMAGE:latest"
-```
-
-**Verify multi-arch support**:
-```bash
-podman manifest inspect ghcr.io/owner/app:latest | jq '.manifests[].platform'
-```
+**Wrong architecture pulled**:
+- Always use `--platform` flag when pulling
+- Use `--format docker` when building for compatibility
