@@ -147,17 +147,15 @@ jq "$(cat <<'EOF'
 .permissions.allow = (((.permissions // {}).allow // []) + [
   "Bash(ls:*)", "Bash(pwd:*)", "Bash(echo:*)", "Bash(export:*)", "Bash(test:*)",
   "Bash(mkdir:*)", "Bash(mv:*)", "Bash(cat:*)", "Bash(cp:*)", "Bash(chmod:*)", "Bash(touch:*)",
-  "Bash(grep:*)", "Bash(rg:*)", "Bash(find:*)", "Bash(sed:*)", "Bash(head:*)",
-  "Bash(xargs:*)",
+  "Bash(grep:*)", "Bash(find:*)", "Bash(sed:*)", "Bash(head:*)", "Bash(xargs:*)",
   "Bash(git:*)", "Bash(gh:*)", "Bash(jq:*)", "Bash(curl:*)",
   "Bash(node:*)", "Bash(npm:*)", "Bash(pnpm:*)", "Bash(npx:*)", "Bash(bun:*)", "Bash(bunx:*)",
   "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(uvx:*)",
   "Bash(docker:*)", "Bash(podman:*)", "Bash(buildah:*)",
-  "Bash(gpg:*)", "Bash(gpgconf:*)",
-  "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch", "SlashCommand",
-  "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
-  "Bash(.specify/scripts/bash/create-new-feature.sh:*)", "Bash(.specify/scripts/bash/setup-plan.sh:*)",
-  "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
+  "Bash(gh:*)", "Bash(gpg:*)", "Bash(gpgconf:*)",
+  "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch",
+  "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+  "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
   "Skill(context7:*)", "mcp__plugin_context7_context7__get-library-docs", "mcp__plugin_context7_context7__resolve-library-id",
   "Skill(commit:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 ] | unique)
@@ -193,17 +191,15 @@ if (-not $settings.permissions.allow) {
 }
 
 $newPermissions = @(
+    "Bash(git:*)", "Bash(gh:*)", "Bash(jq:*)", "Bash(curl:*)",
     "Bash(node:*)", "Bash(npm:*)", "Bash(pnpm:*)", "Bash(npx:*)", "Bash(bun:*)", "Bash(bunx:*)",
     "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(uvx:*)",
     "Bash(docker:*)", "Bash(podman:*)", "Bash(buildah:*)",
-    "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch", "SlashCommand",
-    "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
-    "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
-    "Bash(.specify/scripts/bash/setup-plan.sh:*)",
-    "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
-    "Skill(context7:*)",
-    "mcp__plugin_context7_context7__get-library-docs",
-    "mcp__plugin_context7_context7__resolve-library-id",
+    "Bash(gh:*)", "Bash(gpg:*)", "Bash(gpgconf:*)",
+    "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch",
+    "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+    "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
+    "Skill(context7:*)", "mcp__plugin_context7_context7__get-library-docs", "mcp__plugin_context7_context7__resolve-library-id",
     "Skill(commit:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 )
 
