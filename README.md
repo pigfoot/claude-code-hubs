@@ -9,6 +9,7 @@ A curated collection of plugins, skills, and configuration templates for [Claude
 **From this marketplace (pigfoot):**
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
 - **[context7](./plugins/context7/)** - Access up-to-date documentation and code examples for any library or framework
+- **[nano-banana](./plugins/nano-banana/)** - Python scripting and Gemini image generation using uv with inline script dependencies
 - **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime, non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang, and Rust
 - **[github-actions-container-build](./plugins/github-actions-container-build/)** - Build multi-architecture container images in GitHub Actions. Matrix builds (public repos), QEMU (private repos), Podman rootless builds
 
@@ -157,7 +158,7 @@ jq "$(cat <<'EOF'
   "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
   "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
   "Skill(context7:*)", "mcp__plugin_context7_context7__get-library-docs", "mcp__plugin_context7_context7__resolve-library-id",
-  "Skill(commit:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
+  "Skill(commit:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 ] | unique)
   | .alwaysThinkingEnabled = true
   | .includeCoAuthoredBy = false
@@ -200,7 +201,7 @@ $newPermissions = @(
     "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
     "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
     "Skill(context7:*)", "mcp__plugin_context7_context7__get-library-docs", "mcp__plugin_context7_context7__resolve-library-id",
-    "Skill(commit:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
+    "Skill(commit:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 )
 
 $merged = @($settings.permissions.allow) + $newPermissions | Select-Object -Unique
@@ -229,6 +230,7 @@ Write-Host "✅ Permissions configured successfully!"
 # Install plugins (all available from pigfoot marketplace)
 /plugin install commit@pigfoot
 /plugin install context7@pigfoot
+/plugin install nano-banana@pigfoot
 /plugin install secure-container-build@pigfoot
 /plugin install github-actions-container-build@pigfoot
 /plugin install superpowers@pigfoot
@@ -321,6 +323,44 @@ Ask Claude about any library naturally.
 
 **Behind the scenes:**
 Claude automatically fetches documentation from Context7's curated database.
+
+---
+
+### 🍌 nano-banana Plugin - AI Image Generation
+
+```bash
+/plugin install nano-banana@pigfoot
+```
+
+**What it does:**
+Generates and edits images using Google's Gemini models with Python scripting powered by uv.
+
+**Benefits:**
+- ✅ **AI image generation** - Create images from text descriptions using Gemini 3 Pro (Nano Banana Pro)
+- ✅ **Image editing** - Edit existing images with AI-powered transformations
+- ✅ **Interactive prompting** - Get help crafting effective prompts for better results
+- ✅ **Inline dependencies** - Self-contained Python scripts with `uv run` and inline script metadata
+- ✅ **Multiple models** - Choose between fast generation and professional quality
+
+**Prerequisites:**
+- [uv](https://docs.astral.sh/uv/) installed
+- `GOOGLE_API_KEY` environment variable set with a valid Gemini API key
+
+**Usage:**
+Ask Claude to generate or edit images naturally.
+
+**Examples:**
+- "Generate an image of a futuristic cityscape at sunset"
+- "Create a cute banana character with sunglasses"
+- "Help me write a prompt for a professional product photo"
+- "Edit this image to add a party hat"
+
+**Skills Included:**
+- `nano-banana` - Direct image generation and editing
+- `nano-banana-prompting` - Interactive prompt crafting with best practices
+
+**Behind the scenes:**
+Claude uses Python with Google's Gemini API to generate images. Scripts run via `uv` with automatic dependency management, making it easy to create high-quality AI art.
 
 ---
 
@@ -466,6 +506,7 @@ Once configured, Claude will:
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
 | [context7](./plugins/context7/) | Library documentation via Context7 MCP server | 0.0.1 |
+| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.1 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
 
@@ -478,6 +519,7 @@ claude-code-hubs/
 ├── plugins/
 │   ├── commit/                          # Git commit automation plugin
 │   ├── context7/                        # Documentation plugin
+│   ├── nano-banana/                     # AI image generation plugin
 │   ├── secure-container-build/          # Containerfile templates plugin
 │   └── github-actions-container-build/  # GitHub Actions CI/CD plugin
 ├── .CLAUDE.md                                  # Global configuration template
@@ -548,6 +590,7 @@ Browse available plugins in `plugins/` directory, then:
 |--------|--------|-------------|-----------------|
 | [commit](./plugins/commit/) | pigfoot | Conventional commits with emoji and GPG signing | `commit:commit` |
 | [context7](./plugins/context7/) | pigfoot | Library documentation via Context7 MCP | `context7:skills` |
+| [nano-banana](./plugins/nano-banana/) | pigfoot | Python scripting and Gemini image generation | `nano-banana:nano-banana`, `nano-banana:nano-banana-prompting` |
 | [secure-container-build](./plugins/secure-container-build/) | pigfoot | Secure container images with Wolfi runtime | `secure-container-build:secure-container-build` |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | pigfoot | Multi-arch container builds in GitHub Actions | `github-actions-container-build:github-actions-container-build` |
 | [superpowers](https://github.com/obra/superpowers) | 3rd-party (obra) | Proven development workflows (TDD, debugging, review) | 17+ skills (brainstorming, TDD, systematic-debugging, etc.) |
