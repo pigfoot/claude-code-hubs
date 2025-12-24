@@ -8,12 +8,12 @@ A curated collection of plugins, skills, and configuration templates for [Claude
 
 **From this marketplace (pigfoot):**
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
-- **[context7](./plugins/context7/)** - Access up-to-date documentation and code examples for any library or framework
 - **[nano-banana](./plugins/nano-banana/)** - Python scripting and Gemini image generation using uv with inline script dependencies
 - **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime, non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang, and Rust
 - **[github-actions-container-build](./plugins/github-actions-container-build/)** - Build multi-architecture container images in GitHub Actions. Matrix builds (public repos), QEMU (private repos), Podman rootless builds
 
-**Recommended third-party plugins (available in this marketplace):**
+**Recommended third-party plugins:**
+- **[context7](https://github.com/upstash/context7)** - Access up-to-date documentation and code examples for any library or framework (official from @claude-plugins-official)
 - **[superpowers](https://github.com/obra/superpowers)** - Comprehensive skills library with proven development workflows (TDD, debugging, code review)
 
 ### 🎯 Skills
@@ -157,7 +157,7 @@ jq "$(cat <<'EOF'
   "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch",
   "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
   "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
-  "Skill(context7:*)", "mcp__plugin_context7_context7__get-library-docs", "mcp__plugin_context7_context7__resolve-library-id",
+  "mcp__plugin_context7_context7",
   "Skill(commit:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 ] | unique)
   | .alwaysThinkingEnabled = true
@@ -200,7 +200,7 @@ $newPermissions = @(
     "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch",
     "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
     "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
-    "Skill(context7:*)", "mcp__plugin_context7_context7__get-library-docs", "mcp__plugin_context7_context7__resolve-library-id",
+    "mcp__plugin_context7_context7",
     "Skill(commit:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 )
 
@@ -221,19 +221,30 @@ Write-Host "✅ Permissions configured successfully!"
 
 ### Step 2: Install Plugins
 
-**Inside Claude Code**, run these commands to install plugins from [pigfoot/claude-code-hubs](https://github.com/pigfoot/claude-code-hubs):
+Install plugins from [pigfoot/claude-code-hubs](https://github.com/pigfoot/claude-code-hubs) using CLI:
 
 ```bash
 # Add marketplace
-/plugin marketplace add pigfoot/claude-code-hubs
+claude plugin marketplace add pigfoot/claude-code-hubs
 
-# Install plugins (all available from pigfoot marketplace)
-/plugin install commit@pigfoot
-/plugin install context7@pigfoot
-/plugin install nano-banana@pigfoot
-/plugin install secure-container-build@pigfoot
-/plugin install github-actions-container-build@pigfoot
-/plugin install superpowers@pigfoot
+# Install plugins from pigfoot marketplace
+claude plugin install --scope user commit@pigfoot-marketplace
+claude plugin install --scope user nano-banana@pigfoot-marketplace
+claude plugin install --scope user secure-container-build@pigfoot-marketplace
+claude plugin install --scope user github-actions-container-build@pigfoot-marketplace
+
+# Install recommended third-party plugins
+claude plugin install --scope user context7@claude-plugins-official
+claude plugin install --scope user superpowers@pigfoot-marketplace
+```
+
+**Upgrade plugins:**
+```bash
+# Upgrade specific plugin
+claude plugin upgrade commit@pigfoot-marketplace
+
+# Upgrade all plugins from pigfoot marketplace
+claude plugin upgrade commit@pigfoot-marketplace nano-banana@pigfoot-marketplace secure-container-build@pigfoot-marketplace github-actions-container-build@pigfoot-marketplace superpowers@pigfoot-marketplace
 ```
 
 ### Step 3: Setup CLAUDE.md Template (Optional but Recommended)
@@ -268,7 +279,7 @@ Change `claudeDir` to your project root folder (e.g., `claudeDir="."` or `$claud
 ### 🎯 commit Plugin - Smart Git Commits
 
 ```bash
-/plugin install commit@pigfoot
+claude plugin install --scope user commit@pigfoot-marketplace
 ```
 
 **What it does:**
@@ -296,14 +307,14 @@ User: "commit changes"
 
 ---
 
-### 📚 context7 Plugin - Up-to-Date Library Docs
+### 📚 context7 Plugin - Up-to-Date Library Docs (Official)
 
 ```bash
-/plugin install context7@pigfoot
+claude plugin install --scope user context7@claude-plugins-official
 ```
 
 **What it does:**
-Fetches current documentation and code examples from any library or framework.
+Fetches current documentation and code examples from any library or framework via official Context7 MCP server.
 
 **Benefits:**
 - ✅ **Always current** - Gets latest docs, not outdated LLM training data
@@ -324,12 +335,82 @@ Ask Claude about any library naturally.
 **Behind the scenes:**
 Claude automatically fetches documentation from Context7's curated database.
 
+**Note:** This is the official plugin from @claude-plugins-official, maintained by Upstash.
+
+**Optional: Auto-configure package runner (bunx/npx)**
+
+By default, context7 uses `npx` (Node.js package runner). This script auto-detects and configures the best available option:
+
+**macOS, Linux, WSL, Git Bash:**
+```bash
+# Auto-detect and configure context7 package runner
+config_file="$HOME/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/context7/.mcp.json"
+
+if [ ! -f "$config_file" ]; then
+  echo "⚠️ context7 config not found. Install context7 first:"
+  echo "   claude plugin install --scope user context7@claude-plugins-official"
+  exit 1
+fi
+
+if command -v bunx &> /dev/null; then
+  # Use bunx (fastest: ~50-100ms faster than npx)
+  jq '.context7.command = "bunx" | .context7.args = ["@upstash/context7-mcp"]' "$config_file" > /tmp/mcp.json && mv /tmp/mcp.json "$config_file"
+  echo "✅ Configured context7 to use bunx (fastest)"
+elif command -v npx &> /dev/null; then
+  # Use npx (default Node.js runner)
+  jq '.context7.command = "npx" | .context7.args = ["-y", "@upstash/context7-mcp"]' "$config_file" > /tmp/mcp.json && mv /tmp/mcp.json "$config_file"
+  echo "✅ Configured context7 to use npx (default)"
+else
+  echo "❌ Neither bunx nor npx found. Install one of:"
+  echo "   - Bun: curl -fsSL https://bun.sh/install | bash"
+  echo "   - Node.js: see https://nodejs.org/"
+  exit 1
+fi
+```
+
+<details>
+<summary>Windows PowerShell</summary>
+
+```powershell
+# Auto-detect and configure context7 package runner
+$configFile = "$env:USERPROFILE\.claude\plugins\marketplaces\claude-plugins-official\external_plugins\context7\.mcp.json"
+
+if (-not (Test-Path $configFile)) {
+    Write-Host "⚠️ context7 config not found. Install context7 first:" -ForegroundColor Yellow
+    Write-Host "   claude plugin install --scope user context7@claude-plugins-official"
+    exit 1
+}
+
+$config = Get-Content $configFile -Raw | ConvertFrom-Json
+
+if (Get-Command bunx -ErrorAction SilentlyContinue) {
+    # Use bunx (fastest: ~50-100ms faster than npx)
+    $config.context7.command = "bunx"
+    $config.context7.args = @("@upstash/context7-mcp")
+    $config | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $configFile
+    Write-Host "✅ Configured context7 to use bunx (fastest)" -ForegroundColor Green
+} elseif (Get-Command npx -ErrorAction SilentlyContinue) {
+    # Use npx (default Node.js runner)
+    $config.context7.command = "npx"
+    $config.context7.args = @("-y", "@upstash/context7-mcp")
+    $config | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $configFile
+    Write-Host "✅ Configured context7 to use npx (default)" -ForegroundColor Green
+} else {
+    Write-Host "❌ Neither bunx nor npx found. Install one of:" -ForegroundColor Red
+    Write-Host "   - Bun: https://bun.sh/install"
+    Write-Host "   - Node.js: https://nodejs.org/"
+    exit 1
+}
+```
+
+</details>
+
 ---
 
 ### 🍌 nano-banana Plugin - AI Image Generation
 
 ```bash
-/plugin install nano-banana@pigfoot
+claude plugin install --scope user nano-banana@pigfoot-marketplace
 ```
 
 **What it does:**
@@ -367,7 +448,7 @@ Claude uses Python with Google's Gemini API to generate images. Scripts run via 
 ### 🐳 secure-container-build Plugin - Secure Container Images
 
 ```bash
-/plugin install secure-container-build@pigfoot
+claude plugin install --scope user secure-container-build@pigfoot-marketplace
 ```
 
 **What it does:**
@@ -400,7 +481,7 @@ Ask Claude to create secure Containerfiles for your project.
 ### 🚀 github-actions-container-build Plugin - CI/CD Workflows
 
 ```bash
-/plugin install github-actions-container-build@pigfoot
+claude plugin install --scope user github-actions-container-build@pigfoot-marketplace
 ```
 
 **What it does:**
@@ -429,7 +510,7 @@ Ask Claude to set up CI/CD for your container builds.
 ### 🦸 superpowers Plugin - Proven Development Workflows
 
 ```bash
-/plugin install superpowers@pigfoot
+claude plugin install --scope user superpowers@pigfoot-marketplace
 ```
 
 > **Note:** This is a third-party plugin originally from [obra/superpowers](https://github.com/obra/superpowers), available in this marketplace for convenient installation
@@ -505,7 +586,6 @@ Once configured, Claude will:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
-| [context7](./plugins/context7/) | Library documentation via Context7 MCP server | 0.0.1 |
 | [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.1 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
@@ -518,7 +598,6 @@ claude-code-hubs/
 │   └── marketplace.json                        # Marketplace registry
 ├── plugins/
 │   ├── commit/                          # Git commit automation plugin
-│   ├── context7/                        # Documentation plugin
 │   ├── nano-banana/                     # AI image generation plugin
 │   ├── secure-container-build/          # Containerfile templates plugin
 │   └── github-actions-container-build/  # GitHub Actions CI/CD plugin
@@ -545,12 +624,12 @@ cat ~/.claude/settings.json | jq '.permissions.allow'
 ### Plugin Installation Fails
 
 ```bash
-# Inside Claude Code, check marketplace connection
-/plugin marketplace list
+# Check marketplace connection
+claude plugin marketplace list
 
 # Try removing and re-adding marketplace
-/plugin marketplace remove pigfoot/claude-code-hubs
-/plugin marketplace add pigfoot/claude-code-hubs
+claude plugin marketplace remove pigfoot-marketplace
+claude plugin marketplace add pigfoot/claude-code-hubs
 ```
 
 ### Tools Not Found
@@ -581,7 +660,7 @@ Edit `~/.claude/CLAUDE.md` or `./CLAUDE.md` to customize for your needs.
 
 Browse available plugins in `plugins/` directory, then:
 ```bash
-/plugin install <plugin-name>@pigfoot
+claude plugin install --scope user <plugin-name>@pigfoot-marketplace
 ```
 
 ## Available Plugins
@@ -589,13 +668,15 @@ Browse available plugins in `plugins/` directory, then:
 | Plugin | Origin | Description | Skills Included |
 |--------|--------|-------------|-----------------|
 | [commit](./plugins/commit/) | pigfoot | Conventional commits with emoji and GPG signing | `commit:commit` |
-| [context7](./plugins/context7/) | pigfoot | Library documentation via Context7 MCP | `context7:skills` |
 | [nano-banana](./plugins/nano-banana/) | pigfoot | Python scripting and Gemini image generation | `nano-banana:nano-banana`, `nano-banana:nano-banana-prompting` |
 | [secure-container-build](./plugins/secure-container-build/) | pigfoot | Secure container images with Wolfi runtime | `secure-container-build:secure-container-build` |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | pigfoot | Multi-arch container builds in GitHub Actions | `github-actions-container-build:github-actions-container-build` |
+| [context7](https://github.com/upstash/context7) | official (@claude-plugins-official) | Library documentation via Context7 MCP | MCP server |
 | [superpowers](https://github.com/obra/superpowers) | 3rd-party (obra) | Proven development workflows (TDD, debugging, review) | 17+ skills (brainstorming, TDD, systematic-debugging, etc.) |
 
-**Installation:** All plugins can be installed from this marketplace using `/plugin install <name>@pigfoot`
+**Installation:**
+- pigfoot plugins: `claude plugin install --scope user <name>@pigfoot-marketplace`
+- Official/3rd-party: `claude plugin install --scope user context7@claude-plugins-official` or `claude plugin install --scope user superpowers@pigfoot-marketplace`
 
 ## Contributing
 

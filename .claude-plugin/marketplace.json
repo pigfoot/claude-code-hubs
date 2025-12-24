@@ -40,16 +40,6 @@
       }
     },
     {
-      "name": "context7",
-      "source": "./plugins/context7",
-      "description": "Up-to-date documentation and code examples for any library or framework using Context7 MCP server",
-      "version": "0.0.1",
-      "author": {
-        "name": "Upstash",
-        "url": "https://github.com/upstash"
-      }
-    },
-    {
       "name": "nano-banana",
       "source": "./plugins/nano-banana",
       "description": "Python scripting and Gemini image generation using uv with inline script dependencies. Generate images, edit images with AI, and run Python scripts.",
