@@ -131,6 +131,26 @@ if not model:
 output_format = os.environ.get("NANO_BANANA_FORMAT", "webp").lower()
 quality = int(os.environ.get("NANO_BANANA_QUALITY", "90"))
 
+# Detect if lossless format is needed (for diagrams/slides)
+use_lossless = False
+
+# You (Claude) should understand user's intent and set use_lossless accordingly:
+# 1. Slide deck styles → True (automatic)
+#    - style: trend or style: notebooklm
+# 2. User requests lossless/highest quality (any language) → True
+#    - English: "lossless", "highest quality", "no compression"
+#    - 繁中: "無損", "最高品質"
+#    - 簡中: "无损", "最高质量"
+#    - 日文: "ロスレス", "最高品質"
+#    - Or intent: "I need perfect quality for printing"
+# 3. User requests lossy/smaller file (any language) → False
+#    - English: "lossy", "compress more", "smaller file"
+#    - 繁中: "有損", "壓縮", "檔案小一點"
+#    - Any language expression meaning smaller/compressed
+# 4. Default for photos/general images → False
+
+# Understand intent, not keyword matching
+
 # Initialize client with optional custom endpoint
 base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
 api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
@@ -162,12 +182,19 @@ for part in response.parts:
             pil_image.convert("RGB").save(output_path, "JPEG", quality=quality)
         elif output_format == "webp":
             output_path = OUTPUT_DIR / "generated.webp"
-            pil_image.save(output_path, "WEBP", quality=quality)
+            if use_lossless:
+                # Lossless WebP for slide decks (VP8L encoding)
+                # Saves 20-30% vs PNG, zero quality loss (vs lossy: saves 95% but blurs)
+                pil_image.save(output_path, "WEBP", lossless=True)
+                print(f"Saved: {output_path} (WEBP lossless, optimized for slides)")
+            else:
+                # Lossy WebP for photos (VP8 encoding)
+                pil_image.save(output_path, "WEBP", quality=quality)
+                print(f"Saved: {output_path} (WEBP, quality={quality})")
         else:  # png (default fallback)
             output_path = OUTPUT_DIR / "generated.png"
             pil_image.save(output_path, "PNG")
-
-        print(f"Saved: {output_path} ({output_format.upper()}, quality={quality})")
+            print(f"Saved: {output_path} (PNG)")
 EOF
 ```
 
@@ -392,9 +419,18 @@ Based on user responses, select technique from `references/guide.md`:
 
 **Brand Style Integration:**
 
-If user selected **Trend Micro brand style**:
-1. Load `references/brand-styles.md` for complete color specifications
-2. **Automatically apply NotebookLM slide aesthetic** (Trend style is designed for professional slide decks):
+If user selected **Trend Micro brand style** or **NotebookLM style**:
+1. Load `references/brand-styles.md` (for Trend) or `references/slide-deck-styles.md` (for NotebookLM) for complete specifications
+2. **Use lossless WebP format** (both styles are for slide decks with pure colors, text, and icons):
+   ```python
+   # Override format settings for slide deck styles (or if user requests lossless)
+   # Understand user intent in any language - not just keyword matching
+   use_lossless = True  # Set to True for slide styles or explicit user request
+   pil_image.save(output_path, "WEBP", lossless=True)
+   # VP8L encoding: saves 20-30% vs PNG with zero quality loss
+   # (Lossy WebP saves 95% but blurs text - not suitable for slides)
+   ```
+3. **Automatically apply NotebookLM slide aesthetic**:
    - Polished, well-structured tech infographic aesthetic
    - Clean slide-level organization with logical flow
    - Professional but accessible design
@@ -402,13 +438,13 @@ If user selected **Trend Micro brand style**:
    - Minimal text, maximum visual communication
    - Icons and simple illustrations over complex graphics
    - Style reference: Similar to Google's product documentation or modern tech blog infographics
-3. Append Trend brand color guidelines to the prompt:
+4. If Trend style, append Trend brand color guidelines to the prompt:
    - **Primary**: Trend Red (#d71920) as hero/accent color
    - **Guardian Red** (#6f0000) for intensity
    - **Grays** (#58595b to #e6e7e8) for backgrounds, neutrals
    - **Black and White** for contrast
    - **Additional**: Dark Blue (#005295) or Teal (#2cafa4) only if needed
-4. Add: "Keep the design clean and professional with clear intent in color usage. Suitable for 16:9 presentation format."
+5. Add: "Keep the design clean and professional with clear intent in color usage. Suitable for 16:9 presentation format."
 
 **Step 5: Present and Iterate**
 
@@ -422,6 +458,16 @@ Offer to refine based on feedback.
 **Step 6: Generate the Image**
 
 Execute with the crafted prompt using Direct Generation Mode pattern above.
+
+**Important**: Set `use_lossless = True` in the generation script when:
+- Style is Trend or NotebookLM (slide deck styles), OR
+- User explicitly requests lossless/highest quality (understand intent in any language)
+
+This will:
+- Use VP8L (lossless WebP) encoding instead of VP8 (lossy)
+- Save 20-30% file size compared to PNG (typical for diagrams/slides)
+- Perfect for slides with text, icons, and graphics - zero quality loss
+- Much better than lossy (lossy saves 95% but blurs text)
 
 ## When to Create Files vs Heredoc
 

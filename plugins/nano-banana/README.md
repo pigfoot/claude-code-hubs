@@ -162,11 +162,15 @@ Claude:
 - `style: "trend"` or `style: trend` - **Trend Micro brand colors + NotebookLM slide aesthetic**
   - Automatically applies professional presentation style (polished infographic, clean layout, 16:9 format)
   - Colors: Trend Red #d71920 as hero, Guardian Red, grays, Dark Blue/Teal accents
+  - **Uses lossless WebP** (VP8L) - saves 20-30% vs PNG, zero quality loss
   - Perfect for corporate slide decks, technical presentations, and professional infographics
+- `style: "notebooklm"` or `notebooklm style` - **NotebookLM presentation aesthetic**
+  - Professional infographics and slide decks
+  - **Uses lossless WebP** (VP8L) - saves 20-30% vs PNG with no quality loss
 - `use style trend` or `with trend colors` - Natural language detection
 - `style: "custom"` - Claude will ask for your color preferences
 
-When Trend style is specified, both brand color guidelines and NotebookLM presentation aesthetic are automatically applied to ensure professional, on-brand slide deck imagery.
+When slide deck styles (Trend or NotebookLM) are specified, both brand guidelines and lossless WebP format are automatically applied for professional, on-brand, optimally-compressed slide deck imagery.
 
 ## Quick Example
 

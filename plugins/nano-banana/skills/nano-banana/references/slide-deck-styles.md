@@ -2,6 +2,13 @@
 
 Prompt templates for creating NotebookLM-style slides, infographics, and presentation content using Gemini image generation.
 
+**Important**: All slide deck styles automatically use **lossless WebP** format (VP8L encoding):
+- Saves 20-30% file size compared to PNG (typical for diagrams/slides)
+- Perfect for slides with text, icons, and graphics
+- Completely lossless (zero quality degradation)
+- Much better than lossy formats (lossy WebP saves 95% but blurs text)
+- This is automatically applied when using `style: trend` or `style: notebooklm`
+
 ## Visual Styles Overview
 
 | Style | Best For | Key Characteristics |
@@ -395,3 +402,4 @@ Format: 16:9 landscape
 3. **Reference real data**: Provide actual numbers, percentages, or content when available
 4. **Iterate strategically**: Make small adjustments rather than full regeneration
 5. **Use natural language**: Describe what you want conversationally, not as keyword tags
+6. **File format**: Slide deck styles automatically use lossless WebP (VP8L) - no need to specify format, it's optimized for your content type

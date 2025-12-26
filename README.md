@@ -238,6 +238,12 @@ claude plugin install --scope user context7@claude-plugins-official
 claude plugin install --scope user superpowers@pigfoot-marketplace
 ```
 
+**Update marketplace (fetch latest plugin list):**
+```bash
+# Update pigfoot marketplace to get latest plugin versions
+claude plugin marketplace update pigfoot-marketplace
+```
+
 **Upgrade plugins:**
 ```bash
 # Upgrade specific plugin
@@ -507,13 +513,13 @@ The plugin operates in two modes automatically based on your request:
 - `nano-banana` - Unified skill with dual-mode operation (direct generation + interactive prompting)
 
 **Style Support:**
-- `style: "trend"` or `style: trend` - **Trend Micro brand colors + NotebookLM slide aesthetic** (professional presentations, polished infographics, 16:9 format with Trend Red #d71920, Guardian Red, grays, Dark Blue/Teal)
-- `style: "notebooklm"` or `notebooklm style` - NotebookLM presentation aesthetic (professional infographics, slide decks)
+- `style: "trend"` or `style: trend` - **Trend Micro brand colors + NotebookLM slide aesthetic** (professional presentations, polished infographics, 16:9 format with Trend Red #d71920, Guardian Red, grays, Dark Blue/Teal) - **Uses lossless WebP (saves 20-30% vs PNG)**
+- `style: "notebooklm"` or `notebooklm style` - NotebookLM presentation aesthetic (professional infographics, slide decks) - **Uses lossless WebP (saves 20-30% vs PNG)**
 - `use style trend` or `with trend colors` - Natural language syntax
 - `style: "custom"` - Claude asks for your color preferences
 
 **Behind the scenes:**
-Claude uses Python with Google's Gemini API to generate images. Scripts run via `uv` with automatic dependency management, making it easy to create high-quality AI art. Images default to WebP format for optimal file size (~30% smaller than JPEG).
+Claude uses Python with Google's Gemini API to generate images. Scripts run via `uv` with automatic dependency management, making it easy to create high-quality AI art. Images use WebP format: lossless VP8L for slide decks (saves 20-30% vs PNG, zero quality loss), lossy VP8 for photos (~30% smaller than JPEG).
 
 ---
 
