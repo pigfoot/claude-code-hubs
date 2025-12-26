@@ -13,9 +13,11 @@ uv run - << 'EOF'
 # /// script
 # dependencies = ["google-genai", "pillow"]
 # ///
+import io
 from pathlib import Path
 from google import genai
 from google.genai import types
+from PIL import Image as PILImage
 
 # Output directory - Claude sets based on user request (format: NNN-short-name)
 OUTPUT_DIR = Path("001-futuristic-city")  # <-- Claude replaces this dynamically
@@ -35,12 +37,15 @@ for part in response.parts:
     if part.thought:
         if part.text:
             print(f"Thought: {part.text}")
-        elif image := part.as_image():
-            image.save(OUTPUT_DIR / "thought.png")
+        elif genai_image := part.as_image():
+            pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
+            pil_image.save(OUTPUT_DIR / "thought.png", "PNG")
             print(f"Thought image saved to {OUTPUT_DIR}/thought.png")
     elif part.inline_data is not None:
         output_path = OUTPUT_DIR / "output.png"
-        part.as_image().save(output_path)
+        genai_image = part.as_image()
+        pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
+        pil_image.save(output_path, "PNG")
         print(f"Saved: {output_path}")
     elif part.text:
         print(part.text)
@@ -62,9 +67,11 @@ uv run - << 'EOF'
 # /// script
 # dependencies = ["google-genai", "pillow"]
 # ///
+import io
 from pathlib import Path
 from google import genai
 from google.genai import types
+from PIL import Image as PILImage
 
 # Output directory - Claude sets based on user request (format: NNN-short-name)
 OUTPUT_DIR = Path("001-weather-chart")  # <-- Claude replaces this dynamically
@@ -86,7 +93,9 @@ for part in response.parts:
         print(part.text)
     elif part.inline_data is not None:
         output_path = OUTPUT_DIR / "weather_chart.png"
-        part.as_image().save(output_path)
+        genai_image = part.as_image()
+        pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
+        pil_image.save(output_path, "PNG")
         print(f"Saved: {output_path}")
 
 # Access grounding metadata if available
@@ -116,9 +125,11 @@ uv run - << 'EOF'
 # /// script
 # dependencies = ["google-genai", "pillow"]
 # ///
+import io
 from pathlib import Path
 from google import genai
 from google.genai import types
+from PIL import Image as PILImage
 
 # Output directory - Claude sets based on user request (format: NNN-short-name)
 OUTPUT_DIR = Path("001-photosynthesis")  # <-- Claude replaces this dynamically
@@ -139,7 +150,9 @@ response = chat.send_message("Create an infographic explaining photosynthesis")
 for part in response.parts:
     if part.inline_data is not None:
         output_path = OUTPUT_DIR / "infographic_v1.png"
-        part.as_image().save(output_path)
+        genai_image = part.as_image()
+        pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
+        pil_image.save(output_path, "PNG")
         print(f"Saved: {output_path}")
 
 # Second turn: Modify the generated image
@@ -156,7 +169,9 @@ response = chat.send_message(
 for part in response.parts:
     if part.inline_data is not None:
         output_path = OUTPUT_DIR / "infographic_v2.png"
-        part.as_image().save(output_path)
+        genai_image = part.as_image()
+        pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
+        pil_image.save(output_path, "PNG")
         print(f"Saved: {output_path}")
 EOF
 ```
@@ -179,10 +194,11 @@ uv run - << 'EOF'
 # /// script
 # dependencies = ["google-genai", "pillow"]
 # ///
+import io
 from pathlib import Path
 from google import genai
 from google.genai import types
-from PIL import Image
+from PIL import Image as PILImage
 
 # Output directory - Claude sets based on user request (format: NNN-short-name)
 OUTPUT_DIR = Path("001-group-photo")  # <-- Claude replaces this dynamically
@@ -191,9 +207,9 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 client = genai.Client()
 
 # Load reference images
-person1 = Image.open("person1.png")
-person2 = Image.open("person2.png")
-person3 = Image.open("person3.png")
+person1 = PILImage.open("person1.png")
+person2 = PILImage.open("person2.png")
+person3 = PILImage.open("person3.png")
 
 response = client.models.generate_content(
     model="gemini-3-pro-image-preview",
@@ -212,7 +228,9 @@ response = client.models.generate_content(
 for part in response.parts:
     if part.inline_data is not None:
         output_path = OUTPUT_DIR / "group_photo.png"
-        part.as_image().save(output_path)
+        genai_image = part.as_image()
+        pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
+        pil_image.save(output_path, "PNG")
         print(f"Saved: {output_path}")
 EOF
 ```
@@ -228,9 +246,11 @@ uv run - << 'EOF'
 # /// script
 # dependencies = ["google-genai", "pillow"]
 # ///
+import io
 from pathlib import Path
 from google import genai
 from google.genai import types
+from PIL import Image as PILImage
 
 # Output directory - Claude sets based on user request (format: NNN-short-name)
 OUTPUT_DIR = Path("001-butterfly-4k")  # <-- Claude replaces this dynamically
@@ -255,7 +275,9 @@ for part in response.parts:
         print(part.text)
     elif part.inline_data is not None:
         output_path = OUTPUT_DIR / "butterfly_4k.png"
-        part.as_image().save(output_path)
+        genai_image = part.as_image()
+        pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
+        pil_image.save(output_path, "PNG")
         print(f"Saved: {output_path}")
 EOF
 ```

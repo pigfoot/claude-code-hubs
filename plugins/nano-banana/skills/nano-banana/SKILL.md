@@ -1,41 +1,77 @@
 ---
 name: nano-banana
-description: This skill should be used for Python scripting and Gemini image generation. Use when users ask to generate images, create AI art, edit images with AI, or run Python scripts with uv. Trigger phrases include "generate an image", "create a picture", "draw", "make an image of", "nano banana", or any image generation request.
+description: Use when users request image generation, AI art creation, image editing with Gemini models, or Python scripting with uv
 ---
 
-# Nano Banana Skill
+# Nano Banana
 
-Python scripting with Gemini image generation using uv. Write small, focused scripts using heredocs for quick tasks—no files needed for one-off operations.
+Quick Python scripting with Gemini image generation using uv heredocs. **No files needed for one-off tasks.**
 
-## Choosing Your Approach
+## When to Use
 
-**Quick image generation**: Use heredoc with inline Python for one-off image requests.
+**Use this skill when:**
+- User requests image generation ("draw", "create", "generate image")
+- User wants to edit existing images with AI
+- User needs quick Python scripts with uv
+- User mentions Gemini, Nano Banana, or AI art
 
-**Complex workflows**: When multiple steps are needed (generate -> refine -> save), break into separate scripts and iterate.
+**Don't use when:**
+- User wants to analyze images (use vision models)
+- User needs persistent/reusable scripts (then create files)
+- User wants non-Gemini Python tasks
 
-**Scripting tasks**: For non-image Python tasks, use the same heredoc pattern with `uv run`.
+## Quick Reference
 
-## Writing Scripts
+| Task | Pattern |
+|------|---------|
+| Generate image | `uv run - << 'EOF'` with inline script |
+| Edit image | Same, but `contents=[prompt, img]` |
+| Complex workflow | Multiple small scripts, evaluate between |
+| Model choice | `NANO_BANANA_MODEL` (if set) > Pro (default) > Flash (if budget/fast) |
+| Output format | Default: `webp`, or `NANO_BANANA_FORMAT` env var (webp/jpg/png) |
+| Output location | `NNN-short-name/` (e.g., `001-cute-banana/`) |
 
-Execute Python inline using heredocs with inline script metadata for dependencies:
+## Core Pattern: Heredoc Scripts
+
+**Default to heredoc for one-off tasks:**
 
 ```bash
 uv run - << 'EOF'
 # /// script
 # dependencies = ["google-genai", "pillow"]
 # ///
+import os
+import io
 from pathlib import Path
 from google import genai
 from google.genai import types
+from PIL import Image as PILImage
 
-# Output directory - Claude sets based on user request (format: NNN-short-name)
-OUTPUT_DIR = Path("001-cute-banana")  # <-- Claude replaces this dynamically
+OUTPUT_DIR = Path("001-cute-banana")  # Format: NNN-short-name
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-client = genai.Client()
+# Configuration from environment variables
+model = os.environ.get("NANO_BANANA_MODEL")
+if not model:
+    # You (Claude) choose based on user context:
+    # - gemini-3-pro-image-preview: default, high quality (recommended)
+    # - gemini-2.5-flash-image: if user wants budget/fast/simple generation
+    model = "gemini-3-pro-image-preview"  # <-- Replace based on user request
+
+output_format = os.environ.get("NANO_BANANA_FORMAT", "webp").lower()
+quality = int(os.environ.get("NANO_BANANA_QUALITY", "90"))
+
+# Initialize client with optional custom endpoint
+base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+
+if base_url:
+    client = genai.Client(api_key=api_key, http_options={'base_url': base_url})
+else:
+    client = genai.Client(api_key=api_key)
 
 response = client.models.generate_content(
-    model="gemini-2.5-flash-image",
+    model=model,
     contents=["A cute banana character with sunglasses"],
     config=types.GenerateContentConfig(
         response_modalities=['IMAGE']
@@ -44,187 +80,209 @@ response = client.models.generate_content(
 
 for part in response.parts:
     if part.inline_data is not None:
-        image = part.as_image()
-        output_path = OUTPUT_DIR / "generated.png"
-        image.save(output_path)
-        print(f"Image saved to {output_path}")
+        # Get google-genai Image object
+        genai_image = part.as_image()
+
+        # Convert to PIL Image from bytes
+        pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
+
+        # Save with format conversion
+        if output_format in ("jpg", "jpeg"):
+            output_path = OUTPUT_DIR / "generated.jpg"
+            pil_image.convert("RGB").save(output_path, "JPEG", quality=quality)
+        elif output_format == "webp":
+            output_path = OUTPUT_DIR / "generated.webp"
+            pil_image.save(output_path, "WEBP", quality=quality)
+        else:  # png (default fallback)
+            output_path = OUTPUT_DIR / "generated.png"
+            pil_image.save(output_path, "PNG")
+
+        print(f"Saved: {output_path} ({output_format.upper()}, quality={quality})")
 EOF
 ```
 
-The `# /// script` block declares dependencies inline using TOML syntax. This makes scripts self-contained and reproducible.
+**Key points:**
+- Use `google-genai` (NOT `google-generativeai`)
+- Inline script metadata: `# /// script` block
+- Required deps: `google-genai`, `pillow` (for `.as_image()` to get image bytes, then convert to PIL for saving)
 
-**Why these dependencies:**
-- `google-genai` - Gemini API client
-- `pillow` - Required for `.as_image()` method (converts base64 to PIL Image) and saving images
+## When to Create Files vs Heredoc
 
-**Only write to files when:**
-- The script needs to be reused multiple times
-- The script is complex and requires iteration
-- The user explicitly asks for a saved script
+```dot
+digraph file_decision {
+    "User request" [shape=diamond];
+    "Will be run multiple times?" [shape=diamond];
+    "Complex, needs iteration?" [shape=diamond];
+    "User explicitly asks for file?" [shape=diamond];
+    "Create file" [shape=box];
+    "Use heredoc" [shape=box];
 
-### Basic Template
+    "User request" -> "Will be run multiple times?";
+    "Will be run multiple times?" -> "Create file" [label="yes"];
+    "Will be run multiple times?" -> "Complex, needs iteration?" [label="no"];
+    "Complex, needs iteration?" -> "Create file" [label="yes"];
+    "Complex, needs iteration?" -> "User explicitly asks for file?" [label="no"];
+    "User explicitly asks for file?" -> "Create file" [label="yes"];
+    "User explicitly asks for file?" -> "Use heredoc" [label="no"];
+}
+```
 
+## Configuration
+
+### Environment Variables
+
+Customize plugin behavior with these environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NANO_BANANA_MODEL` | (Claude chooses: Pro or Flash) | Force specific model (overrides Claude's choice) |
+| `NANO_BANANA_FORMAT` | `webp` | Output format: `webp`, `jpg`, or `png` |
+| `NANO_BANANA_QUALITY` | `90` | Image quality (1-100) for webp/jpg |
+| `GOOGLE_GEMINI_BASE_URL` | (official API) | Custom API endpoint (when using non-official deployment) |
+| `GEMINI_API_KEY` | (falls back to `GOOGLE_API_KEY`) | API key (official or custom endpoint) |
+
+**Official Google API (default):**
 ```bash
-uv run - << 'EOF'
-# /// script
-# dependencies = ["google-genai", "pillow"]
-# ///
-from pathlib import Path
-from google import genai
-from google.genai import types
-
-# Output directory - Claude sets based on user request (format: NNN-short-name)
-OUTPUT_DIR = Path("001-example")  # <-- Claude replaces this dynamically
-OUTPUT_DIR.mkdir(exist_ok=True)
-
-client = genai.Client()
-
-# Generate image
-response = client.models.generate_content(
-    model="gemini-2.5-flash-image",
-    contents=["YOUR PROMPT HERE"],
-    config=types.GenerateContentConfig(
-        response_modalities=['IMAGE']
-    )
-)
-
-# Save result
-for part in response.parts:
-    if part.text is not None:
-        print(part.text)
-    elif part.inline_data is not None:
-        image = part.as_image()
-        output_path = OUTPUT_DIR / "output.png"
-        image.save(output_path)
-        print(f"Saved: {output_path}")
-EOF
+export GEMINI_API_KEY="your-api-key"  # Or GOOGLE_API_KEY (backward compatible)
+# Model: Claude chooses Pro (default) or Flash (budget/fast) automatically
+# Optional: force specific model
+# export NANO_BANANA_MODEL="gemini-2.5-flash-image"
+# Optional: change output format
+# export NANO_BANANA_FORMAT="jpg"
 ```
 
-## Key Principles
-
-1. **Small scripts**: Each script should do ONE thing (generate, refine, save)
-2. **Evaluate output**: Always save images and print status to decide next steps
-3. **Dynamic directories**: Save images to `NNN-<short-name>/` directories (see Output Directory Naming)
-4. **Stateless execution**: Each script runs independently, no cleanup needed
-
-## Output Directory Naming
-
-Generated images are saved to dynamically named directories in the current working directory:
-
-### Format
-```
-NNN-<short-name>/
+**Custom Endpoint (e.g., self-hosted or proxy):**
+```bash
+export GOOGLE_GEMINI_BASE_URL="https://your-api.example.com/v1"
+export GEMINI_API_KEY="your-custom-api-key"        # Custom endpoint key
+export NANO_BANANA_MODEL="gemini-3-pro-image"      # Custom model name
+export NANO_BANANA_FORMAT="webp"                   # WebP output
+export NANO_BANANA_QUALITY="90"                    # High quality
 ```
 
-### Naming Rules
-1. **Sequence Number (NNN)**: Three-digit zero-padded (001, 002, 003...)
-   - Check existing `NNN-*` directories in current working directory
-   - Use next available number for new topics
-2. **Short Name**: 2-4 words from user request
-   - action-noun format: `user-auth`, `oauth2-api`, `cute-cat`
-   - preserve technical terms: OAuth2, API, JWT, SSO, K8s
-   - kebab-case, max 30 characters
+**Note:** When `NANO_BANANA_MODEL` is set to a custom model, you typically also need to set `GOOGLE_GEMINI_BASE_URL` and `GEMINI_API_KEY` to match your custom deployment.
 
-### Session Tracking
-- **First request**: Create new directory with next sequence number
-- **Same topic**: Reuse the same directory for related generations
-- **New topic**: Create new directory with next sequence number
+### Model Selection Priority
 
-### Examples
-| User Request | Directory |
-|--------------|-----------|
-| "Generate user authentication flow" | `001-user-auth-flow` |
-| "Create OAuth2 API mockup" | `002-oauth2-api` |
-| "Draw a cute cat profile picture" | `003-cute-cat-profile` |
-| "Make a logo for my startup" | `004-startup-logo` |
+1. **If `NANO_BANANA_MODEL` is set**: ALWAYS use it (highest priority)
+2. **Else, you (Claude) choose based on user request:**
+   - **Default**: `gemini-3-pro-image-preview` (Nano Banana Pro) - recommended
+   - **Switch to** `gemini-2.5-flash-image` when user:
+     - Explicitly requests faster/simpler generation
+     - Mentions budget/cost concerns
+     - Asks for quick iterations
 
-### Directory Setup in Scripts
+**Available models:**
+- `gemini-3-pro-image-preview` - Professional, highest quality (Nano Banana Pro) ⭐ Default
+- `gemini-2.5-flash-image` - Fast, general purpose, budget-friendly
+
+## Output Directory Structure
+
+Save images to numbered directories:
+
+**Format:** `NNN-short-name/`
+- **NNN**: Three-digit sequence (001, 002, 003...)
+- **short-name**: kebab-case, 2-4 words from user request
+
+**Examples:**
+- "Generate user auth flow" → `001-user-auth-flow/`
+- "Create cute cat" → `002-cute-cat/`
+- "Make startup logo" → `003-startup-logo/`
+
+**Session tracking:**
+- First request: Create new directory with next number
+- Same topic: Reuse same directory
+- New topic: Create new directory with next number
+
 ```python
 from pathlib import Path
 
-# Claude sets OUTPUT_DIR based on user request (format: NNN-short-name)
-OUTPUT_DIR = Path("001-user-auth")  # <-- Claude replaces this dynamically
+OUTPUT_DIR = Path("001-example")  # You set this based on user request
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# Save images to OUTPUT_DIR
-image.save(OUTPUT_DIR / "output.png")
-print(f"Saved: {OUTPUT_DIR}/output.png")
+# Save images to OUTPUT_DIR (after converting from genai Image to PIL Image)
+pil_image.save(OUTPUT_DIR / "output.png", "PNG")
 ```
 
-## Workflow Loop
+## Workflow Loop for Complex Tasks
 
-Follow this pattern for complex tasks:
+**Pattern:** Small scripts → Evaluate → Decide next
 
-1. **Write a script** to generate/process one image
-2. **Run it** and observe the output
-3. **Evaluate** - did it work? Check the saved image
-4. **Decide** - refine prompt or task complete?
-5. **Repeat** until satisfied
+```dot
+digraph workflow {
+    "Write ONE script" [shape=box];
+    "Run and observe" [shape=box];
+    "Check saved image" [shape=box];
+    "Satisfied?" [shape=diamond];
+    "Done" [shape=box];
 
-## Image Configuration
-
-Configure aspect ratio and resolution:
-
-```python
-config=types.GenerateContentConfig(
-    response_modalities=['IMAGE'],
-    image_config=types.ImageConfig(
-        aspect_ratio="16:9",  # "1:1", "16:9", "9:16", "4:3", "3:4"
-        image_size="2K"       # "1K", "2K", "4K" (uppercase required)
-    )
-)
+    "Write ONE script" -> "Run and observe";
+    "Run and observe" -> "Check saved image";
+    "Check saved image" -> "Satisfied?";
+    "Satisfied?" -> "Done" [label="yes"];
+    "Satisfied?" -> "Write ONE script" [label="no, refine"];
+}
 ```
 
-## Models
+**Don't:**
+- Create workflow orchestrators
+- Build state management systems
+- Write documentation files
+- Auto-chain multiple steps
 
-- `gemini-2.5-flash-image` - Fast, general purpose image generation
-- `gemini-3-pro-image-preview` - Advanced, professional asset production (Nano Banana Pro)
-
-**Default to `gemini-3-pro-image-preview` (Nano Banana Pro)** for all image generation unless:
-- The user explicitly requests a different model
-- The user wants to save budget/costs
-- The user specifies a simpler or quick generation task
-
-Nano Banana Pro provides higher quality results and should be the recommended choice.
-
-## Text + Image Output
-
-To receive both text explanation and image:
-
-```python
-config=types.GenerateContentConfig(
-    response_modalities=['TEXT', 'IMAGE']
-)
-```
+**Do:**
+1. Run one heredoc script (generates/edits ONE image)
+2. Check the output manually
+3. Decide: done or refine?
+4. If refine: run another small script
 
 ## Image Editing
 
-Edit existing images by including them in the request:
+Load existing image and include in request:
 
 ```bash
 uv run - << 'EOF'
 # /// script
 # dependencies = ["google-genai", "pillow"]
 # ///
+import os
+import io
 from pathlib import Path
 from google import genai
 from google.genai import types
-from PIL import Image
+from PIL import Image as PILImage
 
-# Output directory - Claude sets based on user request (format: NNN-short-name)
-OUTPUT_DIR = Path("001-image-edit")  # <-- Claude replaces this dynamically
+OUTPUT_DIR = Path("002-party-hat")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-client = genai.Client()
+# Configuration from environment variables
+model = os.environ.get("NANO_BANANA_MODEL")
+if not model:
+    # You (Claude) choose based on user context:
+    # - gemini-3-pro-image-preview: default, high quality (recommended)
+    # - gemini-2.5-flash-image: if user wants budget/fast/simple generation
+    model = "gemini-3-pro-image-preview"  # <-- Replace based on user request
+
+output_format = os.environ.get("NANO_BANANA_FORMAT", "webp").lower()
+quality = int(os.environ.get("NANO_BANANA_QUALITY", "90"))
+
+# Initialize client with optional custom endpoint
+base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+
+if base_url:
+    client = genai.Client(api_key=api_key, http_options={'base_url': base_url})
+else:
+    client = genai.Client(api_key=api_key)
 
 # Load existing image
-img = Image.open("input.png")
+img = PILImage.open("001-cute-banana/generated.webp")
 
 response = client.models.generate_content(
-    model="gemini-2.5-flash-image",
+    model=model,
     contents=[
         "Add a party hat to this character",
-        img
+        img  # Pass PIL Image directly
     ],
     config=types.GenerateContentConfig(
         response_modalities=['IMAGE']
@@ -233,27 +291,74 @@ response = client.models.generate_content(
 
 for part in response.parts:
     if part.inline_data is not None:
-        output_path = OUTPUT_DIR / "edited.png"
-        part.as_image().save(output_path)
+        # Get google-genai Image object
+        genai_image = part.as_image()
+
+        # Convert to PIL Image from bytes
+        pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
+
+        # Save with format conversion
+        if output_format in ("jpg", "jpeg"):
+            output_path = OUTPUT_DIR / "edited.jpg"
+            pil_image.convert("RGB").save(output_path, "JPEG", quality=quality)
+        elif output_format == "webp":
+            output_path = OUTPUT_DIR / "edited.webp"
+            pil_image.save(output_path, "WEBP", quality=quality)
+        else:  # png
+            output_path = OUTPUT_DIR / "edited.png"
+            pil_image.save(output_path, "PNG")
+
         print(f"Saved: {output_path}")
 EOF
 ```
 
-## Debugging Tips
+## Image Configuration
 
-1. **Print response.parts** to see what was returned
-2. **Check for text parts** - model may include explanations
-3. **Save images immediately** to verify output visually
-4. **Use Read tool** to view saved images after generation
+Aspect ratio and resolution:
 
-## Error Recovery
+```python
+config=types.GenerateContentConfig(
+    response_modalities=['IMAGE'],
+    image_config=types.ImageConfig(
+        aspect_ratio="16:9",  # "1:1", "16:9", "9:16", "4:3", "3:4"
+        image_size="2K"       # "1K", "2K", "4K" (UPPERCASE required)
+    )
+)
+```
 
-If a script fails:
-1. Check error message for API issues
-2. Verify GOOGLE_API_KEY is set
-3. Try simpler prompt to isolate the issue
-4. Check image format compatibility for edits
+## Red Flags - STOP and Use Heredoc
 
-## Advanced Scenarios
+If you're thinking any of these thoughts, you're over-engineering:
+- "This might be reused later"
+- "Let me create proper structure"
+- "I'll document this for reference"
+- "Let me build a workflow system"
+- "I should make this configurable"
+- "This is complex, I need proper files"
 
-For complex workflows including thinking process, Google Search grounding, multi-turn conversations, and professional asset production, load `references/guide.md`.
+**All of these mean: Use heredoc. It's a one-off task.**
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Creating permanent `.py` files for one-off tasks | Use heredoc instead |
+| Using `google-generativeai` (old API) | Use `google-genai` (new API) |
+| Using `gemini-2.0-flash` or wrong model | Use `gemini-3-pro-image-preview` or `gemini-2.5-flash-image` |
+| Saving to flat files (`output.png`) | Use `NNN-short-name/` directories |
+| Hardcoding PNG format | Use format conversion with `NANO_BANANA_FORMAT` (default: webp) |
+| Creating workflow orchestrators | Write small scripts, iterate manually |
+| Using PIL to draw/edit images | Use Gemini API with `contents=[prompt, img]` |
+| Writing documentation for simple tasks | Just run scripts and print status |
+| Auto-chaining multiple steps | Run one step, evaluate, decide next |
+
+## Debugging
+
+1. Print `response.parts` to see what was returned
+2. Check `GEMINI_API_KEY` or `GOOGLE_API_KEY` is set
+3. For edits: verify image file exists and is valid
+4. Try simpler prompt to isolate issues
+
+## Advanced Usage
+
+For complex workflows (thinking process, Google Search grounding, multi-turn conversations), load `references/guide.md`.

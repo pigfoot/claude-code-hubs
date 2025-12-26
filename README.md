@@ -422,10 +422,42 @@ Generates and edits images using Google's Gemini models with Python scripting po
 - ✅ **Interactive prompting** - Get help crafting effective prompts for better results
 - ✅ **Inline dependencies** - Self-contained Python scripts with `uv run` and inline script metadata
 - ✅ **Multiple models** - Choose between fast generation and professional quality
+- ✅ **Format flexibility** - Output WebP (default), JPEG, or PNG with quality control
 
 **Prerequisites:**
 - [uv](https://docs.astral.sh/uv/) installed
-- `GOOGLE_API_KEY` environment variable set with a valid Gemini API key
+- `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) environment variable set with a valid Gemini API key
+
+**Configuration:**
+
+Customize behavior using environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NANO_BANANA_MODEL` | (Claude chooses: Pro or Flash) | Force specific model (overrides Claude's choice) |
+| `NANO_BANANA_FORMAT` | `webp` | Output format: `webp`, `jpg`, or `png` |
+| `NANO_BANANA_QUALITY` | `90` | Image quality (1-100) for webp/jpg |
+| `GOOGLE_GEMINI_BASE_URL` | (official API) | Custom API endpoint (for non-official deployments) |
+| `GEMINI_API_KEY` | (falls back to `GOOGLE_API_KEY`) | API key (official or custom endpoint) |
+
+**Official Google API:**
+```bash
+export GEMINI_API_KEY="your-api-key"  # Or GOOGLE_API_KEY (backward compatible)
+# Model: Claude chooses Pro (default) or Flash (budget/fast) automatically
+# Optional: force specific model or format
+# export NANO_BANANA_MODEL="gemini-2.5-flash-image"
+# export NANO_BANANA_FORMAT="jpg"
+```
+
+**Custom Endpoint (self-hosted or proxy):**
+```bash
+export GOOGLE_GEMINI_BASE_URL="https://your-api.example.com/v1"
+export GEMINI_API_KEY="your-custom-api-key"
+export NANO_BANANA_MODEL="gemini-3-pro-image"
+export NANO_BANANA_FORMAT="webp"
+```
+
+**Note:** When using a custom model, set `GOOGLE_GEMINI_BASE_URL` and `GEMINI_API_KEY` to match your deployment.
 
 **Usage:**
 Ask Claude to generate or edit images naturally.
@@ -441,7 +473,7 @@ Ask Claude to generate or edit images naturally.
 - `nano-banana-prompting` - Interactive prompt crafting with best practices
 
 **Behind the scenes:**
-Claude uses Python with Google's Gemini API to generate images. Scripts run via `uv` with automatic dependency management, making it easy to create high-quality AI art.
+Claude uses Python with Google's Gemini API to generate images. Scripts run via `uv` with automatic dependency management, making it easy to create high-quality AI art. Images default to WebP format for optimal file size (~30% smaller than JPEG).
 
 ---
 
