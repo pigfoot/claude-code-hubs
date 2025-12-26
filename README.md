@@ -8,7 +8,7 @@ A curated collection of plugins, skills, and configuration templates for [Claude
 
 **From this marketplace (pigfoot):**
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
-- **[nano-banana](./plugins/nano-banana/)** - Python scripting and Gemini image generation using uv with inline script dependencies
+- **[nano-banana](./plugins/nano-banana/)** - AI image generation with Gemini models. Direct generation or interactive prompting with brand style support
 - **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime, non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang, and Rust
 - **[github-actions-container-build](./plugins/github-actions-container-build/)** - Build multi-architecture container images in GitHub Actions. Matrix builds (public repos), QEMU (private repos), Podman rootless builds
 
@@ -460,25 +460,57 @@ export NANO_BANANA_FORMAT="webp"
 **Note:** When using a custom model, set `GOOGLE_GEMINI_BASE_URL` and `GEMINI_API_KEY` to match your deployment.
 
 **Usage:**
-Ask Claude to generate or edit images naturally.
+The plugin operates in two modes automatically based on your request:
 
-**Examples:**
-- "Generate an image of a futuristic cityscape at sunset"
-- "Create a cute banana character with sunglasses"
-- "Help me write a prompt for a professional product photo"
-- "Edit this image to add a party hat"
+**Direct Generation Mode** (detailed prompts or with style):
+```
+# Example 1: Detailed prompt
+"Generate a photorealistic cat wearing sunglasses on a beach chair, sunset golden hour lighting, 16:9"
+→ Output: 001-beach-cat/generated.webp
+
+# Example 2: With brand style (structured)
+"Generate a cybersecurity dashboard infographic, style: trend"
+→ Applies Trend Micro colors (Trend Red #d71920, Guardian Red, grays)
+→ Output: 002-security-dashboard/generated.webp
+
+# Example 3: With brand style (natural language)
+"Use style trend to generate LLM introduction infographic"
+→ Detects "style trend", applies brand colors
+→ Output: 003-llm-intro/generated.webp
+
+# Example 4: Image editing
+"Edit 001-beach-cat/generated.webp and add a party hat"
+→ Output: 004-party-hat/edited.webp
+
+# Example 5: Slide deck / Presentation (NotebookLM style)
+"Create a slide explaining how transformers work, use notebooklm style"
+→ Detects notebooklm style, uses professional infographic aesthetic
+→ Output: 005-transformer-architecture/generated.webp
+```
+
+**Interactive Prompting Mode** (vague requests or explicit help):
+```
+# Example 6: Explicit prompting request
+"Help me write a good prompt for a professional poster"
+→ Claude asks questions (type, subject, style)
+→ Crafts optimized prompt
+→ Generates with crafted prompt
+
+# Example 7: Vague prompt (triggers prompting)
+"Make a logo"
+→ Claude: "Let me help you design a better prompt"
+→ Asks about logo type, colors, style
+→ Generates with refined prompt
+```
 
 **Skills Included:**
-- `nano-banana` - Direct image generation and editing
-- `nano-banana-prompting` - Interactive prompt crafting with best practices and brand style support
+- `nano-banana` - Unified skill with dual-mode operation (direct generation + interactive prompting)
 
-**Brand Style Support:**
-Apply corporate brand guidelines inline:
-```
-"Generate a dashboard infographic, style: trend"
-```
-- `style: "trend"` - Trend Micro brand colors (Trend Red as hero, Guardian Red, grays, Dark Blue/Teal)
-- `style: "custom"` - Custom color preferences
+**Style Support:**
+- `style: "trend"` or `style: trend` - **Trend Micro brand colors + NotebookLM slide aesthetic** (professional presentations, polished infographics, 16:9 format with Trend Red #d71920, Guardian Red, grays, Dark Blue/Teal)
+- `style: "notebooklm"` or `notebooklm style` - NotebookLM presentation aesthetic (professional infographics, slide decks)
+- `use style trend` or `with trend colors` - Natural language syntax
+- `style: "custom"` - Claude asks for your color preferences
 
 **Behind the scenes:**
 Claude uses Python with Google's Gemini API to generate images. Scripts run via `uv` with automatic dependency management, making it easy to create high-quality AI art. Images default to WebP format for optimal file size (~30% smaller than JPEG).
@@ -708,7 +740,7 @@ claude plugin install --scope user <plugin-name>@pigfoot-marketplace
 | Plugin | Origin | Description | Skills Included |
 |--------|--------|-------------|-----------------|
 | [commit](./plugins/commit/) | pigfoot | Conventional commits with emoji and GPG signing | `commit:commit` |
-| [nano-banana](./plugins/nano-banana/) | pigfoot | Python scripting and Gemini image generation | `nano-banana:nano-banana`, `nano-banana:nano-banana-prompting` |
+| [nano-banana](./plugins/nano-banana/) | pigfoot | Python scripting and Gemini image generation with dual-mode operation | `nano-banana:nano-banana` |
 | [secure-container-build](./plugins/secure-container-build/) | pigfoot | Secure container images with Wolfi runtime | `secure-container-build:secure-container-build` |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | pigfoot | Multi-arch container builds in GitHub Actions | `github-actions-container-build:github-actions-container-build` |
 | [context7](https://github.com/upstash/context7) | official (@claude-plugins-official) | Library documentation via Context7 MCP | MCP server |

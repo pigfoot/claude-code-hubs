@@ -1,6 +1,6 @@
 {
   "name": "nano-banana",
-  "description": "Python scripting and Gemini image generation using uv with inline script dependencies. Generate images, edit images with AI, and run Python scripts.",
+  "description": "Python scripting and Gemini image generation using uv with inline script dependencies. Generate images with direct prompts or interactive prompt design assistance. Supports brand styling and format conversion.",
   "version": "0.0.2",
   "author": {
     "name": "pigfoot",
@@ -12,10 +12,11 @@
     "python",
     "uv",
     "ai",
-    "scripting"
+    "scripting",
+    "prompting",
+    "brand-style"
   ],
   "skills": [
-    "./skills/nano-banana",
-    "./skills/nano-banana-prompting"
+    "./skills/nano-banana"
   ]
 }

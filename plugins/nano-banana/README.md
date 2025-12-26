@@ -6,7 +6,7 @@ Python scripting and Gemini image generation using uv with inline script depende
 
 - **Image Generation**: Generate images using Google's Gemini models
 - **Image Editing**: Edit existing images with AI
-- **Interactive Prompting**: Get help crafting effective prompts with best practices (nano-banana-prompting skill)
+- **Interactive Prompting**: Get help crafting effective prompts with best practices (integrated mode selection)
 - **Brand Style Support**: Apply corporate brand guidelines (e.g., `style: "trend"` for Trend Micro brand colors)
 - **Python Scripting**: Run Python scripts with uv using heredocs
 - **Inline Dependencies**: Self-contained scripts with `# /// script` metadata
@@ -63,26 +63,110 @@ export NANO_BANANA_FORMAT="png"
 
 ## Usage
 
-The skill activates when you ask Claude to generate images or run Python scripts. Example triggers:
+The plugin operates in two modes automatically based on your request:
 
-- "Generate an image of..."
-- "Create a picture..."
-- "Draw..."
-- "nano banana"
+### Direct Generation Mode
+
+Used when you provide a detailed prompt or inline style specification. Claude generates immediately.
+
+**Example 1: Detailed Prompt**
+```
+User: "Generate a photorealistic image of a cute cat wearing sunglasses, sitting on a beach chair at sunset, golden hour lighting, 16:9 aspect ratio"
+
+Claude: [Generates directly using gemini-3-pro-image-preview]
+Output: 001-beach-cat/generated.webp
+```
+
+**Example 2: With Brand Style (structured syntax)**
+```
+User: "Generate a cybersecurity dashboard infographic, style: trend"
+
+Claude: [Detects style:trend, applies Trend Micro brand colors, generates directly]
+Output: 001-security-dashboard/generated.webp
+# Colors: Trend Red #d71920, Guardian Red #6f0000, grays, black/white
+```
+
+**Example 3: With Brand Style (natural language)**
+```
+User: "Use style trend to generate an LLM introduction infographic"
+
+Claude: [Detects "style trend" mention, applies Trend Micro colors, generates]
+Output: 001-llm-intro/generated.webp
+```
+
+**Example 4: Image Editing**
+```
+User: "Edit 001-cute-cat/generated.webp and add a party hat"
+
+Claude: [Loads image, generates with edit prompt]
+Output: 002-party-hat/edited.webp
+```
+
+**Example 5: Slide Deck / Presentation (NotebookLM style)**
+```
+User: "Create a slide explaining how transformers work, use notebooklm style"
+
+Claude: [Detects notebooklm style, uses professional infographic aesthetic with hub-spoke layout]
+Output: 001-transformer-architecture/generated.webp
+# Clean tech infographic with central attention mechanism, radiating key concepts
+```
+
+### Interactive Prompting Mode
+
+Used when you request help crafting prompts or provide vague descriptions. Claude guides you through prompt design.
+
+**Example 6: Explicit Prompting Request**
+```
+User: "Help me write a good prompt for a professional poster"
+
+Claude:
+  Step 1: Checking for style specifications... none found
+  Step 2: Let me ask a few questions to craft the best prompt:
+
+  Question 1: What type of image?
+  - [ ] Photo/realistic
+  - [x] Illustration/artistic
+  - [ ] Infographic/educational
+  - [ ] Product shot
+
+  Question 2: What's the main subject?
+  - [x] Concept/abstract
+  - [ ] Person
+  - [ ] Object/product
+
+  Step 3: Based on your needs, I recommend Physical Object Framing technique
+  Step 4: Generated prompt: "Magazine cover featuring [...]"
+  Step 5: Here's your prompt, ready to use!
+  Step 6: [Generates with crafted prompt]
+```
+
+**Example 7: Vague Prompt (triggers prompting)**
+```
+User: "Make a logo"
+
+Claude:
+  Your request is quite brief. Let me help you design a better prompt.
+
+  Question 1: What type of logo?
+  - Minimalist/geometric
+  - Vintage/retro
+  - Modern/gradient
+  - Corporate/professional
+
+  [Continues with prompting workflow...]
+```
 
 ### Brand Style Support
 
-Apply corporate brand guidelines using inline style specification:
-
-```
-"Generate a cybersecurity dashboard infographic, style: trend"
-```
-
 **Supported styles:**
-- `style: "trend"` - Trend Micro brand colors (Trend Red #d71920 as hero, Guardian Red, grays, Dark Blue/Teal accents)
+- `style: "trend"` or `style: trend` - **Trend Micro brand colors + NotebookLM slide aesthetic**
+  - Automatically applies professional presentation style (polished infographic, clean layout, 16:9 format)
+  - Colors: Trend Red #d71920 as hero, Guardian Red, grays, Dark Blue/Teal accents
+  - Perfect for corporate slide decks, technical presentations, and professional infographics
+- `use style trend` or `with trend colors` - Natural language detection
 - `style: "custom"` - Claude will ask for your color preferences
 
-When style is specified, brand color guidelines are automatically applied to ensure on-brand imagery.
+When Trend style is specified, both brand color guidelines and NotebookLM presentation aesthetic are automatically applied to ensure professional, on-brand slide deck imagery.
 
 ## Quick Example
 
