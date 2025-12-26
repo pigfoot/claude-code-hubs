@@ -7,17 +7,31 @@ description: This skill should be used when crafting prompts for Nano Banana Pro
 
 Interactive prompt crafting for Nano Banana Pro image generation. This skill guides users through a structured process to create effective prompts by clarifying intent and applying proven techniques.
 
+## Quick Syntax
+
+Users can specify style inline:
+- `style: "trend"` or `style: trend` → Apply Trend Micro brand colors
+- `style: "custom"` → Ask for custom color preferences
+
+When style is specified inline, skip brand style questions and apply automatically.
+
 ## Workflow
 
-### Step 1: Gather Reference Materials
+### Step 1: Gather Reference Materials and Detect Style
 
 Before asking questions, check if the user has provided:
 
 - **Reference images** - Photos to use for character consistency, style, or composition
 - **Existing prompts** - Previous attempts to improve upon
 - **Visual references** - Screenshots or examples of desired output
+- **Inline style specification** - `style: "trend"` or similar syntax
 
-If reference materials are available, this affects which techniques apply (e.g., Reference Role Assignment, Character Consistency).
+**Style Detection:**
+- If user message contains `style: "trend"` (case-insensitive) → Set brand_style = "trend"
+- If user message contains `style: "custom"` → Set brand_style = "custom"
+- Otherwise → brand_style = None (will ask in Step 2)
+
+If reference materials or style are available, this affects which techniques apply and which questions to ask.
 
 ### Step 2: Clarify Intent with Questions
 
@@ -37,6 +51,12 @@ Use the `AskUserQuestion` tool to understand the user's goal. Ask questions in b
    - Object/product
    - Scene/environment
    - Concept/abstract
+
+3. **Brand Style (optional, skip if already detected)** - Use specific brand guidelines?
+   - None/Custom
+   - Trend Micro (corporate brand colors and style)
+
+   Note: Skip this question if `style: "trend"` was detected in Step 1
 
 #### Technique-Specific Questions (based on answers)
 
@@ -85,6 +105,20 @@ Construct the prompt by:
 3. **Cross-checking** against guide examples for proper formatting
 4. **Including negative prompts** if needed (Technique 10)
 5. **Specifying aspect ratio/resolution** if required (Technique 11)
+6. **Applying brand style** if selected (load `references/brand-styles.md`)
+
+#### Brand Style Integration
+
+If user selected **Trend Micro brand style**:
+
+1. Load `references/brand-styles.md` for complete color specifications
+2. Append brand color guidelines to the prompt:
+   - **Primary**: Trend Red (#d71920) as hero/accent color - first order of attention
+   - **Guardian Red** (#6f0000) for intensity and supporting elements
+   - **Grays** (#58595b to #e6e7e8) for backgrounds, neutrals, sophistication
+   - **Black and White** for strong contrast and visual identity
+   - **Additional colors** (if needed): Dark Blue (#005295) or Teal (#2cafa4) only
+3. Add design guidance: "Keep the design clean and professional with clear intent in color usage"
 
 #### Prompt Construction Checklist
 

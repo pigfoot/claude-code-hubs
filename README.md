@@ -470,7 +470,15 @@ Ask Claude to generate or edit images naturally.
 
 **Skills Included:**
 - `nano-banana` - Direct image generation and editing
-- `nano-banana-prompting` - Interactive prompt crafting with best practices
+- `nano-banana-prompting` - Interactive prompt crafting with best practices and brand style support
+
+**Brand Style Support:**
+Apply corporate brand guidelines inline:
+```
+"Generate a dashboard infographic, style: trend"
+```
+- `style: "trend"` - Trend Micro brand colors (Trend Red as hero, Guardian Red, grays, Dark Blue/Teal)
+- `style: "custom"` - Custom color preferences
 
 **Behind the scenes:**
 Claude uses Python with Google's Gemini API to generate images. Scripts run via `uv` with automatic dependency management, making it easy to create high-quality AI art. Images default to WebP format for optimal file size (~30% smaller than JPEG).
@@ -618,7 +626,7 @@ Once configured, Claude will:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
-| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.1 |
+| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.2 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
 

@@ -6,6 +6,8 @@ Python scripting and Gemini image generation using uv with inline script depende
 
 - **Image Generation**: Generate images using Google's Gemini models
 - **Image Editing**: Edit existing images with AI
+- **Interactive Prompting**: Get help crafting effective prompts with best practices (nano-banana-prompting skill)
+- **Brand Style Support**: Apply corporate brand guidelines (e.g., `style: "trend"` for Trend Micro brand colors)
 - **Python Scripting**: Run Python scripts with uv using heredocs
 - **Inline Dependencies**: Self-contained scripts with `# /// script` metadata
 
@@ -67,6 +69,20 @@ The skill activates when you ask Claude to generate images or run Python scripts
 - "Create a picture..."
 - "Draw..."
 - "nano banana"
+
+### Brand Style Support
+
+Apply corporate brand guidelines using inline style specification:
+
+```
+"Generate a cybersecurity dashboard infographic, style: trend"
+```
+
+**Supported styles:**
+- `style: "trend"` - Trend Micro brand colors (Trend Red #d71920 as hero, Guardian Red, grays, Dark Blue/Teal accents)
+- `style: "custom"` - Claude will ask for your color preferences
+
+When style is specified, brand color guidelines are automatically applied to ensure on-brand imagery.
 
 ## Quick Example
 

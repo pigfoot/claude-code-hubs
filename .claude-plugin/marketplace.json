@@ -43,7 +43,7 @@
       "name": "nano-banana",
       "source": "./plugins/nano-banana",
       "description": "Python scripting and Gemini image generation using uv with inline script dependencies. Generate images, edit images with AI, and run Python scripts.",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "author": {
         "name": "pigfoot",
         "email": "pigfoot@gmail.com"
