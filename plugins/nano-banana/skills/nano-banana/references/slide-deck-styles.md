@@ -1,6 +1,8 @@
 # Slide Deck & Presentation Styles
 
-Prompt templates for creating NotebookLM-style slides, infographics, and presentation content using Gemini image generation.
+Prompt templates for creating professional presentation slides, infographics, and slide deck content using Gemini image generation.
+
+> **⚠️ Important**: Avoid using the word "NotebookLM" in image generation prompts - it may trigger branding watermarks in generated images. Use descriptive style terms instead (e.g., "clean professional presentation", "modern tech infographic aesthetic", "polished slide design").
 
 **Important**: All slide deck styles automatically use **lossless WebP** format (VP8L encoding):
 - Saves 20-30% file size compared to PNG (typical for diagrams/slides)
@@ -227,14 +229,14 @@ Typography: Bold Inter headers, light Roboto body, left-aligned
 Format: 4:3 for easy reading
 ```
 
-## NotebookLM Style Prompts
+## Professional Presentation Style Prompts
 
-For slides matching NotebookLM's aesthetic:
+For slides with clean, modern professional aesthetic:
 
-### Standard NotebookLM Style
+### Standard Professional Style
 
 ```
-Create a presentation slide in NotebookLM style.
+Create a presentation slide in clean professional style.
 
 Topic: "[YOUR TOPIC]"
 
@@ -244,7 +246,7 @@ Visual characteristics:
 - Professional but accessible design
 - Clear visual hierarchy
 
-Style reference: Similar to Google's product documentation or modern tech blog infographics
+Style reference: Similar to Google's product documentation or modern tech blog infographics (avoid branding)
 
 Content structure:
 - Title slide OR content slide
@@ -309,7 +311,7 @@ Summarize and visualize the key concepts in an accessible format.
 ```
 Create a professional infographic explaining "Introduction to Large Language Models (LLMs)".
 
-Visual style: Modern tech infographic, NotebookLM presentation aesthetic
+Visual style: Modern tech infographic, clean professional presentation aesthetic
 Layout: Central concept (LLM) with radiating key features in hub-spoke pattern
 Colors: Deep blue (#0a2463) background, white text, teal (#2cafa4) and coral (#ff6b6b) accents
 
@@ -328,12 +330,12 @@ Include:
 Format: 16:9 landscape, suitable for educational presentation
 ```
 
-### Example 2: Security Best Practices (Trend + NotebookLM Style)
+### Example 2: Security Best Practices (Trend + Professional Style)
 
 ```
-Create a cybersecurity infographic titled "5 Essential Security Practices" in NotebookLM presentation style with Trend Micro branding.
+Create a cybersecurity infographic titled "5 Essential Security Practices" in professional presentation style with Trend Micro branding.
 
-Visual style: NotebookLM professional slide aesthetic with Trend Micro brand colors
+Visual style: Professional slide design aesthetic with Trend Micro brand colors
 - Polished, well-structured tech infographic
 - Clean slide-level organization with logical flow
 - Professional but accessible design
@@ -364,7 +366,7 @@ Format: 16:9, suitable for professional presentation
 Style reference: Similar to Google's product documentation or modern tech blog infographics, but with Trend Micro color scheme
 ```
 
-**When to use Trend style**: The Trend Micro brand style automatically combines NotebookLM's professional slide aesthetic with Trend's brand color palette. Perfect for corporate presentations, technical documentation, and professional slide decks.
+**When to use Trend style**: The Trend Micro brand style automatically combines clean professional slide aesthetic with Trend's brand color palette. Perfect for corporate presentations, technical documentation, and professional slide decks.
 
 ### Example 3: ML Workflow
 
@@ -403,3 +405,181 @@ Format: 16:9 landscape
 4. **Iterate strategically**: Make small adjustments rather than full regeneration
 5. **Use natural language**: Describe what you want conversationally, not as keyword tags
 6. **File format**: Slide deck styles automatically use lossless WebP (VP8L) - no need to specify format, it's optimized for your content type
+
+---
+
+## Multi-Slide Generation
+
+When generating multiple slides for a presentation, use the **Hybrid Mode**: Plan → Parallel Generation → Review.
+
+### Phase 1: Planning
+
+Before generating, plan the entire deck:
+
+**1. Define overall theme and style**
+- Choose visual style (Professional, Blackboard, Data Viz, etc.)
+- Lock down color palette (specific hex codes)
+- Set consistent layout format (16:9, 4:3)
+
+**2. Create content outline**
+```
+Slide 1: Title - "Presentation Title"
+Slide 2: Overview - 3 key points
+Slide 3: Details - Deep dive on point 1
+Slide 4: Data - Charts and metrics
+Slide 5: Conclusion - Summary and CTA
+```
+
+**3. Pre-plan output directories**
+```
+001-title-slide/
+002-overview/
+003-details/
+004-data-viz/
+005-conclusion/
+```
+
+### Phase 2: Parallel Generation (using Task agents)
+
+For **3+ slides**, use Task agents for parallel generation:
+
+```
+# Dispatch multiple agents simultaneously (single message, multiple Task calls)
+Task("Generate slide 1: Title slide, style: trend, colors: #d71920...")
+Task("Generate slide 2: Overview, style: trend, colors: #d71920...")
+Task("Generate slide 3: Details, style: trend, colors: #d71920...")
+// All run in parallel
+```
+
+**Critical - Pass identical style specification to each agent:**
+- Same colors, fonts, layout
+- Same `use_lossless = True` for consistency
+- Same aspect ratio and image size
+- Same visual style reference
+
+### Phase 3: Review & Adjust
+
+After parallel generation:
+
+1. **Visual review** - Compare all slides side by side
+2. **Consistency check** - Do colors, fonts, icon styles match?
+3. **Sequential fixes** - Regenerate any inconsistent slides one by one
+
+### When to Use Each Approach
+
+| Slides | Approach | Reason |
+|--------|----------|--------|
+| 1-2 | Sequential | Faster, no coordination overhead |
+| 3-5 | Parallel | Speed benefit outweighs coordination cost |
+| 6+ | Parallel (batches of 3-5) | Split into manageable batches |
+
+### Example Prompt for Parallel Generation
+
+```
+Generate a 5-slide presentation deck about "Cloud Security Best Practices".
+
+Style: trend (Trend Micro brand + professional aesthetic)
+Format: 16:9, lossless WebP
+Color lock:
+- Trend Red #d71920 (primary/accent)
+- Dark Blue #005295 (secondary)
+- Gray #333333 (background)
+- White #ffffff (text)
+
+Slides:
+1. Title: "Cloud Security Best Practices 2025"
+   - Large title centered
+   - Subtitle: "Protecting Your Infrastructure"
+   - Minimal design with shield icon
+
+2. Overview: "5 Key Practices"
+   - Hub-spoke layout
+   - 5 practices radiating from center
+
+3. Identity: "IAM and Zero Trust"
+   - Icons + 3-4 bullet points per section
+   - Split layout (left: IAM, right: Zero Trust)
+
+4. Data Protection: "Encryption Metrics"
+   - Bar chart showing encryption adoption
+   - 3 key statistics with percentage callouts
+
+5. Summary: "Action Items"
+   - Numbered list (1-5)
+   - Each with icon and brief description
+   - Footer CTA
+
+Use parallel Task agents to generate all 5 slides simultaneously.
+After generation, review consistency and adjust if needed.
+```
+
+### Example 2: Professional Editorial Style (Pure Google Aesthetic)
+
+```
+Generate a 5-slide presentation deck about "AI Product Development Best Practices".
+
+Style: notebooklm (clean, professional, Google-style infographic - internal reference only)
+Format: 16:9, lossless WebP
+Color palette:
+- Deep blue #0a2463 (primary/headers)
+- Teal #2cafa4 (accent/icons)
+- Coral #ff6b6b (highlights/callouts)
+- Light gray #f5f5f5 (background)
+- White #ffffff (cards/text boxes)
+
+Visual characteristics:
+- Polished, well-structured tech infographic aesthetic
+- Clean slide-level organization with logical flow
+- Professional but accessible design
+- Minimal text, maximum visual communication
+
+Slides:
+1. Title: "AI Product Development"
+   - Large centered title
+   - Subtitle: "Best Practices for 2025"
+   - Simple AI icon or abstract geometric pattern
+   - Clean white background
+
+2. Overview: "5 Core Principles"
+   - Hub-spoke layout with AI icon at center
+   - 5 principles radiating outward:
+     * User-Centric Design
+     * Data Quality
+     * Ethical AI
+     * Iterative Testing
+     * Continuous Learning
+
+3. User-Centric: "Designing for Humans"
+   - Split layout (left: problem, right: solution)
+   - 3 key points with icons
+   - Real-world example callout box
+
+4. Metrics: "Measuring AI Success"
+   - Bento grid layout (2x2)
+   - 4 metrics with large numbers and trend arrows
+   - Clean data visualization style
+
+5. Action Plan: "Getting Started"
+   - Numbered steps (1-4) in vertical flow
+   - Each with icon, title, brief description
+   - Bottom CTA: "Start Your AI Journey"
+
+Use parallel Task agents to generate all 5 slides simultaneously.
+Ensure consistent color usage and clean professional aesthetic across all slides.
+```
+
+### Best Practices for Multi-Slide Generation
+
+**Do:**
+- ✅ Define complete style spec before starting
+- ✅ Use consistent hex codes (not "red", use "#d71920")
+- ✅ Pre-plan all directory names
+- ✅ Pass identical parameters to each agent
+- ✅ Review and adjust after generation
+
+**Don't:**
+- ❌ Mix styles between slides (keep consistent)
+- ❌ Forget to specify `use_lossless = True`
+- ❌ Use vague color names ("blue" → specify "#005295")
+- ❌ Generate too many at once (>5 risks inconsistency)
+- ❌ Skip the review phase
