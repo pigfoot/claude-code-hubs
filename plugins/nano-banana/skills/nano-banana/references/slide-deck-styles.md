@@ -2,7 +2,28 @@
 
 Prompt templates for creating professional presentation slides, infographics, and slide deck content using Gemini image generation.
 
-> **⚠️ Important**: Avoid using the word "NotebookLM" in image generation prompts - it may trigger branding watermarks in generated images. Use descriptive style terms instead (e.g., "clean professional presentation", "modern tech infographic aesthetic", "polished slide design").
+> **⚠️ CRITICAL - NotebookLM Branding Protection**:
+>
+> **DO NOT include NotebookLM brand/logo/name in generated slide decks!**
+>
+> **How to use NotebookLM style correctly:**
+> 1. When user specifies `style: "notebooklm"` → **YES, apply the visual aesthetic**
+> 2. Apply these NotebookLM-inspired characteristics (see lines 586-593 in SKILL.md):
+>    - Polished, well-structured tech infographic aesthetic
+>    - Clean slide-level organization with logical flow
+>    - Professional but accessible design
+>    - Minimal text, maximum visual communication
+> 3. **CRITICAL**: When writing the Gemini prompt → **NEVER mention "NotebookLM"**:
+>    - ✅ Write: "clean professional presentation aesthetic", "modern tech infographic style", "polished slide design with Google-style documentation aesthetic"
+>    - ❌ **NEVER write**: "NotebookLM", "NotebookLM style", "NotebookLM aesthetic", "NotebookLM logo", "NotebookLM brand"
+>    - ❌ **NEVER include**: NotebookLM logos, branding, watermarks, or trademarks in the generated images
+>
+> **Why**: Using "NotebookLM" in prompts may cause Gemini to generate Google's NotebookLM branding/logos, which:
+> - Violates trademark/brand usage policies
+> - Creates misleading content (your slides are not official NotebookLM content)
+> - May trigger brand protection filters
+>
+> **Summary**: `notebooklm` is a style **trigger** for Claude (use the aesthetic!), but **translate to descriptive terms** in the Gemini prompt. Never include NotebookLM branding in the output.
 
 **Important**: All slide deck styles automatically use **lossless WebP** format (VP8L encoding):
 - Saves 20-30% file size compared to PNG (typical for diagrams/slides)
@@ -513,12 +534,18 @@ Use parallel Task agents to generate all 5 slides simultaneously.
 After generation, review consistency and adjust if needed.
 ```
 
-### Example 2: Professional Editorial Style (Pure Google Aesthetic)
+### Example 2: Professional Editorial Style (NotebookLM-Inspired Aesthetic)
+
+**⚠️ IMPORTANT**: This example shows how to use `style: notebooklm` trigger WITHOUT including NotebookLM branding in the output.
 
 ```
 Generate a 5-slide presentation deck about "AI Product Development Best Practices".
 
-Style: notebooklm (clean, professional, Google-style infographic - internal reference only)
+Style specification for Claude: notebooklm
+⚠️ CRITICAL: When writing the Gemini prompt below, translate to descriptive terms:
+- DO NOT include "NotebookLM" in the prompt sent to Gemini
+- DO NOT generate NotebookLM logos, branding, or watermarks
+- Use descriptive style terms instead (see below)
 Format: 16:9, lossless WebP
 Color palette:
 - Deep blue #0a2463 (primary/headers)
@@ -527,11 +554,13 @@ Color palette:
 - Light gray #f5f5f5 (background)
 - White #ffffff (cards/text boxes)
 
-Visual characteristics:
-- Polished, well-structured tech infographic aesthetic
-- Clean slide-level organization with logical flow
-- Professional but accessible design
-- Minimal text, maximum visual communication
+Visual characteristics (descriptive terms for Gemini prompt):
+- "Clean professional presentation aesthetic with polished tech infographic style"
+- "Modern documentation visual design similar to Google's product guides"
+- "Well-structured slide-level organization with logical information flow"
+- "Professional but accessible design with clear visual hierarchy"
+- "Minimal text, maximum visual communication using icons and simple illustrations"
+- ⚠️ DO NOT mention "NotebookLM" anywhere in the prompt sent to Gemini
 
 Slides:
 1. Title: "AI Product Development"
@@ -566,6 +595,7 @@ Slides:
 
 Use parallel Task agents to generate all 5 slides simultaneously.
 Ensure consistent color usage and clean professional aesthetic across all slides.
+⚠️ REMINDER: Never include "NotebookLM" text, logos, or branding in any generated slide.
 ```
 
 ### Best Practices for Multi-Slide Generation

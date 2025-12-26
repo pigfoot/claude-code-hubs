@@ -30,6 +30,20 @@ Customize plugin behavior using environment variables:
 
 ### Examples
 
+**Complete configuration (all variables):**
+```bash
+# Required
+export GEMINI_API_KEY="your-api-key"                    # Or GOOGLE_API_KEY
+
+# Optional customization
+export NANO_BANANA_MODEL="gemini-3-pro-image-preview"  # Override model choice
+export NANO_BANANA_FORMAT="webp"                        # Output format (webp/jpg/png)
+export NANO_BANANA_QUALITY="95"                         # Quality 1-100 (webp/jpg)
+
+# For custom endpoints (self-hosted/proxy)
+export GOOGLE_GEMINI_BASE_URL="https://api.example.com/v1"
+```
+
 **Official Google API (default):**
 ```bash
 export GEMINI_API_KEY="your-api-key"  # Or GOOGLE_API_KEY (backward compatible)
@@ -227,13 +241,13 @@ for part in response.parts:
 
         # Save with format conversion
         if output_format in ("jpg", "jpeg"):
-            output_path = OUTPUT_DIR / "output.jpg"
+            output_path = OUTPUT_DIR / "generated.jpg"
             pil_image.convert("RGB").save(output_path, "JPEG", quality=quality)
         elif output_format == "webp":
-            output_path = OUTPUT_DIR / "output.webp"
+            output_path = OUTPUT_DIR / "generated.webp"
             pil_image.save(output_path, "WEBP", quality=quality)
         else:  # png
-            output_path = OUTPUT_DIR / "output.png"
+            output_path = OUTPUT_DIR / "generated.png"
             pil_image.save(output_path, "PNG")
 
         print(f"Saved: {output_path}")

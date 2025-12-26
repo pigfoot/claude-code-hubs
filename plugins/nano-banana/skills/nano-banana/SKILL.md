@@ -49,19 +49,30 @@ Check user's message for style specifications:
 
 **Structured syntax:**
 - `style: "trend"` → Trend Micro brand colors
-- `style: "notebooklm"` or `style: "slide"` → NotebookLM presentation style
+- `style: "notebooklm"` or `style: "slide"` → NotebookLM presentation style (MUST apply visual characteristics)
 - `style: "custom"` → Ask for custom color preferences
 
 **Natural language:**
 - "use style trend" → Apply Trend Micro brand
 - "with trend colors" → Apply Trend Micro brand
-- "notebooklm style" or "create slide" or "presentation style" → NotebookLM aesthetic
+- "notebooklm style" or "create slide" or "presentation style" → NotebookLM aesthetic (MUST apply)
 - "custom style: blue #0066cc" → Parse custom colors
 
-**Style precedence:**
-1. Inline specification (structured or natural language)
-2. Ask user during prompting (if in Interactive Mode)
-3. No style applied (default)
+**⚠️ CRITICAL for NotebookLM**: When detected, apply the style characteristics (see Brand Style Integration section). **NEVER include "NotebookLM" brand/logo/name in the Gemini prompt or generated slides** - this violates trademark policies. `notebooklm` is a **style trigger** for Claude only - translate to descriptive terms like "clean professional presentation aesthetic" in the actual prompt.
+
+**Style detection precedence by mode:**
+
+| Mode | User Provides Style? | Action |
+|------|---------------------|--------|
+| **Direct Generation** | Yes (inline spec) | Use detected style immediately |
+| **Direct Generation** | No | Generate with no style (default) |
+| **Interactive Prompting** | Yes (inline spec) | Use detected style, skip style question |
+| **Interactive Prompting** | No | Ask user about style preference in Step 2 |
+
+**Priority order (first match wins):**
+1. Inline specification detected → Use it
+2. Interactive Mode without inline spec → Ask user
+3. Direct Mode without inline spec → No style (default)
 
 ## Quick Reference
 
@@ -117,56 +128,71 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-OUTPUT_DIR = Path("001-cute-banana")  # Format: NNN-short-name
+# Auto-increment folder detection
+# Scan for existing NNN-* directories and use next available number
+existing_folders = sorted([d for d in Path(".").iterdir()
+                          if d.is_dir() and len(d.name) >= 4
+                          and d.name[:3].isdigit() and d.name[3] == '-'])
+if existing_folders:
+    last_num = int(existing_folders[-1].name[:3])
+    next_num = last_num + 1
+else:
+    next_num = 1
+
+OUTPUT_DIR = Path(f"{next_num:03d}-cute-banana")  # Format: NNN-short-name
 OUTPUT_DIR.mkdir(exist_ok=True)
+print(f"Using output directory: {OUTPUT_DIR}")
 
 # Configuration from environment variables
 model = os.environ.get("NANO_BANANA_MODEL")
 if not model:
-    # You (Claude) choose based on user context:
-    # - gemini-3-pro-image-preview: default, high quality (recommended)
-    # - gemini-2.5-flash-image: if user wants budget/fast/simple generation
-    model = "gemini-3-pro-image-preview"  # <-- Replace based on user request
+    # Model selection logic (Claude decides based on user request):
+    # Use gemini-2.5-flash-image ONLY if user explicitly mentions:
+    #   - "fast", "quick", "draft", "preview", "budget", "cheap"
+    # Otherwise, ALWAYS use gemini-3-pro-image-preview (default):
+    #   - Better quality, especially for text rendering in slides
+    #   - More accurate color reproduction
+    #   - Better handling of complex prompts
+    model = "gemini-3-pro-image-preview"  # Default: prioritize quality
 
 output_format = os.environ.get("NANO_BANANA_FORMAT", "webp").lower()
 quality = int(os.environ.get("NANO_BANANA_QUALITY", "90"))
 
 # Detect if lossless format is needed (for diagrams/slides)
-use_lossless = False
-
-# You (Claude) should understand user's intent and set use_lossless accordingly:
-# 1. Slide deck styles → True (automatic)
-#    - style: trend or style: notebooklm
-# 2. User requests lossless/highest quality (any language) → True
-#    - English: "lossless", "highest quality", "no compression"
-#    - 繁中: "無損", "最高品質"
-#    - 簡中: "无损", "最高质量"
-#    - 日文: "ロスレス", "最高品質"
-#    - Or intent: "I need perfect quality for printing"
-# 3. User requests lossy/smaller file (any language) → False
-#    - English: "lossy", "compress more", "smaller file"
-#    - 繁中: "有損", "壓縮", "檔案小一點"
-#    - Any language expression meaning smaller/compressed
-# 4. Default for photos/general images → False
-
-# Understand intent, not keyword matching
+# See "Lossless WebP Decision Logic" in Configuration section for complete rules
+use_lossless = False  # Set to True for slide deck styles or explicit user request
 
 # Initialize client with optional custom endpoint
 base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
 api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 
-if base_url:
-    client = genai.Client(api_key=api_key, http_options={'base_url': base_url})
-else:
-    client = genai.Client(api_key=api_key)
+if not api_key:
+    print("Error: GEMINI_API_KEY or GOOGLE_API_KEY environment variable not set")
+    exit(1)
 
-response = client.models.generate_content(
-    model=model,
-    contents=["A cute banana character with sunglasses"],
-    config=types.GenerateContentConfig(
-        response_modalities=['IMAGE']
+try:
+    if base_url:
+        client = genai.Client(api_key=api_key, http_options={'base_url': base_url})
+    else:
+        client = genai.Client(api_key=api_key)
+
+    config_params = {
+        'response_modalities': ['IMAGE']
+    }
+
+    response = client.models.generate_content(
+        model=model,
+        contents=["A cute banana character with sunglasses"],
+        config=types.GenerateContentConfig(**config_params)
     )
-)
+
+    if not response.parts:
+        print("Error: No image generated in response")
+        exit(1)
+
+except Exception as e:
+    print(f"Error during image generation: {e}")
+    exit(1)
 
 for part in response.parts:
     if part.inline_data is not None:
@@ -208,18 +234,26 @@ EOF
 Save images to numbered directories:
 
 **Format:** `NNN-short-name/`
-- **NNN**: Three-digit sequence (001, 002, 003...)
+- **NNN**: Three-digit zero-padded sequence (001, 002, 003...)
 - **short-name**: kebab-case, 2-4 words from user request
+
+**Naming rules:**
+1. **Check existing directories**: Scan for `NNN-*` folders in current working directory
+2. **Use next available number**: If 001, 002, 003 exist, use 004
+3. **Same topic**: Reuse the same directory for related generations
+4. **New topic**: Create new directory with next sequence number
 
 **Examples:**
 - "Generate user auth flow" → `001-user-auth-flow/`
 - "Create cute cat" → `002-cute-cat/`
 - "Make startup logo" → `003-startup-logo/`
 
-**Session tracking:**
-- First request: Create new directory with next number
-- Same topic: Reuse same directory
-- New topic: Create new directory with next number
+**Directory scanning example:**
+```bash
+# Existing: 001-cute-cat/, 002-logo-design/
+# New request: "Generate a sunset landscape"
+# → Scans directory, finds 001 and 002, creates: 003-sunset-landscape/
+```
 
 ### Configuration
 
@@ -232,6 +266,26 @@ Customize plugin behavior with environment variables:
 | `NANO_BANANA_QUALITY` | `90` | Image quality (1-100) for webp/jpg |
 | `GOOGLE_GEMINI_BASE_URL` | (official API) | Custom API endpoint (for non-official deployments) |
 | `GEMINI_API_KEY` | (falls back to `GOOGLE_API_KEY`) | API key (official or custom endpoint) |
+
+**Lossless WebP Decision Logic:**
+
+When generating images, set `use_lossless` based on this priority order:
+
+```python
+# Apply rules in this exact order (first match wins):
+if "style: trend" in user_message or "style: notebooklm" in user_message:
+    use_lossless = True  # Slide deck styles with text/icons
+elif user explicitly requests lossless/highest quality (understand intent in ANY language):
+    use_lossless = True  # Examples: "lossless", "highest quality", "perfect quality", "for printing"
+elif user explicitly requests lossy/smaller file (understand intent in ANY language):
+    use_lossless = False  # Examples: "lossy", "compress more", "smaller file", "reduce size"
+else:
+    use_lossless = False  # Default for photos and general images
+```
+
+**Why lossless matters:**
+- **Lossless WebP** (VP8L): 20-30% smaller than PNG, zero quality loss - perfect for slides with text/icons
+- **Lossy WebP** (VP8): 95% smaller but blurs text - good for photos only
 
 ### Image Editing
 
@@ -249,8 +303,19 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-OUTPUT_DIR = Path("002-party-hat")
+# Auto-increment folder detection
+existing_folders = sorted([d for d in Path(".").iterdir()
+                          if d.is_dir() and len(d.name) >= 4
+                          and d.name[:3].isdigit() and d.name[3] == '-'])
+if existing_folders:
+    last_num = int(existing_folders[-1].name[:3])
+    next_num = last_num + 1
+else:
+    next_num = 1
+
+OUTPUT_DIR = Path(f"{next_num:03d}-party-hat")
 OUTPUT_DIR.mkdir(exist_ok=True)
+print(f"Using output directory: {OUTPUT_DIR}")
 
 # Configuration from environment variables
 model = os.environ.get("NANO_BANANA_MODEL")
@@ -264,24 +329,40 @@ quality = int(os.environ.get("NANO_BANANA_QUALITY", "90"))
 base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
 api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 
-if base_url:
-    client = genai.Client(api_key=api_key, http_options={'base_url': base_url})
-else:
-    client = genai.Client(api_key=api_key)
+if not api_key:
+    print("Error: GEMINI_API_KEY or GOOGLE_API_KEY environment variable not set")
+    exit(1)
 
-# Load existing image
-img = PILImage.open("001-cute-banana/generated.webp")
+try:
+    if base_url:
+        client = genai.Client(api_key=api_key, http_options={'base_url': base_url})
+    else:
+        client = genai.Client(api_key=api_key)
 
-response = client.models.generate_content(
-    model=model,
-    contents=[
-        "Add a party hat to this character",
-        img  # Pass PIL Image directly
-    ],
-    config=types.GenerateContentConfig(
-        response_modalities=['IMAGE']
+    # Load existing image
+    img = PILImage.open("001-cute-banana/generated.webp")
+
+    response = client.models.generate_content(
+        model=model,
+        contents=[
+            "Add a party hat to this character",
+            img  # Pass PIL Image directly
+        ],
+        config=types.GenerateContentConfig(
+            response_modalities=['IMAGE']
+        )
     )
-)
+
+    if not response.parts:
+        print("Error: No image generated in response")
+        exit(1)
+
+except FileNotFoundError as e:
+    print(f"Error: Input image not found: {e}")
+    exit(1)
+except Exception as e:
+    print(f"Error during image editing: {e}")
+    exit(1)
 
 for part in response.parts:
     if part.inline_data is not None:
@@ -304,17 +385,34 @@ EOF
 
 ### Image Configuration
 
-Aspect ratio and resolution:
+**Aspect ratio and resolution:**
 
 ```python
-config=types.GenerateContentConfig(
-    response_modalities=['IMAGE'],
-    image_config=types.ImageConfig(
+config_params = {
+    'response_modalities': ['IMAGE'],
+    'image_config': types.ImageConfig(
         aspect_ratio="16:9",  # "1:1", "16:9", "9:16", "4:3", "3:4"
         image_size="2K"       # "1K", "2K", "4K" (UPPERCASE required)
     )
-)
+}
+
+config = types.GenerateContentConfig(**config_params)
 ```
+
+**Common aspect ratios by use case:**
+
+| Aspect Ratio | Use Cases | Best For |
+|--------------|-----------|----------|
+| **16:9** | Presentation slides, modern displays, YouTube thumbnails | Widescreen presentations, video content |
+| **4:3** | Traditional presentations, documents | Classic PowerPoint format, printed slides |
+| **1:1** | Social media posts, profile images | Instagram posts, icons, square designs |
+| **9:16** | Mobile vertical, stories | Instagram/TikTok stories, mobile-first content |
+| **3:4** | Print materials, posters | Printed documents, portrait orientation |
+
+**Resolution recommendations:**
+- **1K**: Quick drafts, previews (faster generation)
+- **2K**: Standard quality for most use cases (recommended default)
+- **4K**: High-resolution prints, detailed graphics (slower generation)
 
 ### Workflow Loop for Complex Tasks
 
@@ -347,6 +445,68 @@ digraph workflow {
 2. Check the output manually
 3. Decide: done or refine?
 4. If refine: run another small script
+
+### Multi-Slide Generation Workflow
+
+For generating **3+ slides** for presentations, use the **Hybrid Mode: Plan → Parallel → Review**.
+
+**IMPORTANT: Always plan before generating multiple slides.**
+
+**Step 1: Planning (Mandatory)**
+
+Before any generation, create a complete plan including:
+
+1. **Define style specification**
+   - Lock down visual style (Professional, NotebookLM, Trend Micro, etc.)
+   - Specify exact hex codes for colors (not "red", use "#d71920")
+   - Set consistent layout format (16:9, 4:3)
+   - Decide on lossless WebP for slides (see Configuration section)
+
+2. **Create content outline**
+   ```
+   Slide 1: Title - "Presentation Title"
+   Slide 2: Overview - 3 key points
+   Slide 3: Details - Deep dive on point 1
+   Slide 4: Data - Charts and metrics
+   Slide 5: Conclusion - Summary and CTA
+   ```
+
+3. **Pre-plan output directories**
+   ```
+   001-title-slide/
+   002-overview/
+   003-details/
+   004-data-viz/
+   005-conclusion/
+   ```
+
+**Step 2: Parallel Generation**
+
+Use Task agents to generate 3-5 slides simultaneously:
+- Pass **identical style specs** to each agent (colors, format, lossless setting)
+- All slides should use the same model and image configuration
+- Dispatch multiple agents in a single message for parallel execution
+
+**Step 3: Review & Adjust**
+
+After parallel generation:
+1. Visual review - Compare all slides side by side
+2. Consistency check - Do colors, fonts, icon styles match?
+3. Sequential fixes - Regenerate any inconsistent slides one by one
+
+**When to use:**
+
+| Slides | Approach | Reason |
+|--------|----------|--------|
+| 1-2 | Sequential | Faster, no coordination overhead |
+| 3-5 | Parallel | Speed benefit outweighs coordination |
+| 6+ | Parallel batches (3-5 each) | Split into manageable groups |
+
+**For complete multi-slide workflow details**, see `references/slide-deck-styles.md` (lines 411-586) which includes:
+- Detailed planning templates
+- Brand style integration (Trend Micro, NotebookLM)
+- Example prompts for parallel generation
+- Best practices and common pitfalls
 
 ### Red Flags - STOP and Use Heredoc
 
@@ -421,23 +581,23 @@ Based on user responses, select technique from `references/guide.md`:
 
 If user selected **Trend Micro brand style** or **NotebookLM style**:
 1. Load `references/brand-styles.md` (for Trend) or `references/slide-deck-styles.md` (for NotebookLM) for complete specifications
-2. **Use lossless WebP format** (both styles are for slide decks with pure colors, text, and icons):
-   ```python
-   # Override format settings for slide deck styles (or if user requests lossless)
-   # Understand user intent in any language - not just keyword matching
-   use_lossless = True  # Set to True for slide styles or explicit user request
-   pil_image.save(output_path, "WEBP", lossless=True)
-   # VP8L encoding: saves 20-30% vs PNG with zero quality loss
-   # (Lossy WebP saves 95% but blurs text - not suitable for slides)
-   ```
-3. **Automatically apply NotebookLM slide aesthetic**:
-   - Polished, well-structured tech infographic aesthetic
-   - Clean slide-level organization with logical flow
-   - Professional but accessible design
-   - Clear visual hierarchy
-   - Minimal text, maximum visual communication
-   - Icons and simple illustrations over complex graphics
-   - Style reference: Similar to Google's product documentation or modern tech blog infographics
+2. **Use lossless WebP format** (both styles are for slide decks):
+   - Set `use_lossless = True` (see Configuration section for complete decision logic)
+   - This enables VP8L encoding: 20-30% smaller than PNG, zero quality loss
+   - Perfect for slides with text/icons (lossy WebP would blur text)
+3. **Apply NotebookLM slide aesthetic** (when user specifies `style: "notebooklm"`):
+   - **IMPORTANT**: `notebooklm` is a style trigger - you MUST apply these characteristics:
+     - Polished, well-structured tech infographic aesthetic
+     - Clean slide-level organization with logical flow
+     - Professional but accessible design
+     - Clear visual hierarchy
+     - Minimal text, maximum visual communication
+     - Icons and simple illustrations over complex graphics
+   - **⚠️ CRITICAL - In the Gemini prompt**: **NEVER use "NotebookLM" brand/logo/name**:
+     - ✅ Write: "clean professional presentation aesthetic", "modern tech infographic style", "polished slide design with Google-style documentation aesthetic"
+     - ❌ **NEVER write**: "NotebookLM", "NotebookLM style", "NotebookLM logo", "NotebookLM branding"
+     - ❌ **NEVER include**: NotebookLM logos, watermarks, or trademarks in generated images
+     - **Reason**: Violates Google's trademark policies and creates misleading content
 4. If Trend style, append Trend brand color guidelines to the prompt:
    - **Primary**: Trend Red (#d71920) as hero/accent color
    - **Guardian Red** (#6f0000) for intensity
@@ -459,15 +619,7 @@ Offer to refine based on feedback.
 
 Execute with the crafted prompt using Direct Generation Mode pattern above.
 
-**Important**: Set `use_lossless = True` in the generation script when:
-- Style is Trend or NotebookLM (slide deck styles), OR
-- User explicitly requests lossless/highest quality (understand intent in any language)
-
-This will:
-- Use VP8L (lossless WebP) encoding instead of VP8 (lossy)
-- Save 20-30% file size compared to PNG (typical for diagrams/slides)
-- Perfect for slides with text, icons, and graphics - zero quality loss
-- Much better than lossy (lossy saves 95% but blurs text)
+**Important**: Apply the **Lossless WebP Decision Logic** from the Configuration section to determine `use_lossless` setting.
 
 ## When to Create Files vs Heredoc
 
@@ -492,10 +644,64 @@ digraph file_decision {
 
 ## Debugging
 
-1. Print `response.parts` to see what was returned
-2. Check `GEMINI_API_KEY` or `GOOGLE_API_KEY` is set
-3. For edits: verify image file exists and is valid
-4. Try simpler prompt to isolate issues
+### Common Errors and Solutions
+
+**API Key Issues:**
+- **Error**: `"Error: GEMINI_API_KEY or GOOGLE_API_KEY environment variable not set"`
+- **Fix**: Set one of these variables: `export GEMINI_API_KEY="your-key"`
+- **Check**: `echo $GEMINI_API_KEY` to verify it's set
+
+**Model Name Errors:**
+- **Error**: `"Model not found"` or `"Invalid model name"`
+- **Fix**: Use exact model names:
+  - `gemini-3-pro-image-preview` (NOT `gemini-3-pro-image`)
+  - `gemini-2.5-flash-image` (NOT `gemini-flash`)
+- **Common typo**: Missing `-preview` or `-image` suffix
+
+**Aspect Ratio Errors:**
+- **Error**: `"Invalid aspect ratio"`
+- **Fix**: Use exact strings: `"16:9"`, `"4:3"`, `"1:1"`, `"9:16"`, `"3:4"` (with quotes)
+- **Wrong**: `16:9` (no quotes), `"16x9"` (wrong separator)
+
+**Rate Limiting:**
+- **Error**: `"429 Too Many Requests"` or `"Quota exceeded"`
+- **Fix**: Wait 60 seconds between requests, or upgrade API quota
+- **Tip**: Use `gemini-2.5-flash-image` for higher rate limits
+
+**No Image Generated:**
+- **Error**: `"Error: No image generated in response"`
+- **Causes**:
+  - Prompt violates content policy (violence, explicit content)
+  - Prompt too vague or confusing
+  - Technical issue with API
+- **Fix**:
+  1. Simplify prompt and try again
+  2. Check `response.parts` to see what was returned
+  3. Try a completely different prompt to test API connection
+
+**Image Size vs Quality Trade-offs:**
+- **Large files**: Use `quality=70` or lower for webp/jpg
+- **Blurry slides**: Use `use_lossless=True` for text/diagrams
+- **Slow generation**: Use `image_size="1K"` for faster previews
+
+**Import Errors:**
+- **Error**: `"ModuleNotFoundError: No module named 'google.genai'"`
+- **Fix**: Verify `# dependencies = ["google-genai", "pillow"]` in script header
+- **Wrong**: Using `google-generativeai` (old API) instead of `google-genai`
+
+**File I/O Errors:**
+- **Error**: `"FileNotFoundError"` when editing images
+- **Fix**: Check input image path exists: `ls -la path/to/image.webp`
+- **Tip**: Use absolute paths or verify current directory with `pwd`
+
+### Debug Workflow
+
+1. **Verify API key**: `echo $GEMINI_API_KEY`
+2. **Test with simple prompt**: `"A red circle"`
+3. **Check response**: Add `print(response.parts)` before processing
+4. **Verify output directory**: `ls -la NNN-*/`
+5. **Check image was saved**: `file output-dir/generated.webp`
+6. **Isolate the issue**: Comment out code sections to find problem area
 
 ## Common Mistakes
 
