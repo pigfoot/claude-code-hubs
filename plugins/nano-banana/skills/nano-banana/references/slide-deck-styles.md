@@ -451,14 +451,20 @@ Slide 4: Data - Charts and metrics
 Slide 5: Conclusion - Summary and CTA
 ```
 
-**3. Pre-plan output directories**
+**3. Pre-plan output directory and file structure**
+
+All slides should be saved in a **single directory** with numbered filenames:
+
 ```
-001-title-slide/
-002-overview/
-003-details/
-004-data-viz/
-005-conclusion/
+001-presentation-topic/
+  ├── 001-title.webp
+  ├── 002-overview.webp
+  ├── 003-details.webp
+  ├── 004-data-viz.webp
+  └── 005-conclusion.webp
 ```
+
+**Critical:** Do NOT create separate directories per slide. Use one shared directory with numbered files.
 
 ### Phase 2: Parallel Generation (using Task agents)
 
@@ -530,6 +536,14 @@ Slides:
    - Each with icon and brief description
    - Footer CTA
 
+**Output directory structure:**
+All slides in one directory: `001-cloud-security/`
+  ├── 001-title.webp
+  ├── 002-overview.webp
+  ├── 003-identity.webp
+  ├── 004-data-protection.webp
+  └── 005-summary.webp
+
 Use parallel Task agents to generate all 5 slides simultaneously.
 After generation, review consistency and adjust if needed.
 ```
@@ -592,6 +606,14 @@ Slides:
    - Numbered steps (1-4) in vertical flow
    - Each with icon, title, brief description
    - Bottom CTA: "Start Your AI Journey"
+
+**Output directory structure:**
+All slides in one directory: `001-ai-product-dev/`
+  ├── 001-title.webp
+  ├── 002-overview.webp
+  ├── 003-user-centric.webp
+  ├── 004-metrics.webp
+  └── 005-action-plan.webp
 
 Use parallel Task agents to generate all 5 slides simultaneously.
 Ensure consistent color usage and clean professional aesthetic across all slides.

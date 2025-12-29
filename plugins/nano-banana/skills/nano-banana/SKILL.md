@@ -83,7 +83,7 @@ Check user's message for style specifications:
 | Generate image | `uv run - << 'EOF'` with inline script |
 | Edit image | Same, but `contents=[prompt, img]` |
 | Complex workflow | Multiple small scripts, evaluate between |
-| Model choice | `NANO_BANANA_MODEL` (if set) > Pro (default) > Flash (if budget/fast) |
+| Model choice | If `NANO_BANANA_MODEL` set → use it (don't override). If not set → Claude chooses based on requirements |
 | Output format | Default: `webp`, or `NANO_BANANA_FORMAT` env var (webp/jpg/png) |
 | Output location | `NNN-short-name/` (e.g., `001-cute-banana/`) |
 
@@ -128,8 +128,16 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-# Auto-increment folder detection
-# Scan for existing NNN-* directories and use next available number
+# Directory selection logic
+# Claude decides based on conversation context and user intent:
+# - Continuation of existing work → Specify existing directory
+# - New unrelated topic → Use auto-increment
+# - Uncertain → Ask user with AskUserQuestion
+
+# Option 1: Reuse existing directory (for continuation)
+# OUTPUT_DIR = Path("001-existing-topic")  # Manually specify
+
+# Option 2: Auto-increment for new topic (default)
 existing_folders = sorted([d for d in Path(".").iterdir()
                           if d.is_dir() and len(d.name) >= 4
                           and d.name[:3].isdigit() and d.name[3] == '-'])
@@ -140,20 +148,19 @@ else:
     next_num = 1
 
 OUTPUT_DIR = Path(f"{next_num:03d}-cute-banana")  # Format: NNN-short-name
+
 OUTPUT_DIR.mkdir(exist_ok=True)
 print(f"Using output directory: {OUTPUT_DIR}")
 
 # Configuration from environment variables
+# IMPORTANT: If NANO_BANANA_MODEL is set, use it - DO NOT override
 model = os.environ.get("NANO_BANANA_MODEL")
 if not model:
-    # Model selection logic (Claude decides based on user request):
-    # Use gemini-2.5-flash-image ONLY if user explicitly mentions:
-    #   - "fast", "quick", "draft", "preview", "budget", "cheap"
-    # Otherwise, ALWAYS use gemini-3-pro-image-preview (default):
-    #   - Better quality, especially for text rendering in slides
-    #   - More accurate color reproduction
-    #   - Better handling of complex prompts
-    model = "gemini-3-pro-image-preview"  # Default: prioritize quality
+    # Only choose model when NANO_BANANA_MODEL is not set
+    # Claude decides based on user request:
+    # - Use "gemini-2.5-flash-image" ONLY if user explicitly mentions speed/budget
+    # - Use "gemini-3-pro-image-preview" (default) for quality, slides, or normal requests
+    model = "gemini-3-pro-image-preview"  # Replace with appropriate choice
 
 output_format = os.environ.get("NANO_BANANA_FORMAT", "webp").lower()
 quality = int(os.environ.get("NANO_BANANA_QUALITY", "90"))
@@ -237,22 +244,49 @@ Save images to numbered directories:
 - **NNN**: Three-digit zero-padded sequence (001, 002, 003...)
 - **short-name**: kebab-case, 2-4 words from user request
 
-**Naming rules:**
-1. **Check existing directories**: Scan for `NNN-*` folders in current working directory
-2. **Use next available number**: If 001, 002, 003 exist, use 004
-3. **Same topic**: Reuse the same directory for related generations
-4. **New topic**: Create new directory with next sequence number
+**Directory selection - Intent-based decision:**
+
+Claude determines whether this is a **continuation** of existing work or a **new topic** based on conversation context:
+
+**Continuation (reuse existing directory):**
+- User is adding to, editing, or extending previous generation
+- The request relates to content already created in this session
+- User wants variations or modifications of existing work
+- **Action**: Specify the existing directory directly: `OUTPUT_DIR = Path("001-existing-topic")`
+
+**New topic (auto-increment new directory):**
+- User is starting something unrelated to previous work
+- No prior context or different subject matter
+- **Action**: Use auto-increment logic to scan for existing directories and create next numbered one
+
+**When uncertain:**
+- Use `AskUserQuestion` to clarify: "Should I add this to the existing [topic] directory, or create a new one?"
 
 **Examples:**
-- "Generate user auth flow" → `001-user-auth-flow/`
-- "Create cute cat" → `002-cute-cat/`
-- "Make startup logo" → `003-startup-logo/`
 
-**Directory scanning example:**
-```bash
-# Existing: 001-cute-cat/, 002-logo-design/
-# New request: "Generate a sunset landscape"
-# → Scans directory, finds 001 and 002, creates: 003-sunset-landscape/
+```python
+# Example 1: New topic (auto-increment)
+# User: "Generate user auth flow"
+# → No existing context, creates: 001-user-auth-flow/
+
+# Example 2: Continuation (reuse directory)
+# Existing: 001-user-auth-flow/ with login.webp
+# User: "Add a signup screen too"
+# Claude understands: This is continuation of auth flow topic
+# → Reuse: OUTPUT_DIR = Path("001-user-auth-flow")
+# → Saves: 001-user-auth-flow/signup.webp
+
+# Example 3: New topic (auto-increment)
+# Existing: 001-user-auth-flow/
+# User: "Create cute cat illustration"
+# Claude understands: Different topic, not related to auth
+# → Scans, finds 001, creates: 002-cute-cat/
+
+# Example 4: Uncertain (ask user)
+# Existing: 001-japan-trip/ with cover.webp, overview.webp
+# User: "Generate a travel conclusion"
+# Claude uncertain: Could be for japan-trip or new generic travel content
+# → Ask: "Should I add this to the existing japan-trip directory, or create a new one?"
 ```
 
 ### Configuration
@@ -261,11 +295,19 @@ Customize plugin behavior with environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NANO_BANANA_MODEL` | (Claude chooses: Pro or Flash) | Force specific model (overrides Claude's choice) |
+| `NANO_BANANA_MODEL` | (Claude chooses) | Specify image generation model. If set, Claude will NOT override it. Valid models: `gemini-3-pro-image-preview` (quality), `gemini-2.5-flash-image` (speed) |
 | `NANO_BANANA_FORMAT` | `webp` | Output format: `webp`, `jpg`, or `png` |
 | `NANO_BANANA_QUALITY` | `90` | Image quality (1-100) for webp/jpg |
 | `GOOGLE_GEMINI_BASE_URL` | (official API) | Custom API endpoint (for non-official deployments) |
 | `GEMINI_API_KEY` | (falls back to `GOOGLE_API_KEY`) | API key (official or custom endpoint) |
+
+**Model Selection Guidelines:**
+
+When `NANO_BANANA_MODEL` is NOT set, Claude selects model based on user requirements:
+- **Default**: `gemini-3-pro-image-preview` - Best quality, accurate colors, good text rendering (recommended for slides)
+- **Speed/Budget**: `gemini-2.5-flash-image` - Faster generation, lower cost (ONLY when user explicitly requests speed/budget)
+
+**IMPORTANT**: These are IMAGE generation models from the `gemini-image` API series. Do NOT use text generation models like `gemini-2.0-flash-exp`, `gemini-exp-1206`, or `gemini-2.0-flash-thinking-exp-*` - they are incompatible with image generation.
 
 **Lossless WebP Decision Logic:**
 
@@ -289,7 +331,9 @@ else:
 
 ### Image Editing
 
-Load existing image and include in request:
+Load existing image and include in request.
+
+**Directory strategy:** Editing an existing image is a continuation of the same topic, so **reuse the source image's directory**. This keeps all variations together.
 
 ```bash
 uv run - << 'EOF'
@@ -303,24 +347,18 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-# Auto-increment folder detection
-existing_folders = sorted([d for d in Path(".").iterdir()
-                          if d.is_dir() and len(d.name) >= 4
-                          and d.name[:3].isdigit() and d.name[3] == '-'])
-if existing_folders:
-    last_num = int(existing_folders[-1].name[:3])
-    next_num = last_num + 1
-else:
-    next_num = 1
-
-OUTPUT_DIR = Path(f"{next_num:03d}-party-hat")
+# Directory selection: Editing existing image = same topic
+# Reuse the source image's directory for edited output
+OUTPUT_DIR = Path("001-cute-banana")  # Same directory as source image
 OUTPUT_DIR.mkdir(exist_ok=True)
 print(f"Using output directory: {OUTPUT_DIR}")
 
 # Configuration from environment variables
+# IMPORTANT: If NANO_BANANA_MODEL is set, use it - DO NOT override
 model = os.environ.get("NANO_BANANA_MODEL")
 if not model:
-    model = "gemini-3-pro-image-preview"
+    # Only choose model when NANO_BANANA_MODEL is not set
+    model = "gemini-3-pro-image-preview"  # Replace with appropriate choice
 
 output_format = os.environ.get("NANO_BANANA_FORMAT", "webp").lower()
 quality = int(os.environ.get("NANO_BANANA_QUALITY", "90"))
@@ -471,14 +509,20 @@ Before any generation, create a complete plan including:
    Slide 5: Conclusion - Summary and CTA
    ```
 
-3. **Pre-plan output directories**
+3. **Pre-plan output directory and file structure**
+
+   All slides should be saved in a **single directory** with numbered filenames:
+
    ```
-   001-title-slide/
-   002-overview/
-   003-details/
-   004-data-viz/
-   005-conclusion/
+   001-presentation-topic/
+     ├── 001-title.webp
+     ├── 002-overview.webp
+     ├── 003-details.webp
+     ├── 004-data-viz.webp
+     └── 005-conclusion.webp
    ```
+
+   **Critical:** Do NOT create separate directories per slide. Use one shared directory with numbered files.
 
 **Step 2: Parallel Generation**
 
@@ -493,6 +537,23 @@ After parallel generation:
 1. Visual review - Compare all slides side by side
 2. Consistency check - Do colors, fonts, icon styles match?
 3. Sequential fixes - Regenerate any inconsistent slides one by one
+
+**Step 4: Adding More Slides (Continuation)**
+
+If user requests additional slides after initial generation (e.g., "Add conclusion slide", "Generate the ending too"):
+- **Reuse the same directory** by specifying it: `OUTPUT_DIR = Path("001-presentation-topic")`
+- Maintain consistent style specs from initial generation
+- Number the new slide sequentially (e.g., if you have 001-003, new slide is 004)
+
+Example:
+```python
+# Initial generation created: 001-japan-trip/ with 001-cover.webp, 002-overview.webp
+# User: "Add a conclusion slide"
+# Claude understands: This is continuation of japan-trip presentation
+# → Reuse directory:
+OUTPUT_DIR = Path("001-japan-trip")
+# → Save as: 003-conclusion.webp
+```
 
 **When to use:**
 
@@ -653,10 +714,11 @@ digraph file_decision {
 
 **Model Name Errors:**
 - **Error**: `"Model not found"` or `"Invalid model name"`
-- **Fix**: Use exact model names:
+- **Fix**: Use exact IMAGE generation model names:
   - `gemini-3-pro-image-preview` (NOT `gemini-3-pro-image`)
   - `gemini-2.5-flash-image` (NOT `gemini-flash`)
 - **Common typo**: Missing `-preview` or `-image` suffix
+- **Wrong model type**: Using text models like `gemini-2.0-flash-exp` will fail - use image models only
 
 **Aspect Ratio Errors:**
 - **Error**: `"Invalid aspect ratio"`
@@ -709,7 +771,9 @@ digraph file_decision {
 |---------|-----|
 | Creating permanent `.py` files for one-off tasks | Use heredoc instead |
 | Using `google-generativeai` (old API) | Use `google-genai` (new API) |
-| Using wrong model names | Use `gemini-3-pro-image-preview` or `gemini-2.5-flash-image` |
+| Using wrong model names | Use `gemini-3-pro-image-preview` or `gemini-2.5-flash-image` (image generation models only) |
+| Using text generation models | Do NOT use `gemini-2.0-flash-exp`, `gemini-exp-1206`, `gemini-2.0-flash-thinking-exp-*` - they don't generate images |
+| Overriding `NANO_BANANA_MODEL` when set | If user set `NANO_BANANA_MODEL`, respect it - don't change to "cheaper" model |
 | Saving to flat files (`output.png`) | Use `NNN-short-name/` directories |
 | Hardcoding PNG format | Use format conversion with `NANO_BANANA_FORMAT` (default: webp) |
 | Creating workflow orchestrators | Write small scripts, iterate manually |

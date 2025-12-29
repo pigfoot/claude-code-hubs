@@ -13,20 +13,32 @@ uv run - << 'EOF'
 # /// script
 # dependencies = ["google-genai", "pillow"]
 # ///
+import os
 import io
 from pathlib import Path
 from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-# Output directory - Claude sets based on user request (format: NNN-short-name)
-OUTPUT_DIR = Path("001-futuristic-city")  # <-- Claude replaces this dynamically
+# Auto-increment folder detection
+existing_folders = sorted([d for d in Path(".").iterdir()
+                          if d.is_dir() and len(d.name) >= 4
+                          and d.name[:3].isdigit() and d.name[3] == '-'])
+if existing_folders:
+    last_num = int(existing_folders[-1].name[:3])
+    next_num = last_num + 1
+else:
+    next_num = 1
+
+OUTPUT_DIR = Path(f"{next_num:03d}-futuristic-city")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-client = genai.Client()
+# Client with optional custom endpoint
+base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 response = client.models.generate_content(
-    model="gemini-3-pro-image-preview",
+    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
     contents=["Create a detailed architectural blueprint of a futuristic city"],
     config=types.GenerateContentConfig(
         response_modalities=['TEXT', 'IMAGE']
@@ -42,7 +54,7 @@ for part in response.parts:
             pil_image.save(OUTPUT_DIR / "thought.png", "PNG")
             print(f"Thought image saved to {OUTPUT_DIR}/thought.png")
     elif part.inline_data is not None:
-        output_path = OUTPUT_DIR / "output.png"
+        output_path = OUTPUT_DIR / "generated.png"
         genai_image = part.as_image()
         pil_image = PILImage.open(io.BytesIO(genai_image.image_bytes))
         pil_image.save(output_path, "PNG")
@@ -67,20 +79,32 @@ uv run - << 'EOF'
 # /// script
 # dependencies = ["google-genai", "pillow"]
 # ///
+import os
 import io
 from pathlib import Path
 from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-# Output directory - Claude sets based on user request (format: NNN-short-name)
-OUTPUT_DIR = Path("001-weather-chart")  # <-- Claude replaces this dynamically
+# Auto-increment folder detection
+existing_folders = sorted([d for d in Path(".").iterdir()
+                          if d.is_dir() and len(d.name) >= 4
+                          and d.name[:3].isdigit() and d.name[3] == '-'])
+if existing_folders:
+    last_num = int(existing_folders[-1].name[:3])
+    next_num = last_num + 1
+else:
+    next_num = 1
+
+OUTPUT_DIR = Path(f"{next_num:03d}-weather-chart")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-client = genai.Client()
+# Client with optional custom endpoint
+base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 response = client.models.generate_content(
-    model="gemini-3-pro-image-preview",
+    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
     contents=["Visualize current weather for San Francisco as a chart"],
     config=types.GenerateContentConfig(
         response_modalities=['TEXT', 'IMAGE'],
@@ -131,14 +155,25 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-# Output directory - Claude sets based on user request (format: NNN-short-name)
-OUTPUT_DIR = Path("001-photosynthesis")  # <-- Claude replaces this dynamically
+# Auto-increment folder detection
+existing_folders = sorted([d for d in Path(".").iterdir()
+                          if d.is_dir() and len(d.name) >= 4
+                          and d.name[:3].isdigit() and d.name[3] == '-'])
+if existing_folders:
+    last_num = int(existing_folders[-1].name[:3])
+    next_num = last_num + 1
+else:
+    next_num = 1
+
+OUTPUT_DIR = Path(f"{next_num:03d}-photosynthesis")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-client = genai.Client()
+# Client with optional custom endpoint
+base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 chat = client.chats.create(
-    model="gemini-3-pro-image-preview",
+    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
     config=types.GenerateContentConfig(
         response_modalities=['TEXT', 'IMAGE']
     )
@@ -200,11 +235,22 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-# Output directory - Claude sets based on user request (format: NNN-short-name)
-OUTPUT_DIR = Path("001-group-photo")  # <-- Claude replaces this dynamically
+# Auto-increment folder detection
+existing_folders = sorted([d for d in Path(".").iterdir()
+                          if d.is_dir() and len(d.name) >= 4
+                          and d.name[:3].isdigit() and d.name[3] == '-'])
+if existing_folders:
+    last_num = int(existing_folders[-1].name[:3])
+    next_num = last_num + 1
+else:
+    next_num = 1
+
+OUTPUT_DIR = Path(f"{next_num:03d}-group-photo")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-client = genai.Client()
+# Client with optional custom endpoint
+base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 # Load reference images
 person1 = PILImage.open("person1.png")
@@ -212,7 +258,7 @@ person2 = PILImage.open("person2.png")
 person3 = PILImage.open("person3.png")
 
 response = client.models.generate_content(
-    model="gemini-3-pro-image-preview",
+    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
     contents=[
         "Office group photo of these people making funny faces",
         person1,
@@ -252,14 +298,25 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-# Output directory - Claude sets based on user request (format: NNN-short-name)
-OUTPUT_DIR = Path("001-butterfly-4k")  # <-- Claude replaces this dynamically
+# Auto-increment folder detection
+existing_folders = sorted([d for d in Path(".").iterdir()
+                          if d.is_dir() and len(d.name) >= 4
+                          and d.name[:3].isdigit() and d.name[3] == '-'])
+if existing_folders:
+    last_num = int(existing_folders[-1].name[:3])
+    next_num = last_num + 1
+else:
+    next_num = 1
+
+OUTPUT_DIR = Path(f"{next_num:03d}-butterfly-4k")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-client = genai.Client()
+# Client with optional custom endpoint
+base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 response = client.models.generate_content(
-    model="gemini-3-pro-image-preview",
+    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
     contents=["Da Vinci style anatomical sketch of a butterfly"],
     config=types.GenerateContentConfig(
         response_modalities=['TEXT', 'IMAGE'],
