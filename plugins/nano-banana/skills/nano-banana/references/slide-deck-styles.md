@@ -1,29 +1,8 @@
 # Slide Deck & Presentation Styles
 
-Prompt templates for creating professional presentation slides, infographics, and slide deck content using Gemini image generation.
+Prompt templates for professional presentation slides, infographics, and slide deck content.
 
-> **⚠️ CRITICAL - NotebookLM Branding Protection**:
->
-> **DO NOT include NotebookLM brand/logo/name in generated slide decks!**
->
-> **How to use NotebookLM style correctly:**
-> 1. When user specifies `style: "notebooklm"` → **YES, apply the visual aesthetic**
-> 2. Apply these NotebookLM-inspired characteristics (see lines 586-593 in SKILL.md):
->    - Polished, well-structured tech infographic aesthetic
->    - Clean slide-level organization with logical flow
->    - Professional but accessible design
->    - Minimal text, maximum visual communication
-> 3. **CRITICAL**: When writing the Gemini prompt → **NEVER mention "NotebookLM"**:
->    - ✅ Write: "clean professional presentation aesthetic", "modern tech infographic style", "polished slide design with Google-style documentation aesthetic"
->    - ❌ **NEVER write**: "NotebookLM", "NotebookLM style", "NotebookLM aesthetic", "NotebookLM logo", "NotebookLM brand"
->    - ❌ **NEVER include**: NotebookLM logos, branding, watermarks, or trademarks in the generated images
->
-> **Why**: Using "NotebookLM" in prompts may cause Gemini to generate Google's NotebookLM branding/logos, which:
-> - Violates trademark/brand usage policies
-> - Creates misleading content (your slides are not official NotebookLM content)
-> - May trigger brand protection filters
->
-> **Summary**: `notebooklm` is a style **trigger** for Claude (use the aesthetic!), but **translate to descriptive terms** in the Gemini prompt. Never include NotebookLM branding in the output.
+**⚠️ NotebookLM Style**: Apply aesthetic but **NEVER** use "NotebookLM" brand/logo in prompts (see SKILL.md for details)
 
 **Important**: All slide deck styles automatically use **lossless WebP** format (VP8L encoding):
 - Saves 20-30% file size compared to PNG (typical for diagrams/slides)

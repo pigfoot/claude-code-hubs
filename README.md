@@ -420,106 +420,58 @@ claude plugin install --scope user nano-banana@pigfoot-marketplace
 ```
 
 **What it does:**
-Generates and edits images using Google's Gemini models with Python scripting powered by uv.
+Generates and edits images using Google's Gemini or Imagen models with Python scripting powered by uv.
+
+**Recent Improvements (v0.0.4):**
+- ✅ Fixed API confusion between Gemini and Imagen (automatic detection)
+- ✅ Added Imagen support for multi-image generation
+- ✅ Respect `NANO_BANANA_MODEL` environment variable (no more overrides)
+- ✅ Reduced skill token consumption by 51%
 
 **Benefits:**
-- ✅ **AI image generation** - Create images from text descriptions using Gemini 3 Pro (Nano Banana Pro)
+- ✅ **Dual API support** - Gemini (quality, slides) or Imagen (multiple images, negative prompts)
+- ✅ **AI image generation** - Create images from text descriptions
 - ✅ **Image editing** - Edit existing images with AI-powered transformations
 - ✅ **Interactive prompting** - Get help crafting effective prompts for better results
-- ✅ **Inline dependencies** - Self-contained Python scripts with `uv run` and inline script metadata
-- ✅ **Multiple models** - Choose between fast generation and professional quality
+- ✅ **Brand style support** - Trend Micro and NotebookLM presentation styles
+- ✅ **Multiple models** - Choose between quality and speed
 - ✅ **Format flexibility** - Output WebP (default), JPEG, or PNG with quality control
 
 **Prerequisites:**
 - [uv](https://docs.astral.sh/uv/) installed
 - `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) environment variable set with a valid Gemini API key
 
-**Configuration:**
+**📖 Complete Documentation:**
+See [plugins/nano-banana/README.md](./plugins/nano-banana/README.md) for:
+- Detailed API selection logic (Gemini vs Imagen)
+- Configuration examples (official API, custom endpoints)
+- Brand style support (Trend Micro, NotebookLM)
+- Slide deck visual styles (Professional, Blackboard, Data Viz, etc.)
+- Complete usage examples
 
-Customize behavior using environment variables:
+**Quick Configuration:**
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NANO_BANANA_MODEL` | (Claude chooses: Pro or Flash) | Force specific model (overrides Claude's choice) |
+| `NANO_BANANA_MODEL` | (Claude chooses) | Gemini (`gemini-*-image*`) or Imagen (`imagen-*`) - auto-detects API |
 | `NANO_BANANA_FORMAT` | `webp` | Output format: `webp`, `jpg`, or `png` |
 | `NANO_BANANA_QUALITY` | `90` | Image quality (1-100) for webp/jpg |
-| `GOOGLE_GEMINI_BASE_URL` | (official API) | Custom API endpoint (for non-official deployments) |
-| `GEMINI_API_KEY` | (falls back to `GOOGLE_API_KEY`) | API key (official or custom endpoint) |
 
-**Official Google API:**
+**Quick Start:**
 ```bash
-export GEMINI_API_KEY="your-api-key"  # Or GOOGLE_API_KEY (backward compatible)
-# Model: Claude chooses Pro (default) or Flash (budget/fast) automatically
-# Optional: force specific model or format
-# export NANO_BANANA_MODEL="gemini-2.5-flash-image"
-# export NANO_BANANA_FORMAT="jpg"
+# Official Google API
+export GEMINI_API_KEY="your-api-key"
+
+# Generate image
+"Generate a photorealistic cat wearing sunglasses, beach sunset, 16:9"
+
+# With brand style
+"Create a professional infographic about CI/CD, style: trend"
+
+# Multiple images with Imagen
+export NANO_BANANA_MODEL="imagen-4.0-generate-001"
+"Generate 4 variations of running shoes product photos"
 ```
-
-**Custom Endpoint (self-hosted or proxy):**
-```bash
-export GOOGLE_GEMINI_BASE_URL="https://your-api.example.com/v1"
-export GEMINI_API_KEY="your-custom-api-key"
-export NANO_BANANA_MODEL="gemini-3-pro-image"
-export NANO_BANANA_FORMAT="webp"
-```
-
-**Note:** When using a custom model, set `GOOGLE_GEMINI_BASE_URL` and `GEMINI_API_KEY` to match your deployment.
-
-**Usage:**
-The plugin operates in two modes automatically based on your request:
-
-**Direct Generation Mode** (detailed prompts or with style):
-```
-# Example 1: Detailed prompt
-"Generate a photorealistic cat wearing sunglasses on a beach chair, sunset golden hour lighting, 16:9"
-→ Output: 001-beach-cat/generated.webp
-
-# Example 2: With brand style (structured)
-"Generate a cybersecurity dashboard infographic, style: trend"
-→ Applies Trend Micro colors (Trend Red #d71920, Guardian Red, grays)
-→ Output: 002-security-dashboard/generated.webp
-
-# Example 3: With brand style (natural language)
-"Use style trend to generate LLM introduction infographic"
-→ Detects "style trend", applies brand colors
-→ Output: 003-llm-intro/generated.webp
-
-# Example 4: Image editing
-"Edit 001-beach-cat/generated.webp and add a party hat"
-→ Output: 004-party-hat/edited.webp
-
-# Example 5: Slide deck / Presentation (NotebookLM style)
-"Create a slide explaining how transformers work, use notebooklm style"
-→ Detects notebooklm style, uses professional infographic aesthetic
-→ Output: 005-transformer-architecture/generated.webp
-```
-
-**Interactive Prompting Mode** (vague requests or explicit help):
-```
-# Example 6: Explicit prompting request
-"Help me write a good prompt for a professional poster"
-→ Claude asks questions (type, subject, style)
-→ Crafts optimized prompt
-→ Generates with crafted prompt
-
-# Example 7: Vague prompt (triggers prompting)
-"Make a logo"
-→ Claude: "Let me help you design a better prompt"
-→ Asks about logo type, colors, style
-→ Generates with refined prompt
-```
-
-**Skills Included:**
-- `nano-banana` - Unified skill with dual-mode operation (direct generation + interactive prompting)
-
-**Style Support:**
-- `style: "trend"` or `style: trend` - **Trend Micro brand colors + NotebookLM slide aesthetic** (professional presentations, polished infographics, 16:9 format with Trend Red #d71920, Guardian Red, grays, Dark Blue/Teal) - **Uses lossless WebP (saves 20-30% vs PNG)**
-- `style: "notebooklm"` or `notebooklm style` - NotebookLM presentation aesthetic (professional infographics, slide decks) - **Uses lossless WebP (saves 20-30% vs PNG)**
-- `use style trend` or `with trend colors` - Natural language syntax
-- `style: "custom"` - Claude asks for your color preferences
-
-**Behind the scenes:**
-Claude uses Python with Google's Gemini API to generate images. Scripts run via `uv` with automatic dependency management, making it easy to create high-quality AI art. Images use WebP format: lossless VP8L for slide decks (saves 20-30% vs PNG, zero quality loss), lossy VP8 for photos (~30% smaller than JPEG).
 
 ---
 

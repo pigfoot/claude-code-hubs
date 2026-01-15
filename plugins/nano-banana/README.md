@@ -1,13 +1,28 @@
 # Nano Banana Plugin
 
-Python scripting and Gemini image generation using uv with inline script dependencies.
+Python scripting and Gemini/Imagen image generation using uv with inline script dependencies.
+
+## ✨ Recent Improvements (v0.0.4)
+
+**Problem Solved:**
+- ✅ Fixed API confusion between Gemini and Imagen
+- ✅ Added clear warnings for non-existent types (`ImageGenerationConfig`)
+- ✅ Respect `NANO_BANANA_MODEL` environment variable (no more overrides)
+- ✅ Reduced token consumption by 51% (795 → 387 lines in SKILL.md)
+
+**What's New:**
+- 🚨 **CRITICAL API Selection** section at top of skill
+- 📚 Complete API references: `gemini-api.md` and `imagen-api.md`
+- 🎨 Imagen support for multi-image generation
+- ⚡ 51% faster skill loading with progressive disclosure
 
 ## Features
 
-- **Image Generation**: Generate images using Google's Gemini models
+- **Dual API Support**: Generate images using Gemini OR Imagen models
+- **Image Generation**: Gemini (quality, slides) or Imagen (multiple images, negative prompts)
 - **Image Editing**: Edit existing images with AI
-- **Interactive Prompting**: Get help crafting effective prompts with best practices (integrated mode selection)
-- **Brand Style Support**: Apply corporate brand guidelines (e.g., `style: "trend"` for Trend Micro brand colors)
+- **Interactive Prompting**: Get help crafting effective prompts with best practices
+- **Brand Style Support**: Trend Micro (`style: "trend"`) and NotebookLM styles
 - **Python Scripting**: Run Python scripts with uv using heredocs
 - **Inline Dependencies**: Self-contained scripts with `# /// script` metadata
 
@@ -22,11 +37,32 @@ Customize plugin behavior using environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NANO_BANANA_MODEL` | (Claude chooses: Pro or Flash) | Force specific model (overrides Claude's choice) |
+| `NANO_BANANA_MODEL` | (Claude chooses) | **Specify model name** - determines API automatically:<br>• Contains `"imagen"` → Imagen API<br>• Otherwise → Gemini API<br>**IMPORTANT:** Used exactly as-is, no modifications |
 | `NANO_BANANA_FORMAT` | `webp` | Output image format: `webp`, `jpg`, or `png` |
 | `NANO_BANANA_QUALITY` | `90` | Image quality (1-100) for webp/jpg formats |
 | `GOOGLE_GEMINI_BASE_URL` | (official API) | Custom API endpoint (for non-official deployments) |
 | `GEMINI_API_KEY` | (falls back to `GOOGLE_API_KEY`) | API key (official or custom endpoint) |
+
+### API Selection Logic
+
+The plugin automatically selects the correct API based on the model name:
+
+```python
+# Automatic detection
+if "imagen" in model.lower():
+    use_imagen_api = True   # → generate_images()
+else:
+    use_gemini_api = True   # → generate_content()
+```
+
+**Supported Models:**
+- **Gemini**: `gemini-3-pro-image-preview`, `gemini-2.5-flash-image`, or custom names
+- **Imagen**: `imagen-4.0-generate-001`, or custom names containing "imagen"
+
+**⚠️ Custom Endpoints:**
+- Model names from custom endpoints are used **exactly as-is**
+- Do NOT add `-preview` or other suffixes
+- Example: If your endpoint uses `gemini-3-pro-image` (no `-preview`), set it exactly like that
 
 ### Examples
 
@@ -170,21 +206,49 @@ Claude:
   [Continues with prompting workflow...]
 ```
 
-### Brand Style Support
+### Style Support
 
-**Supported styles:**
-- `style: "trend"` or `style: trend` - **Trend Micro brand colors + NotebookLM slide aesthetic**
-  - Automatically applies professional presentation style (polished infographic, clean layout, 16:9 format)
-  - Colors: Trend Red #d71920 as hero, Guardian Red, grays, Dark Blue/Teal accents
-  - **Uses lossless WebP** (VP8L) - saves 20-30% vs PNG, zero quality loss
-  - Perfect for corporate slide decks, technical presentations, and professional infographics
-- `style: "notebooklm"` or `notebooklm style` - **NotebookLM presentation aesthetic**
-  - Professional infographics and slide decks
-  - **Uses lossless WebP** (VP8L) - saves 20-30% vs PNG with no quality loss
-- `use style trend` or `with trend colors` - Natural language detection
-- `style: "custom"` - Claude will ask for your color preferences
+#### Brand Styles
 
-When slide deck styles (Trend or NotebookLM) are specified, both brand guidelines and lossless WebP format are automatically applied for professional, on-brand, optimally-compressed slide deck imagery.
+**Specify with:** `style: "stylename"` or natural language
+
+| Style | Syntax | Colors | Use Case |
+|-------|--------|--------|----------|
+| **Trend Micro** | `style: "trend"` or "use style trend" | Trend Red (#d71920), Guardian Red, grays | Corporate presentations, tech slides |
+| **NotebookLM** | `style: "notebooklm"` or "notebooklm style" | Professional aesthetic (⚠️ no branding) | Clean presentation slides, infographics |
+| **Custom** | `style: "custom"` | Your choice | Claude asks for color preferences |
+
+#### Slide Deck Visual Styles
+
+**Available when creating slides/presentations:**
+
+| Visual Style | Best For | Characteristics |
+|--------------|----------|-----------------|
+| **Professional** | Business reports, tech presentations | Deep blue background (#003366), clean typography, neon accents |
+| **Blackboard** | Educational content, tutorials | Green/black board, chalk texture, hand-drawn feel |
+| **Data Viz** | Charts, metrics, analytics | High contrast, clean gridlines, pictogram callouts |
+| **Process Flow** | Step-by-step guides, workflows | Numbered steps, connecting arrows, geometric shapes |
+| **Overview** | Concept summaries, topic intros | Bento grid layout, pastel colors, icon-driven |
+
+**Claude automatically chooses the most appropriate visual style** based on your content type. To request a specific style:
+
+```
+"Create a professional infographic explaining CI/CD pipelines"
+"Make a blackboard-style tutorial slide for sorting algorithms"
+"Generate a data viz slide showing Q4 metrics"
+```
+
+#### Automatic Features for Slide Decks
+
+When creating slides/presentations:
+- ✅ **Lossless WebP** format (VP8L encoding)
+  - 20-30% smaller than PNG
+  - Zero quality loss
+  - Perfect for text and icons
+- ✅ **16:9 aspect ratio** (default for presentations)
+- ✅ **2K resolution** (optimal for displays)
+
+**Priority:** Inline spec → Ask in Interactive Mode → No style (Direct Mode default)
 
 ## Quick Example
 
