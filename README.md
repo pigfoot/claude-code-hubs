@@ -283,13 +283,20 @@ claude plugin install --scope user superpowers@pigfoot-marketplace
 claude plugin marketplace update pigfoot-marketplace
 ```
 
-**Upgrade plugins:**
+**Update plugins:**
 ```bash
-# Upgrade specific plugin
-claude plugin upgrade commit@pigfoot-marketplace
+# Update specific plugin
+claude plugin update commit@pigfoot-marketplace
 
-# Upgrade all plugins from pigfoot marketplace
-claude plugin upgrade commit@pigfoot-marketplace nano-banana@pigfoot-marketplace secure-container-build@pigfoot-marketplace github-actions-container-build@pigfoot-marketplace superpowers@pigfoot-marketplace
+# Update all pigfoot plugins (run one by one)
+claude plugin update commit@pigfoot-marketplace
+claude plugin update nano-banana@pigfoot-marketplace
+claude plugin update secure-container-build@pigfoot-marketplace
+claude plugin update github-actions-container-build@pigfoot-marketplace
+
+# Update third-party plugins installed via this marketplace
+# (Note: superpowers must be installed first via: claude plugin install --scope user superpowers@pigfoot-marketplace)
+claude plugin update superpowers@pigfoot-marketplace
 ```
 
 ### Step 3: Setup CLAUDE.md Template (Optional but Recommended)
