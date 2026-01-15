@@ -219,6 +219,45 @@ Write-Host "✅ Permissions configured successfully!"
 
 </details>
 
+**Optional: Configure Language (Non-English Users)**
+
+If you want Claude Code to respond in a specific language, add the `language` field to your settings:
+
+```bash
+# Configure language (e.g., Traditional Chinese for Taiwan)
+jq '.language = "繁體中文台灣用語"' ~/.claude/settings.json > /tmp/temp.json && mv /tmp/temp.json ~/.claude/settings.json
+
+# Other examples:
+# jq '.language = "简体中文"' ~/.claude/settings.json > /tmp/temp.json && mv /tmp/temp.json ~/.claude/settings.json
+# jq '.language = "日本語"' ~/.claude/settings.json > /tmp/temp.json && mv /tmp/temp.json ~/.claude/settings.json
+# jq '.language = "Español"' ~/.claude/settings.json > /tmp/temp.json && mv /tmp/temp.json ~/.claude/settings.json
+
+# Remove language setting (revert to default English)
+# jq 'del(.language)' ~/.claude/settings.json > /tmp/temp.json && mv /tmp/temp.json ~/.claude/settings.json
+```
+
+<details>
+<summary>Windows PowerShell</summary>
+
+```powershell
+# Configure language (e.g., Traditional Chinese for Taiwan)
+$settingsPath = "$env:USERPROFILE\.claude\settings.json"
+$settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
+$settings | Add-Member -Type NoteProperty -Name "language" -Value "繁體中文台灣用語" -Force
+$settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
+
+# Other examples:
+# $settings | Add-Member -Type NoteProperty -Name "language" -Value "简体中文" -Force
+# $settings | Add-Member -Type NoteProperty -Name "language" -Value "日本語" -Force
+# $settings | Add-Member -Type NoteProperty -Name "language" -Value "Español" -Force
+
+# Remove language setting (revert to default English)
+# $settings.PSObject.Properties.Remove("language")
+# $settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
+```
+
+</details>
+
 ### Step 2: Install Plugins
 
 Install plugins from [pigfoot/claude-code-hubs](https://github.com/pigfoot/claude-code-hubs) using CLI:
@@ -343,13 +382,13 @@ Claude automatically fetches documentation from Context7's curated database.
 
 **Note:** This is the official plugin from @claude-plugins-official, maintained by Upstash.
 
-**Optional: Auto-configure package runner (bunx/npx)**
+**Optional: Configure package runner (bunx recommended)**
 
-By default, context7 uses `npx` (Node.js package runner). This script auto-detects and configures the best available option:
+By default, context7 uses `npx` (Node.js package runner). This script configures bunx (recommended) or npx:
 
 **macOS, Linux, WSL, Git Bash:**
 ```bash
-# Auto-detect and configure context7 package runner
+# Configure context7 to use bunx (recommended) or npx
 config_file="$HOME/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/context7/.mcp.json"
 
 if [ ! -f "$config_file" ]; then
@@ -359,26 +398,30 @@ if [ ! -f "$config_file" ]; then
 fi
 
 if command -v bunx &> /dev/null; then
-  # Use bunx (fastest: ~50-100ms faster than npx)
+  # Use bunx (recommended: ~50-100ms faster than npx)
   jq '.context7.command = "bunx" | .context7.args = ["@upstash/context7-mcp"]' "$config_file" > /tmp/mcp.json && mv /tmp/mcp.json "$config_file"
   echo "✅ Configured context7 to use bunx (fastest)"
 elif command -v npx &> /dev/null; then
-  # Use npx (default Node.js runner)
+  # Use npx (fallback Node.js runner)
   jq '.context7.command = "npx" | .context7.args = ["-y", "@upstash/context7-mcp"]' "$config_file" > /tmp/mcp.json && mv /tmp/mcp.json "$config_file"
-  echo "✅ Configured context7 to use npx (default)"
+  echo "✅ Configured context7 to use npx (fallback)"
 else
   echo "❌ Neither bunx nor npx found. Install one of:"
-  echo "   - Bun: curl -fsSL https://bun.sh/install | bash"
+  echo "   - Bun (recommended): curl -fsSL https://bun.sh/install | bash"
   echo "   - Node.js: see https://nodejs.org/"
   exit 1
 fi
+
+# Clear plugin cache to apply changes immediately
+rm -rf "$HOME/.claude/plugins/cache"
+echo "✅ Plugin cache cleared - changes will take effect on next Claude Code start"
 ```
 
 <details>
 <summary>Windows PowerShell</summary>
 
 ```powershell
-# Auto-detect and configure context7 package runner
+# Configure context7 to use bunx (recommended) or npx
 $configFile = "$env:USERPROFILE\.claude\plugins\marketplaces\claude-plugins-official\external_plugins\context7\.mcp.json"
 
 if (-not (Test-Path $configFile)) {
@@ -390,23 +433,27 @@ if (-not (Test-Path $configFile)) {
 $config = Get-Content $configFile -Raw | ConvertFrom-Json
 
 if (Get-Command bunx -ErrorAction SilentlyContinue) {
-    # Use bunx (fastest: ~50-100ms faster than npx)
+    # Use bunx (recommended: ~50-100ms faster than npx)
     $config.context7.command = "bunx"
     $config.context7.args = @("@upstash/context7-mcp")
     $config | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $configFile
     Write-Host "✅ Configured context7 to use bunx (fastest)" -ForegroundColor Green
 } elseif (Get-Command npx -ErrorAction SilentlyContinue) {
-    # Use npx (default Node.js runner)
+    # Use npx (fallback Node.js runner)
     $config.context7.command = "npx"
     $config.context7.args = @("-y", "@upstash/context7-mcp")
     $config | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $configFile
-    Write-Host "✅ Configured context7 to use npx (default)" -ForegroundColor Green
+    Write-Host "✅ Configured context7 to use npx (fallback)" -ForegroundColor Green
 } else {
     Write-Host "❌ Neither bunx nor npx found. Install one of:" -ForegroundColor Red
-    Write-Host "   - Bun: https://bun.sh/install"
+    Write-Host "   - Bun (recommended): https://bun.sh/install"
     Write-Host "   - Node.js: https://nodejs.org/"
     exit 1
 }
+
+# Clear plugin cache to apply changes immediately
+Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\plugins\cache" -ErrorAction SilentlyContinue
+Write-Host "✅ Plugin cache cleared - changes will take effect on next Claude Code start" -ForegroundColor Green
 ```
 
 </details>
