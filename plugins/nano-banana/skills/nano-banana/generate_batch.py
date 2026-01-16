@@ -202,14 +202,23 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
                 prompt = f"Data visualization slide: {prompt}. Clear charts and graphs, professional color scheme."
             elif style == 'infographic':
                 prompt = f"Infographic style: {prompt}. Visual storytelling with icons and illustrations."
+            elif style == 'trendlife':
+                # TrendLife brand style with colors (logo added later via overlay)
+                prompt = f"{prompt}\n\nUse TrendLife brand colors for Trend Micro presentations:\n- IMPORTANT: Title text and all headings MUST be in Trend Red (#D71920)\n- Primary accents and highlights: Trend Red (#D71920)\n- Guardian Red (#6F0000) for supporting elements and depth\n- Neutral palette: Dark gray (#57585B), medium gray (#808285), light gray (#E7E6E6)\n- Black (#000000) for body text, white (#FFFFFF) for backgrounds\nKeep the design clean, professional, and suitable for corporate presentations.\nDO NOT include any logos or brand text - these will be added separately."
 
         # Determine if lossless is needed (for slides/diagrams)
-        use_lossless = output_format == 'webp' and slide.get('style') in ['professional', 'data-viz', 'infographic']
+        use_lossless = output_format == 'webp' and slide.get('style') in ['professional', 'data-viz', 'infographic', 'trendlife']
+
+        # Get aspect ratio from slide config (default to 16:9 for slides)
+        aspect_ratio = slide.get('aspect_ratio', '16:9')
 
         # Generate image
         config = types.GenerateContentConfig(
-            temperature=1.0,
-            response_modalities=['IMAGE']
+            response_modalities=['IMAGE'],
+            image_config=types.ImageConfig(
+                aspect_ratio=aspect_ratio,
+                image_size='2K'
+            )
         )
 
         response = client.models.generate_content(
@@ -243,6 +252,34 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
             image.save(output_path, 'JPEG', quality=quality, optimize=True)
         else:
             return False, None, f"Unsupported format: {output_format}"
+
+        # TrendLife Logo Overlay (MANDATORY for trendlife style)
+        if slide.get('style') == 'trendlife':
+            from logo_overlay import overlay_logo, detect_layout_type
+
+            # Detect layout type from prompt
+            layout_type = detect_layout_type(slide['prompt'], slide_number=slide['number'])
+
+            # Logo path
+            logo_path = Path(__file__).parent / 'assets/logos/trendlife-logo.png'
+
+            # Create temporary path for overlay
+            temp_output = output_path.with_stem(output_path.stem + '_with_logo')
+
+            try:
+                # Apply logo overlay
+                overlay_logo(
+                    background_path=output_path,
+                    logo_path=logo_path,
+                    output_path=temp_output,
+                    layout_type=layout_type
+                )
+
+                # Replace original with logo version
+                temp_output.replace(output_path)
+            except Exception as e:
+                # Log warning but don't fail the slide generation
+                print(f"Warning: Logo overlay failed for slide {slide['number']}: {e}", file=sys.stderr)
 
         # Get file size
         size_kb = output_path.stat().st_size // 1024
@@ -280,12 +317,21 @@ def generate_slide_imagen(client: genai.Client, slide: Dict,
                 prompt = f"Data visualization slide: {prompt}. Clear charts and graphs, professional color scheme."
             elif style == 'infographic':
                 prompt = f"Infographic style: {prompt}. Visual storytelling with icons and illustrations."
+            elif style == 'trendlife':
+                # TrendLife brand style with colors (logo added later via overlay)
+                prompt = f"{prompt}\n\nUse TrendLife brand colors for Trend Micro presentations:\n- IMPORTANT: Title text and all headings MUST be in Trend Red (#D71920)\n- Primary accents and highlights: Trend Red (#D71920)\n- Guardian Red (#6F0000) for supporting elements and depth\n- Neutral palette: Dark gray (#57585B), medium gray (#808285), light gray (#E7E6E6)\n- Black (#000000) for body text, white (#FFFFFF) for backgrounds\nKeep the design clean, professional, and suitable for corporate presentations.\nDO NOT include any logos or brand text - these will be added separately."
+
+        # Get aspect ratio from slide config (default to 16:9 for slides)
+        aspect_ratio = slide.get('aspect_ratio', '16:9')
 
         # Generate image using Imagen API
         response = client.models.generate_images(
             model=model,
             prompt=prompt,
-            config=types.GenerateImagesConfig()
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                aspect_ratio=aspect_ratio
+            )
         )
 
         # Save image
@@ -298,18 +344,49 @@ def generate_slide_imagen(client: genai.Client, slide: Dict,
         slide_num = slide['number']
         output_path = output_dir / f"slide-{slide_num:02d}.{output_format}"
 
-        use_lossless = output_format == 'webp' and slide.get('style') in ['professional', 'data-viz', 'infographic']
+        use_lossless = output_format == 'webp' and slide.get('style') in ['professional', 'data-viz', 'infographic', 'trendlife']
+
+        # Convert to PIL Image
+        pil_image = PILImage.open(io.BytesIO(image.image_bytes))
 
         if output_format == 'webp':
-            image.save(output_path, 'WEBP', quality=quality, lossless=use_lossless)
+            pil_image.save(output_path, 'WEBP', quality=quality, lossless=use_lossless)
         elif output_format == 'png':
-            image.save(output_path, 'PNG', optimize=True)
+            pil_image.save(output_path, 'PNG', optimize=True)
         elif output_format in ['jpeg', 'jpg']:
-            if image.mode in ('RGBA', 'LA', 'P'):
-                image = image.convert('RGB')
-            image.save(output_path, 'JPEG', quality=quality, optimize=True)
+            if pil_image.mode in ('RGBA', 'LA', 'P'):
+                pil_image = pil_image.convert('RGB')
+            pil_image.save(output_path, 'JPEG', quality=quality, optimize=True)
         else:
             return False, None, f"Unsupported format: {output_format}"
+
+        # TrendLife Logo Overlay (MANDATORY for trendlife style)
+        if slide.get('style') == 'trendlife':
+            from logo_overlay import overlay_logo, detect_layout_type
+
+            # Detect layout type from prompt
+            layout_type = detect_layout_type(slide['prompt'], slide_number=slide['number'])
+
+            # Logo path
+            logo_path = Path(__file__).parent / 'assets/logos/trendlife-logo.png'
+
+            # Create temporary path for overlay
+            temp_output = output_path.with_stem(output_path.stem + '_with_logo')
+
+            try:
+                # Apply logo overlay
+                overlay_logo(
+                    background_path=output_path,
+                    logo_path=logo_path,
+                    output_path=temp_output,
+                    layout_type=layout_type
+                )
+
+                # Replace original with logo version
+                temp_output.replace(output_path)
+            except Exception as e:
+                # Log warning but don't fail the slide generation
+                print(f"Warning: Logo overlay failed for slide {slide['number']}: {e}", file=sys.stderr)
 
         return True, str(output_path), None
 

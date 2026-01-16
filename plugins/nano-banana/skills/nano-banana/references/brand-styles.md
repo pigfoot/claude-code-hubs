@@ -4,113 +4,101 @@ This file contains brand color palettes and style guidelines for generating on-b
 
 ---
 
-## Trend Micro
+## TrendLife
 
-Corporate brand identity for Trend Micro, a global leader in cybersecurity solutions.
+Corporate brand identity for Trend Micro's "TrendLife" product line.
 
 ### Color Palette
 
-**Primary Palette (Always First Choice)**
-
-The primary palette should always be your first choice. Trend Red is the "hero" color and should be the first order of attention in any design.
-
+**Primary Colors:**
 | Color Name | Hex Code | Usage |
 |------------|----------|-------|
-| **Trend Red** | `#d71920` | Hero/accent color - primary brand identifier |
-| Trend Red 80% | `#de543b` | Tinted variations |
-| Trend Red 60% | `#e67c60` | Tinted variations |
-| Trend Red 40% | `#eda389` | Tinted variations |
-| **Guardian Red** | `#6f0000` | Intensity and supporting elements |
+| **Trend Red** | `#D71920` | Primary brand color, accents |
+| **Guardian Red** | `#6F0000` | Supporting elements, intensity |
+| Trend Red 80% | `#DE543B` | Tinted variations |
+| Trend Red 40% | `#EDA389` | Light tinted variations |
 | Black | `#000000` | Strong contrast |
-| White | `#ffffff` | Clean backgrounds, text |
+| White | `#FFFFFF` | Clean backgrounds |
 
-**Grays (K10-K90)**
-
-Use for backgrounds, neutrals, and sophistication:
-
+**Grays (Neutral Palette):**
 | Gray Level | Hex Code |
 |------------|----------|
-| K10 (lightest) | `#e6e7e8` |
-| K20 | `#d1d3d4` |
-| K30 | `#bcbec0` |
-| K40 | `#a7a9ac` |
-| K50 | `#939598` |
-| K60 | `#808285` |
-| K70 | `#6d6e71` |
-| K80 | `#58595b` |
-| K90 (darkest) | `#414042` |
-
-**Secondary Palette (Use Sparingly)**
-
-Only use for complex visuals (data visualization, diagrams). Maximum 2 secondary colors per design.
-
-| Color Name | Hex Code | When to Use |
-|------------|----------|-------------|
-| Orange | `#f9a25e` | Warmth, alerts |
-| Yellow | `#ffde6c` | Attention, highlights |
-| Sage | `#c3d7a4` | Calm, growth |
-| Green | `#73c167` | Success, security |
-| Purple | `#9a4e9e` | Innovation |
-| **Dark Blue** | `#005295` | Professionalism, trust |
-| Light Blue | `#56a0d3` | Information |
-| **Teal** | `#2cafa4` | Technology, modern |
-
-**Recommended Secondary Colors:** Dark Blue and Teal are preferred when additional colors are needed beyond the primary palette.
-
-### Style Guidelines
-
-**When generating images with Trend Micro brand style:**
-
-1. **Color Hierarchy:**
-   - Trend Red (#d71920) must be the primary focus color
-   - Guardian Red (#6f0000) for supporting elements and depth
-   - Grays (#58595b to #e6e7e8) for backgrounds and neutrals
-   - Black and white for strong contrast and clean visual identity
-
-2. **Color Restrictions:**
-   - Limit to primary palette whenever possible
-   - If additional colors needed: use **only** Dark Blue (#005295) or Teal (#2cafa4)
-   - Maximum 2 secondary colors in any design
-   - Never mix more than 4-5 colors total
-
-3. **Design Principles:**
-   - Clean and professional aesthetic
-   - Clear intent in color usage - every color should have a purpose
-   - Strong hierarchy with Trend Red as the focal point
-   - Use grays to create sophistication and balance
-
-4. **Typical Use Cases:**
-   - Product images: Trend Red as primary accent
-   - Infographics: Trend Red for key metrics, grays for structure, Dark Blue/Teal for data categories
-   - UI mockups: Trend Red for CTAs, Guardian Red for errors/warnings, grays for interface
-   - Presentations: Trend Red headers, K80 gray body text, white backgrounds
+| Dark Gray | `#57585B` |
+| Medium Gray | `#808285` |
+| Light Gray | `#E7E6E6` |
 
 ### Prompt Template
 
-When `style: "trend"` is detected, append this to the user's prompt:
+When `style: "trendlife"` is detected, append this to the user's prompt:
 
 ```
-Use Trend Micro brand colors:
-- Primary: Trend Red (#d71920) as the hero/accent color - make it the first order of attention
-- Guardian Red (#6f0000) for intensity and supporting elements
-- Grays (#58595b to #e6e7e8) for backgrounds, neutrals, and sophistication
-- Black and white for strong contrast and visual identity
-- If additional colors needed: Dark Blue (#005295) or Teal (#2cafa4) only
-Keep the design clean and professional with clear intent in color usage.
+Use TrendLife brand colors for Trend Micro presentations:
+- IMPORTANT: Title text and all headings MUST be in Trend Red (#D71920)
+- Primary accents and highlights: Trend Red (#D71920)
+- Guardian Red (#6F0000) for supporting elements and depth
+- Neutral palette: Dark gray (#57585B), medium gray (#808285), light gray (#E7E6E6)
+- Black (#000000) for body text, white (#FFFFFF) for backgrounds
+Keep the design clean, professional, and suitable for corporate presentations.
+DO NOT include any logos or brand text - these will be added separately.
 ```
 
-### Examples
+### Logo Configuration
 
-**Good Usage:**
-- Dashboard with Trend Red header, K80 gray sidebar, white content area, Dark Blue accent for data
-- Product shot with Trend Red packaging, gray background, white highlights
-- Infographic with Trend Red title, gray structure, Teal for primary data, Dark Blue for secondary data
+**Logo Asset:**
+- Path: `assets/logos/trendlife-logo.png`
+- Source: Extracted and cropped from TrendLife PowerPoint template (image3.png)
+- Format: PNG with transparency (RGBA)
+- Dimensions: 4768×1490 pixels (3.2:1 aspect ratio)
+- Size: Pre-cropped to match PowerPoint's display aspect ratio
+- Note: Original image3.png (12532×1490) was cropped to remove tagline
 
-**Poor Usage:**
-- Using orange, yellow, and green together (too many secondary colors)
-- Trend Red as a minor element instead of hero color
-- Mixing all secondary colors in one design
-- Using secondary colors without primary palette
+**Logo Positioning (All Layouts):**
+
+**Based on actual TrendLife PowerPoint template master slide configuration:**
+
+| Property | Value |
+|----------|-------|
+| Position | Bottom-right corner (fixed for all layouts) |
+| Size | 17.2% of slide width (330px at 1920×1080) |
+| Padding | 14px from right edge, 1px from bottom |
+| Opacity | 100% |
+
+**Position Calculations (16:9, 1920×1080 reference):**
+- Logo width: `slide_width × 0.172 = 330px`
+- Logo position: `x = slide_width - logo_width - 14px = 1576px`
+- Logo position: `y = slide_height - logo_height - 1px = 976px`
+
+**Note:** Unlike the original template draft assumptions, all slide layouts (title, content, divider, end) use the **same logo size and position** in the master slide.
+
+### Style Guidelines
+
+1. **Color Usage:**
+   - Trend Red (#D71920) as primary accent
+   - Guardian Red (#6F0000) for intensity
+   - Neutral grays for backgrounds and structure
+   - High contrast with black/white
+
+2. **Design Principles:**
+   - Clean, professional corporate aesthetic
+   - Minimal text, maximum visual impact
+   - Suitable for executive presentations
+
+3. **Logo Treatment:**
+   - Never distort or skew logo
+   - Maintain minimum clear space around logo
+   - Always use transparent PNG with full color
+   - Logo automatically overlaid after AI generation
+
+### Style Trigger Keywords
+
+**Explicit:**
+- `style: "trendlife"`
+
+**Natural Language:**
+- "trendlife style"
+- "use trendlife"
+- "trendlife brand"
+- "trendlife presentation"
 
 ---
 

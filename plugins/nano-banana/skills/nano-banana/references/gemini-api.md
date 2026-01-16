@@ -28,6 +28,9 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
+# User's prompt (replace with actual prompt)
+user_prompt = "A cute banana character with sunglasses"
+
 # Directory selection logic
 # Claude decides based on conversation context and user intent:
 # - Continuation of existing work → Specify existing directory
@@ -84,12 +87,16 @@ try:
         client = genai.Client(api_key=api_key)
 
     config_params = {
-        'response_modalities': ['IMAGE']
+        'response_modalities': ['IMAGE'],
+        'image_config': types.ImageConfig(
+            aspect_ratio='16:9',  # "1:1", "16:9", "9:16", "4:3", "3:4"
+            image_size='2K'       # "1K", "2K", "4K"
+        )
     }
 
     response = client.models.generate_content(
         model=model,
-        contents=["A cute banana character with sunglasses"],
+        contents=[user_prompt],
         config=types.GenerateContentConfig(**config_params)
     )
 
@@ -128,6 +135,38 @@ for part in response.parts:
             output_path = OUTPUT_DIR / "generated.png"
             pil_image.save(output_path, "PNG")
             print(f"Saved: {output_path} (PNG)")
+
+        # TrendLife Logo Overlay (ONLY for trendlife style)
+        # Check if user requested TrendLife brand style
+        if 'trendlife' in user_prompt.lower():
+            import sys
+            sys.path.insert(0, str(Path(__file__).parent))
+            from logo_overlay import overlay_logo, detect_layout_type
+
+            # Detect layout type from prompt
+            layout_type = detect_layout_type(user_prompt, slide_number=1)
+
+            # Logo path
+            logo_path = Path(__file__).parent / 'assets/logos/trendlife-logo.png'
+
+            # Create temporary path for overlay
+            temp_output = output_path.with_stem(output_path.stem + '_with_logo')
+
+            try:
+                # Apply logo overlay
+                overlay_logo(
+                    background_path=output_path,
+                    logo_path=logo_path,
+                    output_path=temp_output,
+                    layout_type=layout_type
+                )
+
+                # Replace original with logo version
+                temp_output.replace(output_path)
+                print(f"Applied TrendLife logo overlay ({layout_type} layout)")
+            except Exception as e:
+                print(f"Warning: Logo overlay failed - {e}")
+                # Continue without logo if overlay fails
 EOF
 ```
 

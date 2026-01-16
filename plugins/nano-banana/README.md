@@ -2,19 +2,19 @@
 
 Python scripting and Gemini/Imagen image generation using uv with inline script dependencies.
 
-## ✨ Recent Improvements (v0.0.4)
+## ✨ Recent Improvements (v0.0.6)
 
-**Problem Solved:**
-- ✅ Fixed API confusion between Gemini and Imagen
-- ✅ Added clear warnings for non-existent types (`ImageGenerationConfig`)
+**TrendLife Brand Support:**
+- ✅ **Automatic logo overlay** - TrendLife logo positioned precisely at (17, 20) padding matching PowerPoint template
+- ✅ **Brand style configuration** - TrendLife colors (Trend Red #D71920) with explicit title color requirements
+- ✅ **API documentation fixes** - Added missing `image_config` to basic examples in gemini-api.md
+
+**Previous Improvements (v0.0.4):**
+- ✅ **Batch generation** - Generate 5+ slides in background with 80% context reduction
+- ✅ Fixed API confusion between Gemini and Imagen (automatic detection)
+- ✅ Added Imagen support for multi-image generation
 - ✅ Respect `NANO_BANANA_MODEL` environment variable (no more overrides)
 - ✅ Reduced token consumption by 51% (795 → 387 lines in SKILL.md)
-
-**What's New:**
-- 🚨 **CRITICAL API Selection** section at top of skill
-- 📚 Complete API references: `gemini-api.md` and `imagen-api.md`
-- 🎨 Imagen support for multi-image generation
-- ⚡ 51% faster skill loading with progressive disclosure
 
 ## Features
 
@@ -22,7 +22,8 @@ Python scripting and Gemini/Imagen image generation using uv with inline script 
 - **Image Generation**: Gemini (quality, slides) or Imagen (multiple images, negative prompts)
 - **Image Editing**: Edit existing images with AI
 - **Interactive Prompting**: Get help crafting effective prompts with best practices
-- **Brand Style Support**: Trend Micro (`style: "trend"`) and NotebookLM styles
+- **Brand Style Support**: TrendLife (`style: "trendlife"`) with automatic logo overlay and NotebookLM styles
+- **Batch Generation**: Generate 5+ slides in background with progress tracking (80% context reduction, since v0.0.4)
 - **Python Scripting**: Run Python scripts with uv using heredocs
 - **Inline Dependencies**: Self-contained scripts with `# /// script` metadata
 

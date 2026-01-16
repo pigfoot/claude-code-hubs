@@ -478,18 +478,19 @@ claude plugin install --scope user nano-banana@pigfoot-marketplace
 **What it does:**
 Generates and edits images using Google's Gemini or Imagen models with Python scripting powered by uv.
 
-**Recent Improvements (v0.0.4):**
-- ✅ Fixed API confusion between Gemini and Imagen (automatic detection)
-- ✅ Added Imagen support for multi-image generation
-- ✅ Respect `NANO_BANANA_MODEL` environment variable (no more overrides)
-- ✅ Reduced skill token consumption by 51%
+**Recent Improvements (v0.0.6):**
+- ✅ **TrendLife brand support** - Automatic logo overlay with precise positioning (17, 20) padding
+- ✅ **Brand style configuration** - TrendLife colors (Trend Red #D71920) with explicit title color requirements
+- ✅ **API documentation fixes** - Added missing `image_config` to basic examples
 
 **Benefits:**
 - ✅ **Dual API support** - Gemini (quality, slides) or Imagen (multiple images, negative prompts)
+- ✅ **TrendLife brand support** - Automatic logo overlay with precise positioning matching PowerPoint template
+- ✅ **Batch generation** - Generate 5+ slides efficiently in background with progress tracking (since v0.0.4)
 - ✅ **AI image generation** - Create images from text descriptions
 - ✅ **Image editing** - Edit existing images with AI-powered transformations
 - ✅ **Interactive prompting** - Get help crafting effective prompts for better results
-- ✅ **Brand style support** - Trend Micro and NotebookLM presentation styles
+- ✅ **Brand style support** - TrendLife and NotebookLM presentation styles
 - ✅ **Multiple models** - Choose between quality and speed
 - ✅ **Format flexibility** - Output WebP (default), JPEG, or PNG with quality control
 
@@ -672,7 +673,7 @@ Once configured, Claude will:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
-| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.2 |
+| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.6 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
 
