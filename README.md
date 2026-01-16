@@ -157,6 +157,7 @@ jq "$(cat <<'EOF'
   "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch",
   "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
   "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
+  "Bash(openspec:*)",
   "mcp__plugin_context7_context7",
   "Skill(commit:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 ] | unique)
@@ -200,6 +201,7 @@ $newPermissions = @(
     "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch",
     "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
     "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
+    "Bash(openspec:*)",
     "mcp__plugin_context7_context7",
     "Skill(commit:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 )
