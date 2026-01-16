@@ -250,6 +250,165 @@ When creating slides/presentations:
 
 **Priority:** Inline spec → Ask in Interactive Mode → No style (Direct Mode default)
 
+## Multi-Slide Generation: Context Window Optimization
+
+### The Problem
+
+When generating multiple images (e.g., 10 slides for a presentation), each image's output accumulates in the conversation context:
+
+- **Per image output:** ~150-200 tokens (generation logs, paths, status)
+- **10 slides:** 1,500-2,000 tokens consumed
+- **Risk:** Context window fills quickly, reducing available space for conversation
+
+### Solutions Evaluated
+
+#### Option 1: Current Approach (Direct Execution)
+
+Execute Python script 10 times sequentially in the main conversation.
+
+**Token Consumption:**
+- Main context: **1,500-2,000 tokens**
+- API cost: Low (single conversation)
+
+**Pros:**
+- ✅ Simple implementation
+- ✅ Immediate feedback per image
+- ✅ Easy debugging with visible output
+
+**Cons:**
+- ❌ Context accumulates quickly
+- ❌ Verbose output fills conversation
+
+---
+
+#### Option 2: Subagent Approach
+
+Spawn independent subagent for each slide generation.
+
+**Token Consumption:**
+- Main context: **~1,400 tokens** (Task tool calls + results)
+- Total API cost: **~32,000 tokens** (10 subagents × 3,200 tokens each)
+
+**Cost Breakdown per Subagent:**
+- System prompt: ~1,000 tokens
+- Skill loading (nano-banana): ~1,500 tokens
+- Task understanding + execution: ~500 tokens
+- Output: ~200 tokens
+
+**Pros:**
+- ✅ Isolated context per image
+- ✅ Parallel execution possible
+- ✅ Cleaner main conversation
+
+**Cons:**
+- ❌ **15x higher API cost** (32,000 vs 2,000 tokens)
+- ❌ Slow startup overhead (2-5s per subagent)
+- ❌ Complex coordination (error handling, retries, timeouts)
+- ❌ Rate limit risks with parallel execution
+- ❌ Overkill for simple batch generation
+
+---
+
+#### Option 3: Background Bash + Progress File ✅ (Selected)
+
+Run batch generation in background task, poll progress file periodically.
+
+**Token Consumption:**
+- Main context: **~390 tokens total**
+  - Start background task: ~20 tokens
+  - Poll progress (3 times): ~120 tokens
+  - Read final results: ~250 tokens
+- API cost: Same as current (no additional subagents)
+
+**Workflow:**
+1. Create slides configuration JSON
+2. Start background task with `Bash(run_in_background=True)`
+3. Python script writes progress to `/tmp/nano-banana-progress.json`
+4. Poll progress file every 10-15 seconds
+5. Read final results from `/tmp/nano-banana-results.json`
+
+**Pros:**
+- ✅ **80% context reduction** (1,800 → 390 tokens)
+- ✅ **Zero additional API cost** (same as current)
+- ✅ **Fastest execution** (Python runs at full speed, no subagent overhead)
+- ✅ **Progress tracking** (can show updates to user)
+- ✅ **Low complexity** (simpler than subagent coordination)
+
+**Cons:**
+- ❌ Requires polling mechanism
+- ❌ Less immediate feedback (progress shown in batches)
+
+### Comparison Table
+
+| Method | Main Context | Total API Cost | Speed | Complexity | Best For |
+|--------|--------------|----------------|-------|------------|----------|
+| **Direct Execution** | 1,800 tokens | Low | Medium | Low | **1-4 images** (auto-selected) |
+| **Subagent** | 1,400 tokens | 32,000 tokens<br>**(+1,500%)** ❌ | Medium | High | Each image needs Claude's reasoning |
+| **Background Bash** ✅ | **390 tokens<br>(-80%)** ✅ | **Low (0% increase)** ✅ | **Fast** ✅ | Low-Medium | **5+ images** (auto-selected) |
+
+### Current Implementation (v0.0.5+)
+
+The skill now automatically uses Background Bash approach for 5+ slides:
+
+```python
+# 1. Create slides configuration
+slides_config = {
+    "slides": [
+        {"number": 1, "prompt": "CI/CD pipeline overview", "style": "professional"},
+        {"number": 2, "prompt": "Build stage architecture", "style": "professional"},
+        {"number": 3, "prompt": "Testing pyramid", "style": "data-viz"},
+        # ... up to slide 10
+    ],
+    "output_dir": "/path/to/deck/",
+    "format": "webp",
+    "quality": 90
+}
+
+# 2. Start background task (MUST use 'uv run')
+task_id = Bash(
+    command="uv run /path/to/generate_batch.py --config /tmp/slides_config.json",
+    run_in_background=True
+)
+# Output: "Started background task: task_abc123"
+
+# 3. Poll progress periodically
+Read("/tmp/nano-banana-progress.json")
+# → {"current": 3, "total": 10, "status": "generating slide 3...", "completed": ["slide-1.webp", "slide-2.webp"]}
+
+# 4. Read final results when complete
+Read("/tmp/nano-banana-results.json")
+# → {"completed": 10, "outputs": ["/path/to/deck/slide-1.webp", ...], "duration": "45s"}
+```
+
+**Context in Main Conversation:**
+```
+Generating 10 slides in background...
+Progress: 3/10 slides completed (30%)
+Progress: 7/10 slides completed (70%)
+✓ All 10 slides completed in 45s
+  Results: /path/to/deck/
+  Files: slide-1.webp through slide-10.webp
+```
+
+**Total context:** ~390 tokens (vs 1,800 with current approach)
+
+### Decision Rationale
+
+**Why Background Bash won:**
+
+1. **Cost Efficiency:** Subagent approach costs 15x more API tokens for the same result
+2. **Performance:** No subagent startup overhead, Python runs at native speed
+3. **Simplicity:** Easier to implement and maintain than subagent coordination
+4. **Context Optimization:** 80% reduction in context usage (critical for long conversations)
+5. **Scalability:** Works equally well for 5 slides or 50 slides
+
+**When Subagent still makes sense:**
+- Each slide requires Claude's judgment/reasoning (e.g., auto-selecting visual style based on content analysis)
+- Slides are completely independent and benefit from parallel processing
+- User doesn't care about API cost
+
+**Current Status:** Feature planned for future release. Current implementation uses direct execution (best for 1-3 images).
+
 ## Quick Example
 
 ```bash

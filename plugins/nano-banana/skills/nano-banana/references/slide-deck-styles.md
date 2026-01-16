@@ -410,7 +410,18 @@ Format: 16:9 landscape
 
 ## Multi-Slide Generation
 
-When generating multiple slides for a presentation, use the **Hybrid Mode**: Plan → Parallel Generation → Review.
+**Mode Selection (Automatic):**
+- **5+ slides**: Use batch mode for maximum efficiency (80% context reduction) → See `batch-generation.md`
+- **3-4 slides**: Use Task agents for parallel generation (documented below)
+- **1-2 slides**: Sequential direct execution
+
+**For 5+ slides:** This document focuses on 3-4 slide generation. For larger decks (5+ slides), see the complete batch generation workflow in `batch-generation.md`.
+
+---
+
+### Generating 3-4 Slides with Task Agents
+
+When generating 3-4 slides for a presentation, use the **Hybrid Mode**: Plan → Parallel Generation → Review.
 
 ### Phase 1: Planning
 

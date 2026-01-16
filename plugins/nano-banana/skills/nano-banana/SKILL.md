@@ -286,19 +286,21 @@ image_config=types.ImageConfig(
 2. Don't: orchestrate, auto-chain, build systems
 3. Do: Small heredoc scripts, manual evaluation between steps
 
-### Multi-Slide Generation Workflow
+### Multi-Slide Generation
 
-For generating **3+ slides**, see complete workflow in `references/slide-deck-styles.md`:
-- **Planning** (mandatory): Style specs, content outline, directory structure
-- **Parallel Generation**: Using Task agents for 3-5 slides simultaneously
-- **Review & Adjust**: Visual consistency check
-- **Adding More Slides**: Reuse same directory for continuation
+**Automatic Mode Selection:**
+- **5+ slides** → Batch mode (background task, progress tracking, 80% context reduction)
+- **1-4 slides** → Direct execution (immediate feedback, current behavior)
 
-**Quick rules:**
-- 1-2 slides: Sequential generation
-- 3-5 slides: Parallel generation
-- 6+ slides: Parallel batches (3-5 each)
-- All slides in **one directory** with numbered files (001-title.webp, 002-overview.webp, ...)
+**Batch Mode Quick Reference (5+ slides):**
+1. Create config JSON with all slide specs
+2. Start background task: `uv run generate_batch.py --config /tmp/slides_config.json` with `run_in_background=True`
+3. Poll `/tmp/nano-banana-progress.json` every 10-15s to update user
+4. Read `/tmp/nano-banana-results.json` when complete
+
+**IMPORTANT:** Script MUST be run with `uv run` (handles dependencies automatically)
+
+**Complete workflow, code examples, and schemas:** See `references/batch-generation.md`
 
 ### Red Flags - STOP and Use Heredoc
 
