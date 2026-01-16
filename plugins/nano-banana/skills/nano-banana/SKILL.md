@@ -111,13 +111,78 @@ For full working examples, see:
 
 ## Style Detection
 
-**Detect:** `style: "trend"`, `style: "notebooklm"`, or natural language ("use style trend", "notebooklm style")
+**Detect:** `style: "trendlife"`, `style: "notebooklm"`, or natural language ("use trendlife style", "notebooklm style")
 
 **Styles:**
-- **Trend**: Trend Micro brand colors (Trend Red #d71920)
+- **TrendLife**: Trend Micro's TrendLife product brand (Trend Red #D71920) with automatic logo overlay
 - **NotebookLM**: Clean presentation aesthetic (⚠️ **NEVER** use "NotebookLM" brand/logo in prompts)
 
 **Priority:** Inline spec → Ask in Interactive Mode → No style (Direct Mode default)
+
+---
+
+## Logo Overlay (TrendLife Style)
+
+**TrendLife style includes automatic logo overlay:**
+
+When `style: "trendlife"` is detected:
+1. Generate slide image with TrendLife colors (no logo in prompt)
+2. Detect layout type from prompt content
+3. Apply logo overlay with `logo_overlay.overlay_logo()`
+4. Output final image with logo
+
+### Layout Detection Rules
+
+**Automatic detection based on keywords:**
+- **"title slide"**, **"cover slide"**, **"opening"** → title layout (15% logo, bottom-right)
+- **"end slide"**, **"closing"**, **"thank you"**, **"conclusion"** → end layout (20% logo, center-bottom)
+- **"divider"**, **"section break"** → divider layout (15% logo, bottom-right)
+- **Slide number 1** (no keywords) → title layout (assumed opener)
+- **Default** → content layout (12% logo, bottom-right)
+
+### Manual Logo Overlay Override
+
+Use when you need custom logo positioning:
+
+```python
+# After image generation, before final output
+from pathlib import Path
+import sys
+
+# Import logo overlay module
+sys.path.insert(0, str(Path(__file__).parent))
+from logo_overlay import overlay_logo, detect_layout_type
+
+# Detect layout type (or specify manually)
+layout_type = detect_layout_type(prompt, slide_number=1)
+# Or override: layout_type = 'title'  # 'title', 'content', 'divider', 'end'
+
+# Logo path
+logo_path = Path(__file__).parent / 'assets/logos/trendlife-logo.png'
+
+# Apply logo overlay
+output_with_logo = output_path.with_stem(output_path.stem + '_with_logo')
+overlay_logo(
+    background_path=output_path,
+    logo_path=logo_path,
+    output_path=output_with_logo,
+    layout_type=layout_type,
+    opacity=1.0  # Optional: 0.0-1.0
+)
+
+# Replace original with logo version
+output_with_logo.replace(output_path)
+```
+
+### Style Trigger Keywords
+
+**Explicit:** `style: "trendlife"`
+
+**Natural Language:**
+- "trendlife style"
+- "use trendlife"
+- "trendlife brand"
+- "trendlife presentation"
 
 ## Quick Reference
 

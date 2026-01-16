@@ -34,6 +34,9 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
+# User's prompt (replace with actual prompt)
+user_prompt = "A cute banana character with sunglasses"
+
 # Directory selection logic (same as Gemini)
 existing_folders = sorted([d for d in Path(".").iterdir()
                           if d.is_dir() and len(d.name) >= 4
@@ -74,7 +77,7 @@ try:
     # Generate image(s) using Imagen API
     response = client.models.generate_images(
         model=model,
-        prompt="A cute banana character with sunglasses",  # String, NOT array
+        prompt=user_prompt,  # String, NOT array
         config=types.GenerateImagesConfig(
             number_of_images=1,
             aspect_ratio="1:1",  # Optional
@@ -112,6 +115,38 @@ for idx, generated_image in enumerate(response.generated_images):
         pil_image.save(output_path, "PNG")
 
     print(f"Saved: {output_path}")
+
+    # TrendLife Logo Overlay (ONLY for trendlife style)
+    # Check if user requested TrendLife brand style
+    if 'trendlife' in user_prompt.lower():
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent))
+        from logo_overlay import overlay_logo, detect_layout_type
+
+        # Detect layout type from prompt
+        layout_type = detect_layout_type(user_prompt, slide_number=idx+1)
+
+        # Logo path
+        logo_path = Path(__file__).parent / 'assets/logos/trendlife-logo.png'
+
+        # Create temporary path for overlay
+        temp_output = output_path.with_stem(output_path.stem + '_with_logo')
+
+        try:
+            # Apply logo overlay
+            overlay_logo(
+                background_path=output_path,
+                logo_path=logo_path,
+                output_path=temp_output,
+                layout_type=layout_type
+            )
+
+            # Replace original with logo version
+            temp_output.replace(output_path)
+            print(f"Applied TrendLife logo overlay ({layout_type} layout)")
+        except Exception as e:
+            print(f"Warning: Logo overlay failed - {e}")
+            # Continue without logo if overlay fails
 EOF
 ```
 
