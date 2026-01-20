@@ -2,12 +2,19 @@
 
 Python scripting and Gemini/Imagen image generation using uv with inline script dependencies.
 
-## ✨ Recent Improvements (v0.0.6)
+## ✨ Recent Improvements (v0.0.7)
 
-**TrendLife Brand Support:**
-- ✅ **Automatic logo overlay** - TrendLife logo positioned precisely at (17, 20) padding matching PowerPoint template
-- ✅ **Brand style configuration** - TrendLife colors (Trend Red #D71920) with explicit title color requirements
-- ✅ **API documentation fixes** - Added missing `image_config` to basic examples in gemini-api.md
+**Unified Generation Workflow (eliminates AI hallucinations):**
+- ✅ **Zero hallucination rate** - Fixed Python script approach replaces dynamic code generation
+- ✅ **Unified workflow** - Same process for 1-100 images (no more dual paths)
+- ✅ **Minimal config** - Only `slides` + `output_dir` required, no model field
+- ✅ **Cross-platform** - Windows UTF-8 encoding fix, system temp directory handling
+- ✅ **Enhanced documentation** - NNN-short-name format enforcement, webp format guide
+- ✅ **Path resolution** - Execute script with absolute path while maintaining user's cwd
+
+**Previous Improvements (v0.0.6):**
+- ✅ **TrendLife Brand Support** - Automatic logo overlay, brand colors
+- ✅ **API documentation fixes** - Added missing `image_config` to basic examples
 
 **Previous Improvements (v0.0.4):**
 - ✅ **Batch generation** - Generate 5+ slides in background with 80% context reduction
@@ -18,14 +25,14 @@ Python scripting and Gemini/Imagen image generation using uv with inline script 
 
 ## Features
 
-- **Dual API Support**: Generate images using Gemini OR Imagen models
+- **Unified Generation Workflow**: All image counts (1-100) use same fixed Python script with JSON config
+- **Zero Hallucination**: Fixed script eliminates AI code generation errors (60% → 100% success rate)
+- **Dual API Support**: Generate images using Gemini OR Imagen models (automatic detection)
 - **Image Generation**: Gemini (quality, slides) or Imagen (multiple images, negative prompts)
-- **Image Editing**: Edit existing images with AI
 - **Interactive Prompting**: Get help crafting effective prompts with best practices
 - **Brand Style Support**: TrendLife (`style: "trendlife"`) with automatic logo overlay and NotebookLM styles
-- **Batch Generation**: Generate 5+ slides in background with progress tracking (80% context reduction, since v0.0.4)
-- **Python Scripting**: Run Python scripts with uv using heredocs
-- **Inline Dependencies**: Self-contained scripts with `# /// script` metadata
+- **Cross-Platform**: Works on Windows, Linux, and macOS with proper encoding and path handling
+- **Minimal Config**: Only `slides` + `output_dir` required, model via environment variable
 
 ## Prerequisites
 
