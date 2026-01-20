@@ -3,15 +3,15 @@
 # dependencies = ["google-genai", "pillow"]
 # ///
 """
-generate_batch.py - Batch image generation with progress tracking
+generate_images.py - Unified image generation with progress tracking
 
 IMPORTANT: This script MUST be run with uv:
-    uv run generate_batch.py --config slides_config.json
+    uv run generate_images.py --config slides_config.json
 
 DO NOT run with plain python (dependencies will not be found)
 
 Usage:
-    uv run generate_batch.py --config <config_file>
+    uv run generate_images.py --config <config_file>
 
 Config format:
     {
@@ -19,21 +19,23 @@ Config format:
             {"number": 1, "prompt": "...", "style": "professional"},
             {"number": 2, "prompt": "...", "style": "data-viz"}
         ],
-        "output_dir": "/path/to/output/",
-        "model": "gemini-3-pro-image-preview",
+        "output_dir": "./output/",
         "format": "webp",
         "quality": 90
     }
 
-Output files:
-    - Progress: /tmp/nano-banana-progress.json
-    - Results: /tmp/nano-banana-results.json
+Note: Model is set via NANO_BANANA_MODEL environment variable, not in config.
+
+Output files (in system temp directory):
+    - Progress: {temp_dir}/nano-banana-progress.json
+    - Results: {temp_dir}/nano-banana-results.json
 """
 
 import json
 import sys
 import os
 import io
+import tempfile
 from pathlib import Path
 from datetime import datetime, UTC
 from typing import Dict, List, Tuple, Optional
@@ -42,9 +44,41 @@ from google import genai
 from google.genai import types
 from PIL import Image as PILImage
 
-# Progress and results file paths
-PROGRESS_FILE = Path("/tmp/nano-banana-progress.json")
-RESULTS_FILE = Path("/tmp/nano-banana-results.json")
+# Configure UTF-8 encoding for Windows console
+if sys.platform == 'win32':
+    # Force UTF-8 encoding for stdout/stderr on Windows
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+# Progress and results file paths (cross-platform)
+TEMP_DIR = Path(tempfile.gettempdir())
+PROGRESS_FILE = TEMP_DIR / "nano-banana-progress.json"
+RESULTS_FILE = TEMP_DIR / "nano-banana-results.json"
+
+
+def validate_output_dir(path_str: str) -> Path:
+    """Validate that output_dir is a relative path.
+
+    Args:
+        path_str: Path string from config
+
+    Returns:
+        Path object if valid
+
+    Raises:
+        SystemExit: If path is absolute
+    """
+    path = Path(path_str)
+
+    if path.is_absolute():
+        print(
+            f"Error: output_dir must be relative path, got: {path_str}\n"
+            f"Use './dirname/' instead for cross-platform compatibility.",
+            file=sys.stderr
+        )
+        sys.exit(1)
+
+    return path
 
 
 def load_config(config_path: str) -> Dict:
@@ -81,6 +115,9 @@ def load_config(config_path: str) -> Dict:
     if 'output_dir' not in config:
         print("Error: Config must contain 'output_dir'", file=sys.stderr)
         sys.exit(1)
+
+    # Validate output_dir is relative path
+    validate_output_dir(config['output_dir'])
 
     # Validate each slide
     for i, slide in enumerate(config['slides']):
@@ -409,9 +446,10 @@ def main():
     # Extract parameters
     slides = config['slides']
     output_dir = Path(config['output_dir'])
-    # Priority: config file > environment variable > default
-    # This matches the pattern in gemini-api.md and imagen-api.md
-    model = config.get('model') or os.environ.get("NANO_BANANA_MODEL") or "gemini-3-pro-image-preview"
+
+    # Priority: environment variable > default
+    # Config file no longer includes model field to prevent hallucinations
+    model = os.environ.get("NANO_BANANA_MODEL") or "gemini-3-pro-image-preview"
     output_format = config.get('format', 'webp').lower()
     quality = config.get('quality', 90)
 
@@ -502,6 +540,13 @@ def main():
         print(f"\nErrors:")
         for err in errors:
             print(f"  Slide {err['slide']}: {err['error']}")
+
+    # Cleanup temp files
+    try:
+        PROGRESS_FILE.unlink(missing_ok=True)
+        RESULTS_FILE.unlink(missing_ok=True)
+    except Exception:
+        pass  # Ignore cleanup errors
 
     # Exit with appropriate code
     # Exit 0 if at least some slides completed, 1 if all failed

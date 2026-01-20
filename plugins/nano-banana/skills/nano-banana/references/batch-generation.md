@@ -51,8 +51,9 @@ config = {
     "quality": 90
 }
 
-# Write config to temp file
-config_path = Path("/tmp/slides_config.json")
+# Write config to temp file (cross-platform)
+import tempfile
+config_path = Path(tempfile.gettempdir()) / "nano-banana-config.json"
 with open(config_path, 'w') as f:
     json.dump(config, f, indent=2)
 
@@ -81,9 +82,10 @@ Use `Bash` tool with `run_in_background=True` to start batch generation:
 ```python
 # CRITICAL: Must use 'uv run' not plain 'python'
 # The script dependencies are managed by uv via PEP 723 inline metadata
+# {base_dir} is the skill base directory provided by Claude Code
 
 task_result = Bash(
-    command="uv run /home/pigfoot/proj/claude-code-hubs/plugins/nano-banana/skills/nano-banana/generate_batch.py --config /tmp/slides_config.json",
+    command="uv run {base_dir}/generate_images.py --config {config_path}",
     run_in_background=True,
     description="Generate 10 slides in batch mode"
 )
@@ -98,7 +100,7 @@ print("Progress updates will appear every 10-15 seconds.")
 ❌ **WRONG - Will fail with import errors:**
 ```python
 Bash(
-    command="python generate_batch.py --config /tmp/slides_config.json",
+    command="python generate_images.py --config {config_path}",
     run_in_background=True
 )
 ```
@@ -106,31 +108,45 @@ Bash(
 ❌ **WRONG - Missing full path:**
 ```python
 Bash(
-    command="uv run generate_batch.py --config /tmp/slides_config.json",
+    command="uv run generate_images.py --config {config_path}",
     run_in_background=True
 )
 ```
 
-✅ **CORRECT:**
+❌ **WRONG - Changes directory (breaks relative paths in config):**
 ```python
 Bash(
-    command="uv run /home/pigfoot/proj/claude-code-hubs/plugins/nano-banana/skills/nano-banana/generate_batch.py --config /tmp/slides_config.json",
+    command="cd {base_dir} && uv run generate_images.py --config {config_path}",
     run_in_background=True
 )
 ```
+This makes `Path.cwd()` return the plugin cache directory, causing `./001-slides/` to resolve to the wrong location.
+
+✅ **CORRECT:**
+```python
+Bash(
+    command="uv run {base_dir}/generate_images.py --config {config_path}",
+    run_in_background=True
+)
+```
+
+**Key Points:**
+- `{base_dir}` is the skill base directory provided by Claude Code when loading the skill
+- Use absolute path to script WITHOUT `cd` command
+- This keeps execution cwd in user's project directory, so relative paths in config work correctly
 
 ---
 
 ### Step 3: Poll Progress File
 
-Poll `/tmp/nano-banana-progress.json` every 10-15 seconds to show user progress:
+Poll progress file in system temp directory every 10-15 seconds to show user progress:
 
 ```python
 import time
 import json
 from pathlib import Path
 
-progress_file = Path("/tmp/nano-banana-progress.json")
+progress_file = Path(tempfile.gettempdir()) / "nano-banana-progress.json"
 
 # Poll loop (Claude handles this automatically)
 while True:
@@ -195,13 +211,13 @@ while True:
 
 ### Step 4: Read Results File
 
-When complete (`current == total`), read `/tmp/nano-banana-results.json`:
+When complete (`current == total`), read results file in system temp directory:
 
 ```python
 import json
 from pathlib import Path
 
-results_file = Path("/tmp/nano-banana-results.json")
+results_file = Path(tempfile.gettempdir()) / "nano-banana-results.json"
 
 with open(results_file, 'r') as f:
     results = json.load(f)
@@ -422,16 +438,16 @@ ModuleNotFoundError: No module named 'google.genai'
 
 **Cause:** Used `python` instead of `uv run`
 
-**Solution:** Always use `uv run generate_batch.py`
+**Solution:** Always use `uv run generate_images.py`
 
 ### Problem: Permission denied on progress/results file
 
 **Symptoms:**
 ```
-PermissionError: [Errno 13] Permission denied: '/tmp/nano-banana-progress.json'
+PermissionError: [Errno 13] Permission denied: '<temp_dir>/nano-banana-progress.json'
 ```
 
-**Solution:** Check `/tmp/` directory permissions (should be writable)
+**Solution:** Check system temp directory permissions (should be writable). On Linux/macOS: `/tmp/`, on Windows: `%TEMP%`
 
 ---
 
@@ -453,25 +469,26 @@ config = {
         {"number": 5, "prompt": "Best practices for production", "style": "professional"}
     ],
     "output_dir": "./002-docker-basics/",
-    "model": "gemini-3-pro-image-preview",
     "format": "webp",
     "quality": 90
 }
 
-config_path = Path("/tmp/slides_config.json")
+# Use cross-platform temp directory
+import tempfile
+config_path = Path(tempfile.gettempdir()) / "nano-banana-config.json"
 with open(config_path, 'w') as f:
     json.dump(config, f, indent=2)
 
 # Step 2: Start background task
 print("🚀 Starting batch generation for 5 slides...")
 # Use Bash tool with run_in_background=True
-# Command: uv run /path/to/generate_batch.py --config /tmp/slides_config.json
+# Command: uv run /path/to/generate_images.py --config {config_path}
 
 # Step 3: Poll progress (Claude handles automatically)
-# Read /tmp/nano-banana-progress.json every 10-15s
+# Read progress file from temp directory every 10-15s
 
 # Step 4: Read results when complete
-# Read /tmp/nano-banana-results.json
+# Read results file from temp directory
 # Report completion status to user
 ```
 

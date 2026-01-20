@@ -2,6 +2,11 @@
 
 This guide covers advanced scenarios for Gemini image generation including thinking process, Google Search grounding, and multi-turn conversations.
 
+**⚠️ IMPORTANT:** This document contains legacy heredoc examples for reference. For production use:
+- Use the unified generation workflow documented in [SKILL.md](../SKILL.md)
+- All image generation should use `generate_images.py` with JSON config
+- See [batch-generation.md](batch-generation.md) for the current workflow
+
 ## Thinking Process
 
 The model uses internal reasoning for complex prompts. It generates interim thought images to refine composition before producing the final output.
