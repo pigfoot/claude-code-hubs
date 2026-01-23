@@ -661,6 +661,7 @@ Without superpowers, you might get working code. With superpowers, you get **tes
 ### ⚙️ .CLAUDE.md Configuration
 
 Once configured, Claude will:
+- **Verify before act** - When uncertain, Claude checks docs/files first instead of guessing and proceeding
 - Auto-detect your communication language (supports Traditional Chinese, Japanese, etc.)
 - Write all code and documentation in English
 - Follow your project's conventions
