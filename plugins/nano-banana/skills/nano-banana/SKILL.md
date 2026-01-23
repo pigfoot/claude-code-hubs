@@ -152,7 +152,15 @@ When `style: "trendlife"` is detected:
 
 Use when you need custom logo positioning:
 
+**IMPORTANT:** This script must be run with `uv run` to ensure dependencies are available.
+
 ```python
+#!/usr/bin/env python3
+# /// script
+# dependencies = ["pillow"]
+# ///
+# Run with: uv run your_script.py
+
 # After image generation, before final output
 from pathlib import Path
 import sys

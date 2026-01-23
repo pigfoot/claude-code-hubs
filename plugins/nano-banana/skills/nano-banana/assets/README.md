@@ -43,7 +43,15 @@ Original PowerPoint templates for reference.
 
 **Logo Overlay:**
 
+**IMPORTANT:** Run with `uv run` to ensure dependencies are available.
+
 ```python
+#!/usr/bin/env python3
+# /// script
+# dependencies = ["pillow"]
+# ///
+
+from pathlib import Path
 from logo_overlay import overlay_logo
 
 overlay_logo(

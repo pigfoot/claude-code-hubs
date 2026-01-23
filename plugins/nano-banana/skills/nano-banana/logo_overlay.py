@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
+# /// script
+# dependencies = ["pillow"]
+# ///
 """
 Logo overlay utilities for brand-styled slide generation.
 
 Provides precise logo compositing using Pillow for pixel-perfect
 brand element placement.
+
+IMPORTANT: This script MUST be run with uv when used standalone:
+    uv run logo_overlay.py
+
+When imported by other scripts (e.g., generate_images.py), it uses
+the parent script's environment.
 """
 
 from pathlib import Path
