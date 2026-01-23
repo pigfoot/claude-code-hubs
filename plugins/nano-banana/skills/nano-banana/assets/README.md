@@ -42,6 +42,7 @@ Original PowerPoint templates for reference.
 ## Usage
 
 **Logo Overlay:**
+
 ```python
 from logo_overlay import overlay_logo
 

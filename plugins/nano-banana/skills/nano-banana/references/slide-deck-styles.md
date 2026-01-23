@@ -56,6 +56,7 @@ Format: 16:9 landscape, suitable for presentation slides
 ```
 
 **Example use**:
+
 ```
 Create a clean, modern infographic explaining "CI/CD Pipeline Best Practices".
 
@@ -95,6 +96,7 @@ Format: 4:3 or 16:9, classic classroom feel
 ```
 
 **Example use**:
+
 ```
 Create an educational infographic in chalkboard art style.
 
@@ -134,6 +136,7 @@ Format: 16:9 landscape, suitable for tech/business presentations
 ```
 
 **Example use**:
+
 ```
 Design a structured infographic titled "2025 Cloud Adoption Metrics".
 
@@ -173,6 +176,7 @@ Format: Portrait or landscape based on number of steps
 ```
 
 **Example use**:
+
 ```
 Generate an infographic showing "5 Steps of Incident Response".
 
@@ -212,6 +216,7 @@ Format: Square or 4:3
 ```
 
 **Example use**:
+
 ```
 Create a summary-style infographic titled "Kubernetes Overview".
 
@@ -260,6 +265,7 @@ Format: 16:9 landscape
 ### Detailed vs Presenter Slides
 
 **Detailed Deck** (for reading/sharing):
+
 ```
 Create a comprehensive presentation slide with full text and details.
 Include complete explanations, data points, and context.
@@ -267,6 +273,7 @@ Format for reading/sharing without presenter notes.
 ```
 
 **Presenter Slides** (for live presentation):
+
 ```
 Create a clean, visual presenter slide with key talking points only.
 Focus on visual impact over text density.
@@ -278,6 +285,7 @@ Large visuals, minimal bullet points, clear focal areas.
 ### Using Reference Sketches
 
 Upload hand-drawn layouts for structure:
+
 ```
 Use the layout from the attached image as a structural guide.
 [Upload sketch/wireframe]
@@ -287,6 +295,7 @@ Maintain the placement and proportions while rendering in polished style.
 ### Iterative Refinement
 
 Request specific changes instead of regenerating:
+
 ```
 Change the color scheme to [NEW COLORS].
 Move the title to the center.
@@ -297,6 +306,7 @@ Make the text neon blue.
 ### Content Grounding
 
 Provide source material for accuracy:
+
 ```
 Create an infographic using the following information:
 [Paste article, bullet points, or data]
@@ -433,6 +443,7 @@ Before generating, plan the entire deck:
 - Set consistent layout format (16:9, 4:3)
 
 **2. Create content outline**
+
 ```
 Slide 1: Title - "Presentation Title"
 Slide 2: Overview - 3 key points

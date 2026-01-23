@@ -75,6 +75,7 @@ else:
 ### Examples
 
 **Complete configuration (all variables):**
+
 ```bash
 # Required
 export GEMINI_API_KEY="your-api-key"                    # Or GOOGLE_API_KEY
@@ -89,6 +90,7 @@ export GOOGLE_GEMINI_BASE_URL="https://api.example.com/v1"
 ```
 
 **Official Google API (default):**
+
 ```bash
 export GEMINI_API_KEY="your-api-key"  # Or GOOGLE_API_KEY (backward compatible)
 # Model: Claude chooses Pro (default) or Flash (budget/fast) automatically
@@ -98,6 +100,7 @@ export GEMINI_API_KEY="your-api-key"  # Or GOOGLE_API_KEY (backward compatible)
 ```
 
 **Custom Endpoint (self-hosted or proxy):**
+
 ```bash
 export GOOGLE_GEMINI_BASE_URL="https://your-api.example.com/v1"
 export GEMINI_API_KEY="your-custom-api-key"
@@ -107,6 +110,7 @@ export NANO_BANANA_QUALITY="90"
 ```
 
 **High-quality PNG for professional work:**
+
 ```bash
 export NANO_BANANA_FORMAT="png"
 ```
@@ -128,6 +132,7 @@ The plugin operates in two modes automatically based on your request:
 Used when you provide a detailed prompt or inline style specification. Claude generates immediately.
 
 **Example 1: Detailed Prompt**
+
 ```
 User: "Generate a photorealistic image of a cute cat wearing sunglasses, sitting on a beach chair at sunset, golden hour lighting, 16:9 aspect ratio"
 
@@ -136,6 +141,7 @@ Output: 001-beach-cat/generated.webp
 ```
 
 **Example 2: With Brand Style (structured syntax)**
+
 ```
 User: "Generate a cybersecurity dashboard infographic, style: trend"
 
@@ -145,6 +151,7 @@ Output: 001-security-dashboard/generated.webp
 ```
 
 **Example 3: With Brand Style (natural language)**
+
 ```
 User: "Use style trend to generate an LLM introduction infographic"
 
@@ -153,6 +160,7 @@ Output: 001-llm-intro/generated.webp
 ```
 
 **Example 4: Image Editing**
+
 ```
 User: "Edit 001-cute-cat/generated.webp and add a party hat"
 
@@ -161,6 +169,7 @@ Output: 002-party-hat/edited.webp
 ```
 
 **Example 5: Slide Deck / Presentation (NotebookLM style)**
+
 ```
 User: "Create a slide explaining how transformers work, use notebooklm style"
 
@@ -174,6 +183,7 @@ Output: 001-transformer-architecture/generated.webp
 Used when you request help crafting prompts or provide vague descriptions. Claude guides you through prompt design.
 
 **Example 6: Explicit Prompting Request**
+
 ```
 User: "Help me write a good prompt for a professional poster"
 
@@ -199,6 +209,7 @@ Claude:
 ```
 
 **Example 7: Vague Prompt (triggers prompting)**
+
 ```
 User: "Make a logo"
 
@@ -389,6 +400,7 @@ Read("/tmp/nano-banana-results.json")
 ```
 
 **Context in Main Conversation:**
+
 ```
 Generating 10 slides in background...
 Progress: 3/10 slides completed (30%)
@@ -490,8 +502,3 @@ EOF
 ```bash
 /plugin install nano-banana@pigfoot
 ```
-
-## Resources
-- [Cloned from NikiforovAll](https://github.com/NikiforovAll/claude-code-rules/tree/main/plugins/handbook-nano-banana)
-- [Official Prompting Guide](https://blog.google/products/gemini/prompting-tips-nano-banana-pro/) - Learn how to structure your prompts effectively.
-- [How to prompt Nano Banana Pro](https://www.fofr.ai/nano-banana-pro-guide)

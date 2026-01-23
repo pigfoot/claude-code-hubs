@@ -11,6 +11,7 @@ Corporate brand identity for Trend Micro's "TrendLife" product line.
 ### Color Palette
 
 **Primary Colors:**
+
 | Color Name | Hex Code | Usage |
 |------------|----------|-------|
 | **Trend Red** | `#D71920` | Primary brand color, accents |
@@ -21,6 +22,7 @@ Corporate brand identity for Trend Micro's "TrendLife" product line.
 | White | `#FFFFFF` | Clean backgrounds |
 
 **Grays (Neutral Palette):**
+
 | Gray Level | Hex Code |
 |------------|----------|
 | Dark Gray | `#57585B` |

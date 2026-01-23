@@ -1,6 +1,17 @@
 ---
+# === Required (All Platforms) ===
 name: nano-banana
-description: Use when users request image generation, AI art creation, image editing with Gemini models, need help crafting prompts, or want brand-styled imagery. Handles both direct generation and interactive prompt design.
+description: |
+  Use when users request image generation, AI art creation, image editing with Gemini models, need help crafting prompts, or want brand-styled imagery. Handles both direct generation and interactive prompt design.
+
+# === Claude Code / OpenAI Codex ===
+allowed-tools: Bash Write Read AskUserQuestion
+metadata:
+  short-description: Unified image generation workflow with Gemini/Imagen models
+  version: "0.0.7"
+
+# === GitHub Copilot ===
+license: MIT
 ---
 
 # Nano Banana
@@ -43,6 +54,7 @@ These are **NOT interchangeable**. Using the wrong API will cause errors.
 | **Special Config** | `response_modalities=['IMAGE']` | Not used |
 
 **Example model detection:**
+
 ```python
 # These trigger Imagen API:
 "imagen-4.0-generate-001" → generate_images()
@@ -70,6 +82,7 @@ If you find yourself writing these, **STOP** - you are using the wrong API:
 **Rule:** If `NANO_BANANA_MODEL` is set, use it EXACTLY as-is.
 
 ❌ **WRONG - Do NOT do this:**
+
 ```python
 model = os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image")
 if not model.endswith("-preview"):
@@ -77,6 +90,7 @@ if not model.endswith("-preview"):
 ```
 
 ✅ **CORRECT:**
+
 ```python
 model = os.environ.get("NANO_BANANA_MODEL")
 if not model:
@@ -212,6 +226,7 @@ All image generation uses the same fixed Python script with JSON config:
 **Config Requirements:**
 
 **Minimal Config (recommended):**
+
 ```json
 {
   "slides": [{"number": 1, "prompt": "...", "style": "trendlife"}],
@@ -220,6 +235,7 @@ All image generation uses the same fixed Python script with JSON config:
 ```
 
 **Full Config (optional fields):**
+
 ```json
 {
   "slides": [{"number": 1, "prompt": "...", "style": "trendlife"}],
@@ -249,6 +265,7 @@ All image generation uses the same fixed Python script with JSON config:
 - Use sequential numbering for different presentation topics
 
 **Example: Config File Creation**
+
 ```bash
 # Linux/macOS: Write to /tmp/
 Write tool: /tmp/nano-banana-config-1234567890.json

@@ -98,6 +98,7 @@ print("Progress updates will appear every 10-15 seconds.")
 **IMPORTANT - Common Mistakes:**
 
 ❌ **WRONG - Will fail with import errors:**
+
 ```python
 Bash(
     command="python generate_images.py --config {config_path}",
@@ -106,6 +107,7 @@ Bash(
 ```
 
 ❌ **WRONG - Missing full path:**
+
 ```python
 Bash(
     command="uv run generate_images.py --config {config_path}",
@@ -114,15 +116,18 @@ Bash(
 ```
 
 ❌ **WRONG - Changes directory (breaks relative paths in config):**
+
 ```python
 Bash(
     command="cd {base_dir} && uv run generate_images.py --config {config_path}",
     run_in_background=True
 )
 ```
+
 This makes `Path.cwd()` return the plugin cache directory, causing `./001-slides/` to resolve to the wrong location.
 
 ✅ **CORRECT:**
+
 ```python
 Bash(
     command="uv run {base_dir}/generate_images.py --config {config_path}",
@@ -319,34 +324,42 @@ The batch script continues processing remaining slides when individual slides fa
 ### Common Errors
 
 **1. API Rate Limit**
+
 ```json
 {
   "error": "API rate limit exceeded",
   "slide": 5
 }
 ```
+
 **Solution:** Wait for rate limit reset, retry failed slides
 
 **2. Invalid Configuration**
+
 ```json
 {
   "error": "Config must contain 'slides' array"
 }
 ```
+
 **Solution:** Fix configuration JSON format, retry entire batch
 
 **3. File I/O Error**
+
 ```json
 {
   "error": "Cannot create output directory: Permission denied"
 }
 ```
+
 **Solution:** Check directory permissions, use writable path
 
 **4. Missing API Key**
+
 ```
 Error: GEMINI_API_KEY or GOOGLE_API_KEY environment variable not set
 ```
+
 **Solution:** Set `GEMINI_API_KEY` environment variable
 
 ---
@@ -356,30 +369,38 @@ Error: GEMINI_API_KEY or GOOGLE_API_KEY environment variable not set
 The `style` field in slide configuration applies prompt enhancements:
 
 ### professional
+
 ```json
 {"number": 1, "prompt": "CI/CD pipeline overview", "style": "professional"}
 ```
+
 - Enhanced prompt: "Professional presentation slide: CI/CD pipeline overview. Clean, minimal design with clear typography."
 - Uses lossless WebP (for crisp text)
 
 ### data-viz
+
 ```json
 {"number": 2, "prompt": "Testing pyramid metrics", "style": "data-viz"}
 ```
+
 - Enhanced prompt: "Data visualization slide: Testing pyramid metrics. Clear charts and graphs, professional color scheme."
 - Uses lossless WebP (for sharp diagrams)
 
 ### infographic
+
 ```json
 {"number": 3, "prompt": "DevOps workflow", "style": "infographic"}
 ```
+
 - Enhanced prompt: "Infographic style: DevOps workflow. Visual storytelling with icons and illustrations."
 - Uses lossless WebP (for detailed graphics)
 
 ### No style (default)
+
 ```json
 {"number": 4, "prompt": "Kubernetes architecture"}
 ```
+
 - Prompt used as-is
 - Uses lossy WebP (smaller file size)
 
@@ -424,6 +445,7 @@ The `style` field in slide configuration applies prompt enhancements:
 3. Long generation time (wait longer)
 
 **Solution:**
+
 ```python
 # Check if background task is still running
 # If task finished, read results file for errors
@@ -432,6 +454,7 @@ The `style` field in slide configuration applies prompt enhancements:
 ### Problem: "Module not found" error
 
 **Symptoms:**
+
 ```
 ModuleNotFoundError: No module named 'google.genai'
 ```
@@ -443,6 +466,7 @@ ModuleNotFoundError: No module named 'google.genai'
 ### Problem: Permission denied on progress/results file
 
 **Symptoms:**
+
 ```
 PermissionError: [Errno 13] Permission denied: '<temp_dir>/nano-banana-progress.json'
 ```
@@ -493,6 +517,7 @@ print("🚀 Starting batch generation for 5 slides...")
 ```
 
 **Expected output:**
+
 ```
 🚀 Starting batch generation for 5 slides...
 Progress: 2/5 slides completed (40%)
