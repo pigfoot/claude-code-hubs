@@ -39,6 +39,86 @@ Python scripting and Gemini/Imagen image generation using uv with inline script 
 - [uv](https://docs.astral.sh/uv/) installed
 - `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) environment variable set with a valid Gemini API key
 
+## Quick Setup
+
+### Option A: Claude Code Settings (Recommended)
+
+Configure environment variables in `~/.claude/settings.json` so they're available to all skills.
+
+**macOS / Linux / WSL / Git Bash:**
+
+```bash
+# Replace with your actual API key
+GEMINI_API_KEY="your-api-key-here"
+
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq is required but not installed."
+    echo "Install with: brew install jq (Mac) or apt install jq (Linux)"
+    exit 1
+fi
+
+[[ ! -r "${HOME}/.claude/settings.json" ]] && mkdir -p "${HOME}/.claude" && echo "{}" > "${HOME}/.claude/settings.json"
+
+jq "$(cat <<EOFSETTINGS
+.env.GEMINI_API_KEY="${GEMINI_API_KEY}"
+EOFSETTINGS
+)" ${HOME}/.claude/settings.json > /tmp/temp.json && mv -f /tmp/temp.json ${HOME}/.claude/settings.json
+
+echo "Configuration updated successfully"
+```
+
+**Windows PowerShell:**
+
+```powershell
+# Replace with your actual API key
+$GEMINI_API_KEY = "your-api-key-here"
+
+# Settings.json setup
+$settingsPath = "$env:USERPROFILE\.claude\settings.json"
+if (-not (Test-Path $settingsPath)) {
+    New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude" | Out-Null
+    "{}" | Out-File -Encoding utf8 $settingsPath
+}
+
+$settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
+
+# Ensure env object exists
+if (-not $settings.env) {
+    $settings | Add-Member -Type NoteProperty -Name "env" -Value (New-Object PSObject) -Force
+}
+
+# Add or update environment variables (preserving existing ones)
+$settings.env | Add-Member -Type NoteProperty -Name "GEMINI_API_KEY" -Value $GEMINI_API_KEY -Force
+
+$settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
+
+Write-Host "Configuration updated successfully" -ForegroundColor Green
+```
+
+**Verify installation:**
+```bash
+# macOS / Linux
+cat ~/.claude/settings.json
+
+# Windows PowerShell
+Get-Content (Join-Path $env:USERPROFILE ".claude\settings.json")
+```
+
+### Option B: Shell Environment Variables
+
+```bash
+# Add to ~/.bashrc, ~/.zshrc, or ~/.profile
+export GEMINI_API_KEY="your-api-key-here"
+```
+
+### Option C: Project .env file
+
+```bash
+# Create .env file in your project directory
+GEMINI_API_KEY=your-api-key-here
+```
+
 ## Configuration
 
 Customize plugin behavior using environment variables:

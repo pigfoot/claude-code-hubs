@@ -8,6 +8,7 @@ A curated collection of plugins, skills, and configuration templates for [Claude
 
 **From this marketplace (pigfoot):**
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
+- **[confluence](./plugins/confluence/)** - Professional Confluence document management with **intelligent roundtrip editing** (preserves macros while Claude edits content), markdown-first workflows, unlimited file sizes, complete image support, and CQL search
 - **[nano-banana](./plugins/nano-banana/)** - AI image generation with Gemini models. Direct generation or interactive prompting with brand style support
 - **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime, non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang, and Rust
 - **[github-actions-container-build](./plugins/github-actions-container-build/)** - Build multi-architecture container images in GitHub Actions. Matrix builds (public repos), QEMU (private repos), Podman rootless builds
@@ -270,6 +271,7 @@ claude plugin marketplace add pigfoot/claude-code-hubs
 
 # Install plugins from pigfoot marketplace
 claude plugin install --scope user commit@pigfoot-marketplace
+claude plugin install --scope user confluence@pigfoot-marketplace
 claude plugin install --scope user nano-banana@pigfoot-marketplace
 claude plugin install --scope user secure-container-build@pigfoot-marketplace
 claude plugin install --scope user github-actions-container-build@pigfoot-marketplace
@@ -277,6 +279,30 @@ claude plugin install --scope user github-actions-container-build@pigfoot-market
 # Install recommended third-party plugins
 claude plugin install --scope user context7@claude-plugins-official
 claude plugin install --scope user superpowers@pigfoot-marketplace
+```
+
+**Configure MCP permissions (for confluence plugin):**
+
+To avoid repeated permission prompts when using Confluence MCP features, add this to your settings:
+
+```bash
+# macOS / Linux / WSL / Git Bash
+jq '.permissions.allow += ["mcp__plugin_confluence_atlassian__*"]' ~/.claude/settings.json > /tmp/settings.json.tmp && mv /tmp/settings.json.tmp ~/.claude/settings.json
+```
+
+```powershell
+# Windows PowerShell
+$settingsPath = "$env:USERPROFILE\.claude\settings.json"
+$settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
+if (-not $settings.permissions) {
+    $settings | Add-Member -Type NoteProperty -Name "permissions" -Value (New-Object PSObject) -Force
+}
+if (-not $settings.permissions.allow) {
+    $settings.permissions | Add-Member -Type NoteProperty -Name "allow" -Value @() -Force
+}
+$settings.permissions.allow += "mcp__plugin_confluence_atlassian__*"
+$settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
+Write-Host "MCP permissions configured" -ForegroundColor Green
 ```
 
 **Update marketplace (fetch latest plugin list):**
@@ -292,6 +318,7 @@ claude plugin update commit@pigfoot-marketplace
 
 # Update all pigfoot plugins (run one by one)
 claude plugin update commit@pigfoot-marketplace
+claude plugin update confluence@pigfoot-marketplace
 claude plugin update nano-banana@pigfoot-marketplace
 claude plugin update secure-container-build@pigfoot-marketplace
 claude plugin update github-actions-container-build@pigfoot-marketplace
@@ -674,6 +701,7 @@ Once configured, Claude will:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
+| [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads | 0.1.0 |
 | [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.6 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
@@ -686,6 +714,7 @@ claude-code-hubs/
 │   └── marketplace.json                        # Marketplace registry
 ├── plugins/
 │   ├── commit/                          # Git commit automation plugin
+│   ├── confluence/                      # Confluence document management plugin
 │   ├── nano-banana/                     # AI image generation plugin
 │   ├── secure-container-build/          # Containerfile templates plugin
 │   └── github-actions-container-build/  # GitHub Actions CI/CD plugin
@@ -756,6 +785,7 @@ claude plugin install --scope user <plugin-name>@pigfoot-marketplace
 | Plugin | Origin | Description | Skills Included |
 |--------|--------|-------------|-----------------|
 | [commit](./plugins/commit/) | pigfoot | Conventional commits with emoji and GPG signing | `commit:commit` |
+| [confluence](./plugins/confluence/) | pigfoot | Confluence document management with unlimited uploads | `confluence:confluence` |
 | [nano-banana](./plugins/nano-banana/) | pigfoot | Python scripting and Gemini image generation with dual-mode operation | `nano-banana:nano-banana` |
 | [secure-container-build](./plugins/secure-container-build/) | pigfoot | Secure container images with Wolfi runtime | `secure-container-build:secure-container-build` |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | pigfoot | Multi-arch container builds in GitHub Actions | `github-actions-container-build:github-actions-container-build` |

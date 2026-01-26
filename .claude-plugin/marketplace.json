@@ -20,6 +20,16 @@
       }
     },
     {
+      "name": "confluence",
+      "source": "./plugins/confluence",
+      "description": "Professional Confluence document management with unlimited file sizes and complete image support. Upload/download Markdown documents, handle images and diagrams, search with CQL, and integrate with CI/CD pipelines.",
+      "version": "0.1.0",
+      "author": {
+        "name": "pigfoot",
+        "email": "pigfoot@gmail.com"
+      }
+    },
+    {
       "name": "secure-container-build",
       "source": "./plugins/secure-container-build",
       "description": "Build secure container images with Wolfi runtime, non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang (static/CGO), and Rust (glibc/musl) with allocator optimization",
@@ -57,7 +67,14 @@
       },
       "description": "Core skills library: TDD, debugging, collaboration patterns, and proven techniques",
       "version": "4.3.0",
-      "keywords": ["skills", "tdd", "debugging", "collaboration", "best-practices", "workflows"],
+      "keywords": [
+        "skills",
+        "tdd",
+        "debugging",
+        "collaboration",
+        "best-practices",
+        "workflows"
+      ],
       "strict": true
     }
   ]
