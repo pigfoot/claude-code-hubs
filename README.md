@@ -159,8 +159,8 @@ jq "$(cat <<'EOF'
   "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
   "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
   "Bash(openspec:*)",
-  "mcp__plugin_context7_context7",
-  "Skill(commit:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
+  "mcp__plugin_context7_context7", "mcp__plugin_confluence_atlassian__*",
+  "Skill(commit:*)", "Skill(confluence:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 ] | unique)
   | .alwaysThinkingEnabled = true
   | .includeCoAuthoredBy = false
@@ -203,8 +203,8 @@ $newPermissions = @(
     "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
     "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
     "Bash(openspec:*)",
-    "mcp__plugin_context7_context7",
-    "Skill(commit:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
+    "mcp__plugin_context7_context7", "mcp__plugin_confluence_atlassian__*",
+    "Skill(commit:*)", "Skill(confluence:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 )
 
 $merged = @($settings.permissions.allow) + $newPermissions | Select-Object -Unique
@@ -279,30 +279,6 @@ claude plugin install --scope user github-actions-container-build@pigfoot-market
 # Install recommended third-party plugins
 claude plugin install --scope user context7@claude-plugins-official
 claude plugin install --scope user superpowers@pigfoot-marketplace
-```
-
-**Configure MCP permissions (for confluence plugin):**
-
-To avoid repeated permission prompts when using Confluence MCP features, add this to your settings:
-
-```bash
-# macOS / Linux / WSL / Git Bash
-jq '.permissions.allow += ["mcp__plugin_confluence_atlassian__*"]' ~/.claude/settings.json > /tmp/settings.json.tmp && mv /tmp/settings.json.tmp ~/.claude/settings.json
-```
-
-```powershell
-# Windows PowerShell
-$settingsPath = "$env:USERPROFILE\.claude\settings.json"
-$settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
-if (-not $settings.permissions) {
-    $settings | Add-Member -Type NoteProperty -Name "permissions" -Value (New-Object PSObject) -Force
-}
-if (-not $settings.permissions.allow) {
-    $settings.permissions | Add-Member -Type NoteProperty -Name "allow" -Value @() -Force
-}
-$settings.permissions.allow += "mcp__plugin_confluence_atlassian__*"
-$settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
-Write-Host "MCP permissions configured" -ForegroundColor Green
 ```
 
 **Update marketplace (fetch latest plugin list):**
