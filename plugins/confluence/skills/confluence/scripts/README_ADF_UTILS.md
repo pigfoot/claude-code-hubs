@@ -79,7 +79,7 @@ Get authentication credentials from environment variables.
 
 **Environment Variables**:
 - `CONFLUENCE_URL` - Confluence base URL (e.g., `https://company.atlassian.net/wiki`)
-- `CONFLUENCE_USERNAME` - Email address
+- `CONFLUENCE_USER` - Email address
 - `CONFLUENCE_API_TOKEN` - API token from https://id.atlassian.com/manage-profile/security/api-tokens
 
 #### `get_page_adf(base_url, auth, page_id) -> Dict`

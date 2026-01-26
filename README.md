@@ -8,7 +8,7 @@ A curated collection of plugins, skills, and configuration templates for [Claude
 
 **From this marketplace (pigfoot):**
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
-- **[confluence](./plugins/confluence/)** - Professional Confluence document management with **intelligent roundtrip editing** (preserves macros while Claude edits content), markdown-first workflows, unlimited file sizes, complete image support, and CQL search
+- **[confluence](./plugins/confluence/)** - Professional Confluence document management with **intelligent roundtrip editing** (preserves macros while Claude edits content), **smart routing** (auto-selects between MCP and REST API for 25x faster writes), short URL resolution, search quality detection, markdown-first workflows, unlimited file sizes, and complete image support
 - **[nano-banana](./plugins/nano-banana/)** - AI image generation with Gemini models. Direct generation or interactive prompting with brand style support
 - **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime, non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang, and Rust
 - **[github-actions-container-build](./plugins/github-actions-container-build/)** - Build multi-architecture container images in GitHub Actions. Matrix builds (public repos), QEMU (private repos), Podman rootless builds

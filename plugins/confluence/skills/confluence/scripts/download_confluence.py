@@ -28,7 +28,7 @@ Usage:
 
 Environment Variables (in .env file or exported):
     CONFLUENCE_URL - Confluence base URL (e.g., https://company.atlassian.net/wiki)
-    CONFLUENCE_USERNAME - Your email address
+    CONFLUENCE_USER - Your email address
     CONFLUENCE_API_TOKEN - API token
 """
 
@@ -47,6 +47,10 @@ from atlassian import Confluence
 from markdownify import markdownify as md
 from bs4 import BeautifulSoup
 
+# Import router for API selection transparency
+sys.path.insert(0, str(Path(__file__).parent))
+from confluence_router import ConfluenceRouter, OperationType
+
 
 def get_confluence_client(env_file: Optional[str] = None) -> Confluence:
     """Get authenticated Confluence client from environment variables."""
@@ -56,15 +60,15 @@ def get_confluence_client(env_file: Optional[str] = None) -> Confluence:
         load_dotenv()
     
     url = os.getenv("CONFLUENCE_URL")
-    username = os.getenv("CONFLUENCE_USERNAME")
+    username = os.getenv("CONFLUENCE_USER")
     api_token = os.getenv("CONFLUENCE_API_TOKEN")
-    
+
     if not all([url, username, api_token]):
         missing = []
         if not url:
             missing.append("CONFLUENCE_URL")
         if not username:
-            missing.append("CONFLUENCE_USERNAME")
+            missing.append("CONFLUENCE_USER")
         if not api_token:
             missing.append("CONFLUENCE_API_TOKEN")
         raise ValueError(f"Missing environment variables: {', '.join(missing)}")
@@ -165,7 +169,7 @@ def download_attachments(
                 response = requests.get(
                     download_url,
                     auth=(
-                        os.getenv("CONFLUENCE_USERNAME"),
+                        os.getenv("CONFLUENCE_USER"),
                         os.getenv("CONFLUENCE_API_TOKEN")
                     ),
                     stream=True
@@ -299,7 +303,14 @@ Examples:
     parser.add_argument('--env-file', type=str, help='Path to .env file')
     
     args = parser.parse_args()
-    
+
+    # Display routing decision for transparency
+    router = ConfluenceRouter()
+    decision = router.route_operation(OperationType.READ)
+    if decision.warning:
+        print(decision.warning, file=sys.stderr)
+        print()
+
     # Setup output directory
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

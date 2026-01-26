@@ -50,7 +50,7 @@ For unlimited document sizes, image handling, and batch operations:
 # Then configure (see Installation section for detailed options):
 
 export CONFLUENCE_URL="https://your-company.atlassian.net/wiki"
-export CONFLUENCE_USERNAME="your-email@company.com"
+export CONFLUENCE_USER="your-email@company.com"
 export CONFLUENCE_API_TOKEN="your-token-here"
 ```
 
@@ -72,7 +72,68 @@ Search Confluence for "project documentation"
 uv run ~/.claude/plugins/.../scripts/upload_confluence.py document.md --id PAGE_ID
 ```
 
+## ⚠️ Breaking Changes
+
+### Environment Variable Renamed (v1.0.0+)
+
+**`CONFLUENCE_USERNAME` is no longer supported. Use `CONFLUENCE_USER` instead.**
+
+This change follows industry naming conventions (`DB_USER`, `MYSQL_USER`, `POSTGRES_USER`).
+
+**Migration:**
+```bash
+# Old (deprecated):
+export CONFLUENCE_USERNAME="your-email@company.com"
+
+# New (required):
+export CONFLUENCE_USER="your-email@company.com"
+```
+
+**Update your configuration:**
+- `.env` files: Rename the variable
+- Shell exports: Update your `~/.bashrc` or `~/.zshrc`
+- CI/CD: Update environment variable settings
+
 ## ✨ Key Features
+
+### 🔀 Smart Routing (Auto API Selection)
+**Automatically selects the optimal API for each operation.** This plugin intelligently switches between MCP and REST API based on:
+- **Available credentials** - Uses REST API when token is configured, falls back to MCP otherwise
+- **Operation type** - Reads vs writes vs Rovo AI search
+- **Performance requirements** - REST API for fast writes (~1s), MCP for zero-config simplicity
+
+**Why this is unique:**
+- **25x faster writes** with REST API (~1s vs ~26s via MCP)
+- **Zero-config fallback** to MCP when no token configured
+- **Graceful degradation** - MCP session expires? Silently switches to REST API
+- **Best of both worlds** - Easy OAuth setup + optional performance optimization
+
+**What other tools lack:**
+- Official Atlassian MCP: Only MCP (slow writes, 55-min token expiry)
+- Third-party tools: Only REST API (requires manual setup, no OAuth option)
+- This plugin: Combines both with automatic selection
+
+### 🔗 Short URL Resolution
+**Decode Confluence TinyUI short URLs locally.** Supports `/wiki/x/ZQGBfg` format via Base64 decoding:
+- **Local processing** - No network calls needed (< 10ms)
+- **Privacy-preserving** - URL decoded on your machine
+- **All formats supported** - Short URLs, full URLs, direct page IDs
+
+### 🎯 Smart Search with Quality Detection
+**Detects when Rovo search results may be imprecise.** Calculates confidence score and suggests CQL alternative:
+- **Confidence scoring** - Based on title matches and result count
+- **Automatic suggestions** - When confidence < 60%, suggests CQL with preview query
+- **Bilingual prompts** - Chinese + English for better UX
+- **Best of both** - Use Rovo for semantic search, CQL for precision
+
+**Example:**
+```
+ℹ️  Search precision may be low (confidence: 35%).
+   Found 60 results, but only 1 title match(es) for 'API documentation'.
+
+   Consider using CQL search for more precise results:
+   title ~ "API documentation" OR text ~ "API documentation"
+```
 
 ### 🧠 Intelligent Roundtrip Editing (Method 6)
 **Edit existing Confluence pages with Claude while preserving macros.** Revolutionary JSON diff/patch approach that:
@@ -472,7 +533,7 @@ MCP uses cloud-based OAuth sessions that local Python scripts cannot access. For
    ```bash
    # Replace with your actual values
    CONFLUENCE_URL="https://your-company.atlassian.net/wiki"
-   CONFLUENCE_USERNAME="your-email@company.com"
+   CONFLUENCE_USER="your-email@company.com"
    CONFLUENCE_API_TOKEN="your-token-here"
 
    # Check if jq is installed
@@ -486,7 +547,7 @@ MCP uses cloud-based OAuth sessions that local Python scripts cannot access. For
 
    jq "$(cat <<EOFSETTINGS
    .env.CONFLUENCE_URL="${CONFLUENCE_URL}"
-     | .env.CONFLUENCE_USERNAME="${CONFLUENCE_USERNAME}"
+     | .env.CONFLUENCE_USER="${CONFLUENCE_USER}"
      | .env.CONFLUENCE_API_TOKEN="${CONFLUENCE_API_TOKEN}"
    EOFSETTINGS
    )" ${HOME}/.claude/settings.json > /tmp/temp.json && mv -f /tmp/temp.json ${HOME}/.claude/settings.json
@@ -498,7 +559,7 @@ MCP uses cloud-based OAuth sessions that local Python scripts cannot access. For
    ```powershell
    # Replace with your actual values
    $CONFLUENCE_URL = "https://your-company.atlassian.net/wiki"
-   $CONFLUENCE_USERNAME = "your-email@company.com"
+   $CONFLUENCE_USER = "your-email@company.com"
    $CONFLUENCE_API_TOKEN = "your-token-here"
 
    # Settings.json setup
@@ -517,7 +578,7 @@ MCP uses cloud-based OAuth sessions that local Python scripts cannot access. For
 
    # Add or update environment variables (preserving existing ones)
    $settings.env | Add-Member -Type NoteProperty -Name "CONFLUENCE_URL" -Value $CONFLUENCE_URL -Force
-   $settings.env | Add-Member -Type NoteProperty -Name "CONFLUENCE_USERNAME" -Value $CONFLUENCE_USERNAME -Force
+   $settings.env | Add-Member -Type NoteProperty -Name "CONFLUENCE_USER" -Value $CONFLUENCE_USER -Force
    $settings.env | Add-Member -Type NoteProperty -Name "CONFLUENCE_API_TOKEN" -Value $CONFLUENCE_API_TOKEN -Force
 
    $settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
@@ -529,7 +590,7 @@ MCP uses cloud-based OAuth sessions that local Python scripts cannot access. For
    ```bash
    # Add to ~/.bashrc, ~/.zshrc, or ~/.profile
    export CONFLUENCE_URL="https://your-company.atlassian.net/wiki"
-   export CONFLUENCE_USERNAME="your-email@company.com"
+   export CONFLUENCE_USER="your-email@company.com"
    export CONFLUENCE_API_TOKEN="your-token-here"
    ```
 
@@ -537,7 +598,7 @@ MCP uses cloud-based OAuth sessions that local Python scripts cannot access. For
    ```bash
    # Create .env file in your project directory
    CONFLUENCE_URL=https://your-company.atlassian.net/wiki
-   CONFLUENCE_USERNAME=your-email@company.com
+   CONFLUENCE_USER=your-email@company.com
    CONFLUENCE_API_TOKEN=your-token-here
    ```
 
@@ -722,7 +783,7 @@ By default, existing attachments are skipped to save bandwidth. Use `--force-reu
 ```bash
 # Verify variables are set
 echo $CONFLUENCE_URL
-echo $CONFLUENCE_USERNAME
+echo $CONFLUENCE_USER
 echo $CONFLUENCE_API_TOKEN
 
 # Or check .env file exists
@@ -744,7 +805,7 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 
 **Fix:**
 1. Generate new API token: https://id.atlassian.com/manage-profile/security/api-tokens
-2. Verify `CONFLUENCE_USERNAME` matches your Atlassian account email
+2. Verify `CONFLUENCE_USER` matches your Atlassian account email
 3. Check `CONFLUENCE_URL` format: `https://yourcompany.atlassian.net/wiki` (no trailing slash)
 
 ### OAuth prompt appears repeatedly

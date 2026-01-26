@@ -26,7 +26,7 @@ Usage:
 
 Environment Variables (in .env file or exported):
     CONFLUENCE_URL - Confluence base URL (e.g., https://company.atlassian.net/wiki)
-    CONFLUENCE_USERNAME - Your email address
+    CONFLUENCE_USER - Your email address
     CONFLUENCE_API_TOKEN - API token from https://id.atlassian.com/manage-profile/security/api-tokens
 """
 
@@ -41,6 +41,10 @@ import yaml
 import mistune
 from dotenv import load_dotenv
 from atlassian import Confluence
+
+# Import router for API selection transparency
+sys.path.insert(0, str(Path(__file__).parent))
+from confluence_router import ConfluenceRouter, OperationType
 
 
 class ConfluenceStorageRenderer(mistune.HTMLRenderer):
@@ -107,15 +111,15 @@ def get_confluence_client(env_file: Optional[str] = None) -> Confluence:
         load_dotenv()
     
     url = os.getenv("CONFLUENCE_URL")
-    username = os.getenv("CONFLUENCE_USERNAME")
+    username = os.getenv("CONFLUENCE_USER")
     api_token = os.getenv("CONFLUENCE_API_TOKEN")
-    
+
     if not all([url, username, api_token]):
         missing = []
         if not url:
             missing.append("CONFLUENCE_URL")
         if not username:
-            missing.append("CONFLUENCE_USERNAME")
+            missing.append("CONFLUENCE_USER")
         if not api_token:
             missing.append("CONFLUENCE_API_TOKEN")
         raise ValueError(f"Missing environment variables: {', '.join(missing)}")
@@ -371,7 +375,14 @@ IMPORTANT:
                         help='Re-upload all attachments even if they exist')
     
     args = parser.parse_args()
-    
+
+    # Display routing decision for transparency
+    router = ConfluenceRouter()
+    decision = router.route_operation(OperationType.WRITE)
+    if decision.warning:
+        print(decision.warning, file=sys.stderr)
+        print()
+
     # Validate file
     file_path = Path(args.file)
     if not file_path.exists():

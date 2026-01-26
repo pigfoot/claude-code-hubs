@@ -93,7 +93,7 @@ import mistune
 # Configuration
 CONFLUENCE_URL = os.getenv("CONFLUENCE_URL")
 API_TOKEN = os.getenv("CONFLUENCE_API_TOKEN")
-USER_EMAIL = os.getenv("CONFLUENCE_USERNAME")
+USER_EMAIL = os.getenv("CONFLUENCE_USER")
 
 class ConfluenceRoundtrip:
     def __init__(self):

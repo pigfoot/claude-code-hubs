@@ -266,7 +266,7 @@ uv run {base_dir}/scripts/add_table_row.py 2117534137 \
 - `--dry-run`: Preview mode, doesn't actually update
 
 **Prerequisites**:
-- Environment must be configured: `CONFLUENCE_URL`, `CONFLUENCE_USERNAME`, `CONFLUENCE_API_TOKEN`
+- Environment must be configured: `CONFLUENCE_URL`, `CONFLUENCE_USER`, `CONFLUENCE_API_TOKEN`
 - Uses ADF (Atlassian Document Format) operations
 - Direct REST API v2, no MCP dependency
 
@@ -539,7 +539,7 @@ Download Progress:
 **Required:**
 - **`uv` package manager** - All scripts use PEP 723 inline metadata, must run with `uv run`
 - Atlassian MCP Server (`mcp__atlassian`) with Confluence credentials (for MCP tools)
-- Environment variables: `CONFLUENCE_URL`, `CONFLUENCE_USERNAME`, `CONFLUENCE_API_TOKEN` (for REST API scripts)
+- Environment variables: `CONFLUENCE_URL`, `CONFLUENCE_USER`, `CONFLUENCE_API_TOKEN` (for REST API scripts)
 
 **Optional:**
 - `mark` CLI: Git-to-Confluence sync (`brew install kovetskiy/mark/mark`)

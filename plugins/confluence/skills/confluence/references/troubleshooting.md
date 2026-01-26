@@ -9,7 +9,7 @@
 **Fix:** Create `.env` file or export variables:
 ```bash
 export CONFLUENCE_URL="https://company.atlassian.net/wiki"
-export CONFLUENCE_USERNAME="your-email@company.com"
+export CONFLUENCE_USER="your-email@company.com"
 export CONFLUENCE_API_TOKEN="your-api-token"
 ```
 

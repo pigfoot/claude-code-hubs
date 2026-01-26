@@ -2,7 +2,7 @@
 
 Standardize Confluence environment variable naming to follow industry conventions.
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: Environment Variable Naming
 
@@ -20,8 +20,6 @@ The system MUST use standardized environment variable names.
 - **When** the system reads authentication credentials
 - **Then** `CONFLUENCE_USERNAME` is NOT used
 - **And** authentication fails with missing credentials error
-
-## ADDED Requirements
 
 ### Requirement: Required Environment Variables
 

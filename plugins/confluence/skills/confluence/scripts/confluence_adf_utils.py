@@ -35,13 +35,13 @@ def get_auth() -> Tuple[str, Tuple[str, str]]:
 
     Environment Variables:
         CONFLUENCE_URL - Confluence base URL (e.g., https://company.atlassian.net/wiki)
-        CONFLUENCE_USERNAME - Your email address
+        CONFLUENCE_USER - Your email address
         CONFLUENCE_API_TOKEN - API token from https://id.atlassian.com/manage-profile/security/api-tokens
     """
     load_dotenv()
 
     url = os.getenv("CONFLUENCE_URL")
-    username = os.getenv("CONFLUENCE_USERNAME")
+    username = os.getenv("CONFLUENCE_USER")
     api_token = os.getenv("CONFLUENCE_API_TOKEN")
 
     if not all([url, username, api_token]):
@@ -49,7 +49,7 @@ def get_auth() -> Tuple[str, Tuple[str, str]]:
         if not url:
             missing.append("CONFLUENCE_URL")
         if not username:
-            missing.append("CONFLUENCE_USERNAME")
+            missing.append("CONFLUENCE_USER")
         if not api_token:
             missing.append("CONFLUENCE_API_TOKEN")
         raise ValueError(f"Missing environment variables: {', '.join(missing)}")

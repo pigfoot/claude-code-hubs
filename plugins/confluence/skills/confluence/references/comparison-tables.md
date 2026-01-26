@@ -138,14 +138,14 @@ claude mcp add atlassian \
 
 # 2. Set environment variables
 export CONFLUENCE_URL="https://your-site.atlassian.net"
-export CONFLUENCE_USERNAME="your@email.com"
+export CONFLUENCE_USER="your@email.com"
 export CONFLUENCE_API_TOKEN="your_api_token_here"
 
 # 3. Or write to ~/.claude/settings.json
 {
   "env": {
     "CONFLUENCE_URL": "https://your-site.atlassian.net",
-    "CONFLUENCE_USERNAME": "your@email.com",
+    "CONFLUENCE_USER": "your@email.com",
     "CONFLUENCE_API_TOKEN": "your_token"
   }
 }
@@ -400,7 +400,7 @@ import os
 
 # All operations happen in Python, no AI delays
 api_url = os.environ['CONFLUENCE_URL']
-auth = (os.environ['CONFLUENCE_USERNAME'], os.environ['CONFLUENCE_API_TOKEN'])
+auth = (os.environ['CONFLUENCE_USER'], os.environ['CONFLUENCE_API_TOKEN'])
 
 # 1. Read page (5-10s - network only)
 response = requests.get(f"{api_url}/rest/api/v2/pages/{page_id}")
@@ -456,7 +456,7 @@ requests.put(f"{api_url}/rest/api/v2/pages/{page_id}", json=page_data)
 1. **Use environment variables** (already configured):
    ```python
    CONFLUENCE_URL = os.environ.get('CONFLUENCE_URL')
-   CONFLUENCE_USERNAME = os.environ.get('CONFLUENCE_USERNAME')
+   CONFLUENCE_USER = os.environ.get('CONFLUENCE_USER')
    CONFLUENCE_API_TOKEN = os.environ.get('CONFLUENCE_API_TOKEN')
    ```
 
