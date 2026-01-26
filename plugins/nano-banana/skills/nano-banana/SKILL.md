@@ -8,7 +8,7 @@ description: |
 allowed-tools: Bash Write Read AskUserQuestion
 metadata:
   short-description: Unified image generation workflow with Gemini/Imagen models
-  version: "0.0.7"
+  version: "0.0.8"
 
 # === GitHub Copilot ===
 license: MIT

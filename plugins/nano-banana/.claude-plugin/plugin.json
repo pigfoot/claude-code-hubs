@@ -1,7 +1,7 @@
 {
   "name": "nano-banana",
   "description": "Unified image generation workflow with Gemini/Imagen models using fixed Python script approach (eliminates AI hallucinations). Generate 1-100 images with minimal JSON config. Supports TrendLife brand styling, interactive prompt design, and cross-platform operation.",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": {
     "name": "pigfoot",
     "email": "pigfoot@gmail.com"

@@ -505,10 +505,15 @@ claude plugin install --scope user nano-banana@pigfoot-marketplace
 **What it does:**
 Generates and edits images using Google's Gemini or Imagen models with Python scripting powered by uv.
 
-**Recent Improvements (v0.0.6):**
-- ✅ **TrendLife brand support** - Automatic logo overlay with precise positioning (17, 20) padding
-- ✅ **Brand style configuration** - TrendLife colors (Trend Red #D71920) with explicit title color requirements
-- ✅ **API documentation fixes** - Added missing `image_config` to basic examples
+**Recent Improvements (v0.0.8):**
+- ✅ **uv compatibility enhancement** - PEP 723 inline metadata for library modules (logo_overlay.py)
+- ✅ **Fixed intermittent failures** - Logo overlay works when Claude creates temporary scripts
+- ✅ **Automatic dependency resolution** - uv correctly installs Pillow even when importing modules
+
+**Previous Improvements (v0.0.7):**
+- ✅ **Zero hallucination rate** - Fixed Python script approach eliminates AI code generation errors
+- ✅ **Unified workflow** - Same process for 1-100 images (no more dual paths)
+- ✅ **Cross-platform support** - Windows UTF-8 encoding fix, system temp directory handling
 
 **Benefits:**
 - ✅ **Dual API support** - Gemini (quality, slides) or Imagen (multiple images, negative prompts)
@@ -702,7 +707,7 @@ Once configured, Claude will:
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
 | [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads | 0.1.0 |
-| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.6 |
+| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.8 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
 

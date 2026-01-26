@@ -2,9 +2,15 @@
 
 Python scripting and Gemini/Imagen image generation using uv with inline script dependencies.
 
-## ✨ Recent Improvements (v0.0.7)
+## ✨ Recent Improvements (v0.0.8)
 
-**Unified Generation Workflow (eliminates AI hallucinations):**
+**uv Compatibility Enhancement:**
+- ✅ **PEP 723 for library modules** - Added inline dependency metadata to `logo_overlay.py`
+- ✅ **Fixed intermittent failures** - Logo overlay now works when Claude creates temporary scripts
+- ✅ **Documentation updates** - Added PEP 723 headers to all usage examples
+- ✅ **Automatic dependency resolution** - `uv run` correctly installs Pillow even when importing logo_overlay
+
+**Previous Improvements (v0.0.7):**
 - ✅ **Zero hallucination rate** - Fixed Python script approach replaces dynamic code generation
 - ✅ **Unified workflow** - Same process for 1-100 images (no more dual paths)
 - ✅ **Minimal config** - Only `slides` + `output_dir` required, no model field
