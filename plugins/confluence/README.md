@@ -2,6 +2,12 @@
 
 > Professional Confluence document management with **intelligent roundtrip editing** (preserves macros while Claude edits), markdown-first workflows, unlimited file sizes, and complete image support
 
+## Design & Research
+
+See [docs/plans/005-confluence-smart-routing/](../../docs/plans/005-confluence-smart-routing/) for:
+- **[design.md](../../docs/plans/005-confluence-smart-routing/design.md)** - Smart routing architecture (MCP ↔ REST API)
+- **[research.md](../../docs/plans/005-confluence-smart-routing/research.md)** - Performance testing & technical decisions
+
 ## 🚀 Quick Start
 
 ### 1. Install Plugin

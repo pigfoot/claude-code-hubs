@@ -149,22 +149,28 @@ Returns:
 - ✅ Official integration
 - ✅ Rich query capabilities via Rovo Search
 - ✅ Access to Jira + Confluence
+- ✅ Cross-product search (Confluence + Jira + Slack + Google Drive)
+- ✅ AI natural language queries (Rovo-powered)
 
 **Cons**:
-- ❌ Token expires every 55-60 minutes
+- ❌ Token expires every 55 minutes
 - ❌ Manual re-authentication required
 - ❌ Refresh token unreliable (empty scope)
 - ❌ No long-term solution available
-- ❌ Performance overhead (13 minutes for complex operations)
+- ❌ Slow write performance (26-120 seconds per page vs REST API's 1 second)
+- ❌ Variable performance (write times fluctuate significantly)
+- ❌ Rate limits (Enterprise: 10,000 calls/hour; Free: 500 calls/hour)
+- ❌ No public REST API for Rovo features
 
 ### Option 2: Python REST API + API Token (Our Choice)
 
 **Pros**:
 - ✅ **Permanent API token** (never expires unless manually revoked)
-- ✅ **650x faster** (~1 second vs. 13 minutes)
-- ✅ Direct ADF manipulation (precise control)
+- ✅ **25x faster writes** (~1 second vs. 26 seconds for Markdown)
+- ✅ Direct format control (Storage HTML, ADF, Wiki Markup)
 - ✅ No authentication interruptions
 - ✅ Works in CI/CD pipelines
+- ✅ Consistent, predictable performance
 
 **Cons**:
 - ⚠️ Requires implementing own tools (but only once)
@@ -175,10 +181,11 @@ Returns:
 We chose **Python REST API + API Token** because:
 
 1. **Reliability**: Permanent token vs. hourly re-authentication
-2. **Performance**: 650x speed improvement is critical for productivity
+2. **Performance**: 25x speed improvement for writes (1s vs 26s) is critical for productivity
 3. **Structural Operations**: Our use case focuses on adding rows, items, panels, etc. - REST API is perfect for this
-4. **CI/CD Compatible**: API tokens work in automated environments
-5. **MCP Still Available**: Can use MCP for read-only/search operations when needed
+4. **CI/CD Compatible**: API tokens work in automated environments without re-authentication
+5. **Predictable Performance**: Consistent 1-second writes vs MCP's variable 26-120 seconds
+6. **MCP Still Available**: Can use MCP for read-only/search operations when needed
 
 ### Hybrid Approach
 
@@ -196,27 +203,40 @@ We chose **Python REST API + API Token** because:
 
 ## Performance Comparison
 
-### MCP Approach (Original)
-```
-Task: Upload markdown with images to Confluence
-Time: ~13 minutes (780 seconds)
-Reason: Multiple AI tool invocations, MCP roundtrips
-```
+### Write Operation Comparison
 
-### Python REST API Approach (Current)
-```
-Task: Same upload operation
-Time: ~1.2 seconds
-Speed: 650x faster
-Reason: Direct API calls, no AI intermediary
-```
+**Test**: Upload Markdown table (1.6KB, 5 columns × 21 rows)
+
+| Method | Processing | Upload Time | Total Time |
+|--------|------------|-------------|------------|
+| **MCP** | Server-side Markdown conversion | Network + conversion | **25.96 sec** |
+| **REST API** | Client-side Markdown → HTML (mistune) | Network only | **1.02 sec** |
+
+**Speed Advantage**: REST API is **25.5x faster**
+
+### Why REST API is Faster
+
+1. **Local Conversion**: Python script converts Markdown → HTML on your computer (instant)
+2. **Pre-converted Upload**: Sends ready-to-save HTML to server
+3. **No Server Processing**: Confluence directly saves HTML (no conversion needed)
+
+### Why MCP is Slower
+
+1. **Raw Markdown Upload**: Sends unconverted Markdown to server
+2. **Server-side Conversion**: Confluence must process Markdown → internal format
+3. **Network Overhead**: Multiple roundtrips for conversion process
 
 ### Real-World Impact
 
 For a team making 10 documentation updates per day:
-- **MCP**: 130 minutes (2.17 hours) waiting time
-- **REST API**: 12 seconds total
-- **Time Saved**: 2+ hours per day
+- **MCP**: 260 seconds (4.3 minutes) waiting time
+- **REST API**: 10 seconds total
+- **Time Saved**: 4 minutes per day (but adds up over time)
+
+For batch operations (100 pages):
+- **MCP**: 2,596 seconds (43 minutes) + rate limit concerns
+- **REST API**: 102 seconds (1.7 minutes)
+- **Time Saved**: 41 minutes per batch
 
 ---
 
@@ -385,6 +405,228 @@ Based on user reports, automatic refresh **frequently fails** in practice.
 ✅ **Continue using Python REST API + permanent API Token** for reliable, production operations.
 
 ⚠️ **Use MCP OAuth only for** exploratory/read-only operations where occasional re-authentication is acceptable.
+
+---
+
+## MCP Limitations Comprehensive Analysis
+
+### Confirmed Limitations
+
+| Category | Limitation | Impact | Workaround |
+|----------|-----------|--------|------------|
+| **Authentication** | Token expires every 55 minutes | Frequent manual re-authentication | Use API Token |
+| **Performance** | 25x slower writes (26s vs 1s for Markdown) | Impractical for production write operations | Use REST API |
+| **File Operations** | ❌ No attachment upload support | Cannot upload images/PDFs via MCP | Use REST API `/attachment` endpoint |
+| **Rate Limits** | 10,000 calls/hour (Enterprise)<br>500 calls/hour (Free) | Batch operations may hit limits | Monitor usage, use REST API for bulk |
+| **Refresh Token** | Not working (scope empty) | Cannot auto-renew access token | Manual re-authentication |
+| **Permission Management** | ❌ Not supported | Cannot modify page/space permissions | Use REST API or UI |
+| **Space Administration** | ❌ Not supported | Cannot create/delete spaces | Use REST API or UI |
+| **Rovo Features** | No public REST API alternative | Rovo Search only via MCP | Accept MCP for Rovo features |
+| **Payload Size** | ✅ Handles large ADF (~15KB+) | No apparent size limits in testing | Works well for complex pages |
+
+### Payload Size Testing
+
+**Test Date**: 2026-01-26 (after re-authentication)
+
+**Test Case**: Page 2117534137 (Threat Model Template)
+- **Content**: 3 complex tables + panels + bullet lists
+- **ADF Size**: ~15,000 characters
+- **Result**: ✅ Successfully read complete ADF structure
+- **Conclusion**: MCP can handle moderately large ADF documents without issues
+
+**Note**: File/attachment upload is NOT supported via MCP (confirmed via official documentation). For uploading images, PDFs, or other files, use REST API `/attachment` endpoint.
+
+### Supported Content Formats
+
+Both MCP and REST API support multiple content formats, but with different capabilities:
+
+| Format | MCP | REST API | Notes |
+|--------|-----|----------|-------|
+| **Markdown** | ✅ `contentFormat: "markdown"` | ❌ **Not supported** | MCP exclusive: Server-side auto-conversion |
+| **ADF (Atlassian Document Format)** | ✅ `contentFormat: "adf"` | ✅ `representation: "atlas_doc_format"` | Full control, both support |
+| **Storage HTML** | ❌ Not supported | ✅ `representation: "storage"` | REST API exclusive: Confluence's internal XHTML |
+| **Wiki Markup** | ❌ Not supported | ✅ `representation: "wiki"` | REST API exclusive: Legacy format |
+
+**Key Differences**:
+- **MCP Markdown Support**: Unique feature - upload raw Markdown, server converts automatically
+- **REST API**: Must convert locally before upload (Markdown → Storage HTML or ADF)
+- **Conversion Trade-off**: MCP convenience (no local tools) vs REST API speed (pre-converted)
+
+**Workflow Comparison**:
+
+```
+MCP Workflow (Markdown):
+  Local: Read .md file
+      ↓
+  Upload: Send raw Markdown (1.6KB)
+      ↓
+  Server: Markdown → Confluence format ← Slow!
+      ↓
+  Result: Page created (25-30 seconds)
+
+REST API Workflow (Storage HTML):
+  Local: Read .md file
+      ↓
+  Local: mistune converts Markdown → HTML (2.5KB) ← Fast!
+      ↓
+  Upload: Send pre-converted HTML
+      ↓
+  Server: Direct save (no conversion)
+      ↓
+  Result: Page created (1 second)
+```
+
+**Best Practice**:
+- For **MCP**: Use Markdown if you don't have local conversion tools
+- For **REST API**: Pre-convert to Storage HTML or ADF (use `upload_confluence.py`)
+
+### Supported Confluence Operations (via MCP)
+
+**Content Management**:
+- ✅ Create page (Markdown body) - `createConfluencePage`
+- ✅ Update page (title, body, location) - `updateConfluencePage`
+- ✅ Read page (ADF/Markdown) - `getConfluencePage`
+- ✅ List pages in space - `getPagesInConfluenceSpace`
+
+**Search & Discovery**:
+- ✅ CQL search - `searchConfluenceUsingCql`
+- ✅ List spaces - `getConfluenceSpaces`
+- ✅ Get page descendants - `getConfluencePageDescendants`
+- ✅ Rovo AI natural language search (MCP exclusive)
+
+**Collaboration**:
+- ✅ Create footer comment - `createConfluenceFooterComment`
+- ✅ Create inline comment - `createConfluenceInlineComment`
+- ✅ Get comments - `getConfluencePageFooterComments`, `getConfluencePageInlineComments`
+
+### Write Speed Testing
+
+**Test Date**: 2026-01-26
+
+Comprehensive write performance testing comparing MCP and REST API. All tests use identical table content (5 columns x 21 rows).
+
+#### Fair Comparison Test: Same Markdown Content
+
+**Test Content**: 1.6KB Markdown file with table (5 columns × 21 rows)
+
+| Method | Content Format | Processing | Time | Page ID |
+|--------|----------------|------------|------|---------|
+| **MCP** | Markdown (1.6KB) | Server-side conversion | **25.96 sec** | 2121172818 |
+| **REST API** | Markdown → Storage HTML (2.5KB) | Client-side conversion (mistune) | **1.02 sec** | 2123367184 |
+
+**Speed Difference**: REST API is **25.5x faster**
+
+**Key Insight**: The speed difference comes from **where** Markdown conversion happens:
+- **MCP**: Uploads raw Markdown → Server converts → Slower (network + server processing)
+- **REST API**: Local Python script converts → Uploads HTML → Faster (pre-converted)
+
+**Both approaches produce identical pages** - only the conversion location differs.
+
+---
+
+#### Additional Tests: Format-Specific Performance
+
+**Test A: MCP with ADF Format**
+
+| Test | Content Size | Time | Status |
+|------|--------------|------|--------|
+| **Test #1** | 23KB ADF JSON (hand-crafted) | 120.19 sec | ✅ Success |
+| **Test #2** | 23KB ADF JSON (same content) | 79.52 sec | ✅ Success |
+| **Average** | 23KB ADF JSON | **99.86 sec** | - |
+
+**Observations**:
+- MCP write speed varies significantly (41 sec difference, 34% variance)
+- Possible factors: network conditions, server load, connection overhead
+- ADF format is much larger than equivalent Markdown (23KB vs 1.6KB)
+
+**Test B: REST API with Storage HTML**
+
+| Input | Output | Time | Status |
+|-------|--------|------|--------|
+| 1.4KB Markdown | 2.4KB Storage HTML | **0.954 sec** | ✅ Success |
+
+**Method**: `upload_confluence.py` with mistune for Markdown → HTML conversion
+
+---
+
+#### Performance Summary
+
+| Test Type | MCP | REST API | Speed Advantage |
+|-----------|-----|----------|-----------------|
+| **Fair Test (Markdown source)** | 25.96 sec | 1.02 sec | **25.5x faster** |
+| **Unfair Test (ADF vs HTML)** | 99.86 sec | 0.954 sec | 104.7x faster |
+
+**Conclusion**:
+- Real-world advantage: **~25x faster** (using same source content)
+- MCP slower due to server-side Markdown conversion overhead
+- REST API consistent performance (~1 second regardless of method)
+
+---
+
+#### Recommendations
+
+Based on comprehensive testing:
+
+**Use REST API for**:
+1. ✅ **All production write operations** (25x faster, stable)
+2. ✅ **Batch operations** (consistent 1-second performance)
+3. ✅ **CI/CD pipelines** (no re-authentication needed)
+4. ✅ **Time-sensitive updates** (predictable performance)
+
+**Use MCP for**:
+1. 🔍 **Rovo Search** (MCP-exclusive feature, no alternative)
+2. 🤖 **AI natural language queries** (MCP-exclusive)
+3. 📖 **Quick reads** (acceptable performance for read operations)
+4. 🚀 **One-off prototyping** (when you don't want to set up API token)
+
+**Avoid MCP for**:
+- ❌ Production write operations (25x slower than REST API)
+- ❌ Large batch updates (rate limits + slow writes)
+- ❌ Markdown uploads requiring speed (server conversion is bottleneck)
+
+### What REST API Can Do That MCP Cannot
+
+| Feature | REST API | MCP | Winner |
+|---------|----------|-----|--------|
+| Upload attachments | ✅ | ❌ | REST API |
+| Permanent authentication | ✅ (API Token never expires) | ❌ (55 min OAuth) | REST API |
+| High performance writes | ✅ (~1s) | ❌ (~26s for Markdown, ~100s for ADF) | REST API |
+| Markdown support | ❌ Must convert locally | ✅ Server-side auto-conversion | MCP |
+| Direct ADF manipulation | ✅ `atlas_doc_format` | ✅ `contentFormat: "adf"` | Both |
+| Storage HTML format | ✅ `representation: "storage"` | ❌ | REST API |
+| Space management | ✅ Create/delete | ❌ | REST API |
+| Permission control | ✅ Share/restrict | ❌ | REST API |
+| Version history | ✅ Full access | ⚠️ Limited | REST API |
+| Batch operations | ✅ Stable performance | ⚠️ 10k/hour + slow writes | REST API |
+
+### What MCP Can Do That REST API Cannot
+
+| Feature | MCP | REST API | Winner |
+|---------|-----|----------|--------|
+| Cross-product search | ✅ (Confluence+Jira+Slack+Drive) | ❌ (Confluence only) | MCP |
+| Rovo AI natural language | ✅ | ❌ No public API | MCP |
+| Teamwork Graph queries | ✅ | ❌ | MCP |
+| AI-powered summarization | ✅ | ❌ | MCP |
+
+### Design Decision: Hybrid Approach
+
+**Primary (Production)**: REST API + API Token
+- ✅ All structural modifications (16 ADF tools)
+- ✅ Upload/download with attachments
+- ✅ Fast and reliable
+- ✅ Never expires
+
+**Secondary (Fallback/Special)**: MCP OAuth
+- 🔍 Cross-product search (when needed)
+- 🤖 Rovo AI queries (exploration)
+- 🚀 Quick PoC/testing (no config required)
+- ⚠️ Accept hourly re-authentication trade-off
+
+**Implementation Strategy**:
+1. Check for `CONFLUENCE_API_TOKEN` environment variable
+2. If present: Use REST API (recommended path)
+3. If absent: Fall back to MCP OAuth with warnings about limitations
+4. Document which features require API Token vs. available via MCP
 
 ---
 
