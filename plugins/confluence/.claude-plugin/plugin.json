@@ -1,0 +1,22 @@
+{
+  "name": "confluence",
+  "description": "Professional Confluence document management with unlimited file sizes and complete image support. Upload/download Markdown documents, handle images and diagrams, search with CQL, and integrate with CI/CD pipelines.",
+  "version": "0.1.0",
+  "author": {
+    "name": "pigfoot",
+    "email": "pigfoot@gmail.com"
+  },
+  "keywords": [
+    "confluence",
+    "atlassian",
+    "documentation",
+    "markdown",
+    "wiki",
+    "sync",
+    "mcp",
+    "cql"
+  ],
+  "skills": [
+    "./skills/confluence"
+  ]
+}
