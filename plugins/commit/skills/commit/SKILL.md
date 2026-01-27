@@ -27,18 +27,36 @@ Creates well-formatted commits following conventional commit standards with emoj
 
 ## Process
 
-### 1. Environment Check
+**⚠️ CRITICAL: ALWAYS start with Step 1 (Environment Check) before attempting any commit**
+
+### 1. Environment Check (MANDATORY FIRST STEP)
+
+**MUST cache GPG passphrase if available:**
+
 ```bash
-# Check GPG passphrase availability
+# If GPG_PASSPHRASE is set, cache it to gpg-agent
 if [ -n "$GPG_PASSPHRASE" ]; then
-  # Cache passphrase
   gpg --batch --pinentry-mode loopback \
       --passphrase-file <(echo "$GPG_PASSPHRASE") \
-      --clearsign >/dev/null 2>&1 <<< "test"
-  USE_GPG="yes"
+      --clearsign >/dev/null 2>&1 <<< "test" && echo "✅ GPG passphrase cached" || echo "❌ GPG cache failed"
 else
-  USE_GPG="no"
+  echo "⚠️  GPG_PASSPHRASE not set - GPG signing will prompt for passphrase (and fail in non-interactive environment)"
 fi
+```
+
+**Why this matters:**
+- GPG_PASSPHRASE purpose: Allow GPG to sign automatically without interactive password prompt
+- If GPG_PASSPHRASE is set → **Must cache first**, otherwise git commit --gpg-sign will fail
+- If GPG_PASSPHRASE not set → GPG will attempt interactive password prompt (fails in Claude Code environment)
+
+**GPG signing decision:**
+- Whether to use --gpg-sign should be determined by project policy or git config
+- In this project: **always use --gpg-sign** (assumes GPG is configured)
+
+**When committing:**
+```bash
+# Always use --gpg-sign (passphrase is cached if GPG_PASSPHRASE was set)
+git commit --signoff --gpg-sign -m "..."
 ```
 
 ### 2. Analyze Changes
@@ -170,10 +188,12 @@ Only proceed if confirmed.
 - ❌ Use past tense ("added" → "add")
 - ❌ Make first line >72 chars
 - ❌ Bypass hooks without asking
+- ❌ **Attempt git commit before running GPG cache command**
 
 ### ALWAYS
-- ✅ Use --signoff flag
-- ✅ Check GPG passphrase first
+- ✅ **FIRST: Run Environment Check (Step 1) to cache GPG passphrase**
+- ✅ Use --signoff flag (always)
+- ✅ Use --gpg-sign flag (always, passphrase is cached in Step 1)
 - ✅ Analyze diff before commit
 - ✅ Suggest splits when appropriate
 - ✅ Use imperative mood
