@@ -159,7 +159,7 @@ Use when you need custom logo positioning:
 # /// script
 # dependencies = ["pillow"]
 # ///
-# Run with: uv run your_script.py
+# Run with: uv run --managed-python your_script.py
 
 # After image generation, before final output
 from pathlib import Path
@@ -218,11 +218,11 @@ All image generation uses the same fixed Python script with JSON config:
 1. **Create Config:** Write JSON to system temp directory (NOT skill directory)
    - Use `Write` tool with path: `{temp_dir}/nano-banana-config-{timestamp}.json`
    - Get temp_dir from user's OS temp location (cross-platform)
-2. **Execute Script:** `uv run {base_dir}/generate_images.py --config <temp_config_path>`
+2. **Execute Script:** `uv run --managed-python {base_dir}/generate_images.py --config <temp_config_path>`
    - `{base_dir}` is the skill base directory provided by Claude Code when loading the skill
    - **CRITICAL:** Use absolute path to script WITHOUT changing directory (no `cd` command)
-   - **WRONG:** `cd {base_dir} && uv run generate_images.py ...` ❌
-   - **CORRECT:** `uv run {base_dir}/generate_images.py ...` ✅
+   - **WRONG:** `cd {base_dir} && uv run --managed-python generate_images.py ...` ❌
+   - **CORRECT:** `uv run --managed-python {base_dir}/generate_images.py ...` ✅
    - This ensures execution cwd remains in user's project directory, so relative paths in config work correctly
 3. **Track Progress:** Monitor progress/results files (for background tasks)
 4. **Return Paths:** Report generated image locations

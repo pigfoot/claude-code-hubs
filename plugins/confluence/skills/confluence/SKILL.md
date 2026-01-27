@@ -18,10 +18,10 @@ Version: 0.1.0 (Testing Phase)
 ```bash
 # Use REST API scripts instead:
 # For uploading documents:
-uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
+uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 
 # For structural modifications (adding table rows, etc.):
-uv run {base_dir}/scripts/add_table_row.py PAGE_ID --table-heading "..." --after-row-containing "..." --cells "..." "..." "..."
+uv run --managed-python {base_dir}/scripts/add_table_row.py PAGE_ID --table-heading "..." --after-row-containing "..." --cells "..." "..." "..."
 ```
 
 **DO NOT CREATE TEMPORARY ANALYSIS SCRIPTS** - Use existing `analyze_page.py` tool
@@ -32,8 +32,8 @@ uv run {base_dir}/scripts/add_table_row.py PAGE_ID --table-heading "..." --after
 /tmp/show_all_blocks.py
 
 # DO use the existing tool:
-uv run {base_dir}/scripts/analyze_page.py PAGE_ID
-uv run {base_dir}/scripts/analyze_page.py PAGE_ID --type codeBlock
+uv run --managed-python {base_dir}/scripts/analyze_page.py PAGE_ID
+uv run --managed-python {base_dir}/scripts/analyze_page.py PAGE_ID --type codeBlock
 ```
 
 **Performance Reality**:
@@ -45,7 +45,7 @@ MCP tools are fine for **reading** pages and **simple text edits** but **fail fo
 
 ## Quick Decision Matrix
 
-**NOTE**: All `.py` scripts below must be run with `uv run scripts/SCRIPT_NAME.py`
+**NOTE**: All `.py` scripts below must be run with `uv run --managed-python scripts/SCRIPT_NAME.py`
 
 ### When to Use What Tool
 
@@ -90,7 +90,7 @@ MCP tools are fine for **reading** pages and **simple text edits** but **fail fo
 
 2. **Resolve to page ID**:
    ```bash
-   uv run {base_dir}/scripts/url_resolver.py "URL"
+   uv run --managed-python {base_dir}/scripts/url_resolver.py "URL"
    ```
 
 3. **Read page content** (via MCP):
@@ -176,13 +176,13 @@ Simply use natural language commands, system handles automatically:
 
 ```bash
 # Update existing page
-uv run {base_dir}/scripts/upload_confluence.py document.md --id 780369923
+uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id 780369923
 
 # Create new page
-uv run {base_dir}/scripts/upload_confluence.py document.md --space DEV --parent-id 123456
+uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --space DEV --parent-id 123456
 
 # Preview first (recommended)
-uv run {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --dry-run
+uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --dry-run
 ```
 
 ### Structural Modifications (Fast Method) 🚀
@@ -192,14 +192,14 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --dry-
 **Example - Add Table Row**:
 ```bash
 # Preview first (recommended)
-uv run {base_dir}/scripts/add_table_row.py PAGE_ID \
+uv run --managed-python {base_dir}/scripts/add_table_row.py PAGE_ID \
   --table-heading "Access Control Inventory" \
   --after-row-containing "GitHub" \
   --cells "Service" "Owner" "Access" \
   --dry-run
 
 # Actual update
-uv run {base_dir}/scripts/add_table_row.py 2117534137 \
+uv run --managed-python {base_dir}/scripts/add_table_row.py 2117534137 \
   --table-heading "Access Control Inventory" \
   --after-row-containing "GitHub" \
   --cells "Elasticsearch Cluster" "@Data Team" "Read-Only"
@@ -220,19 +220,19 @@ uv run {base_dir}/scripts/add_table_row.py 2117534137 \
 
 ```bash
 # Single page
-uv run {base_dir}/scripts/download_confluence.py 123456789
+uv run --managed-python {base_dir}/scripts/download_confluence.py 123456789
 
 # With child pages
-uv run {base_dir}/scripts/download_confluence.py --download-children 123456789
+uv run --managed-python {base_dir}/scripts/download_confluence.py --download-children 123456789
 
 # Custom output directory
-uv run {base_dir}/scripts/download_confluence.py --output-dir ./docs 123456789
+uv run --managed-python {base_dir}/scripts/download_confluence.py --output-dir ./docs 123456789
 ```
 
 ### Convert Markdown to Wiki Markup
 
 ```bash
-uv run {base_dir}/scripts/convert_markdown_to_wiki.py input.md output.wiki
+uv run --managed-python {base_dir}/scripts/convert_markdown_to_wiki.py input.md output.wiki
 ```
 
 ### Search Confluence (via MCP)
@@ -283,7 +283,7 @@ mcp__atlassian__confluence_update_page({
 
 3. **Upload** (script handles attachments):
    ```bash
-   uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
+   uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
    ```
 
 ### Common Mistakes
@@ -308,7 +308,7 @@ Search, read pages, create/update (⚠️ size limited), delete, labels, comment
 
 ## Utility Scripts
 
-**IMPORTANT**: All Python scripts must be run with `uv run` to ensure correct dependency management.
+**IMPORTANT**: All Python scripts must be run with `uv run --managed-python` to ensure correct dependency management.
 
 **ADF Coverage**: 15 structural modification tools covering 16/19 ADF node types (84% coverage, ~98% practical coverage)
 - ✅ All common block elements (table, list, code, panel, heading, quote, rule, images)
@@ -318,31 +318,31 @@ Search, read pages, create/update (⚠️ size limited), delete, labels, comment
 | Script | Purpose | Usage |
 |--------|---------|-------|
 | `scripts/confluence_adf_utils.py` | **Shared Utils Library** - ADF operation core functions (auth, read, write, find nodes) | Import by other scripts |
-| `scripts/analyze_page.py` | 🔍 **Analyze Page Structure** - Show all components (tables, lists, code blocks, panels, headings) and suggest which tool to use | `uv run scripts/analyze_page.py PAGE_ID [--type codeBlock\|table\|bulletList\|...]` |
-| `scripts/add_table_row.py` | ⚡ **Fast Add Table Row** (~1.2s vs MCP 13min) | `uv run scripts/add_table_row.py PAGE_ID --table-heading "..." --after-row-containing "..." --cells "..." "..."` |
-| `scripts/add_list_item.py` | 📋 Add bullet/numbered list items | `uv run scripts/add_list_item.py PAGE_ID --after-heading "..." --item "..." [--position start\|end]` |
-| `scripts/add_panel.py` | 💡 Add info/warning/note/success panels | `uv run scripts/add_panel.py PAGE_ID --after-heading "..." --panel-type info --content "..."` |
-| `scripts/insert_section.py` | 📑 Insert new section (heading + content) | `uv run scripts/insert_section.py PAGE_ID --new-heading "..." --level 2 [--after-heading "..."]` |
-| `scripts/add_to_codeblock.py` | 💻 Add line to code block | `uv run scripts/add_to_codeblock.py PAGE_ID --search-text "..." --add-line "..." [--position after]` |
-| `scripts/add_blockquote.py` | 💬 Add blockquote (citation) | `uv run scripts/add_blockquote.py PAGE_ID --quote "..." [--after-heading "..."\|--at-end]` |
-| `scripts/add_rule.py` | ➖ Add horizontal rule (divider) | `uv run scripts/add_rule.py PAGE_ID [--after-heading "..."\|--at-end]` |
-| `scripts/add_media.py` | 🖼️ Add image (uploads and embeds) | `uv run scripts/add_media.py PAGE_ID --image-path "./img.png" [--after-heading "..."\|--at-end] [--width 500]` |
-| `scripts/add_status.py` | 🏷️ Add status label (TODO/DONE/etc.) | `uv run scripts/add_status.py PAGE_ID --search-text "..." --status "TODO" [--color blue]` |
-| `scripts/add_mention.py` | 👤 Add @mention (notify user) | `uv run scripts/add_mention.py PAGE_ID --search-text "..." --user-id "557058..." [--display-name "John"]` |
-| `scripts/add_date.py` | 📅 Add date (inline timestamp) | `uv run scripts/add_date.py PAGE_ID --search-text "..." --date "2026-03-15"` |
-| `scripts/add_emoji.py` | 😀 Add emoji | `uv run scripts/add_emoji.py PAGE_ID --search-text "..." --emoji ":smile:"` |
-| `scripts/add_media_group.py` | 🖼️🖼️ Add image group (multiple images) | `uv run scripts/add_media_group.py PAGE_ID --images "./img1.png" "./img2.png" [--after-heading "..."\|--at-end]` |
-| `scripts/add_nested_expand.py` | 📂 Add nested expand panel | `uv run scripts/add_nested_expand.py PAGE_ID --parent-expand "Details" --title "More" --content "..."` |
-| `scripts/add_inline_card.py` | 🔗 Add inline card (URL preview) | `uv run scripts/add_inline_card.py PAGE_ID --search-text "..." --url "https://..."` |
-| `scripts/upload_confluence.py` | 📝 Upload Markdown (supports large files, images) | `uv run scripts/upload_confluence.py doc.md --id PAGE_ID` |
-| `scripts/download_confluence.py` | 📥 Download as Markdown (with attachments) | `uv run scripts/download_confluence.py PAGE_ID` |
-| `scripts/convert_markdown_to_wiki.py` | 🔄 Markdown ↔ Wiki Markup conversion | `uv run scripts/convert_markdown_to_wiki.py input.md output.wiki` |
+| `scripts/analyze_page.py` | 🔍 **Analyze Page Structure** - Show all components (tables, lists, code blocks, panels, headings) and suggest which tool to use | `uv run --managed-python scripts/analyze_page.py PAGE_ID [--type codeBlock\|table\|bulletList\|...]` |
+| `scripts/add_table_row.py` | ⚡ **Fast Add Table Row** (~1.2s vs MCP 13min) | `uv run --managed-python scripts/add_table_row.py PAGE_ID --table-heading "..." --after-row-containing "..." --cells "..." "..."` |
+| `scripts/add_list_item.py` | 📋 Add bullet/numbered list items | `uv run --managed-python scripts/add_list_item.py PAGE_ID --after-heading "..." --item "..." [--position start\|end]` |
+| `scripts/add_panel.py` | 💡 Add info/warning/note/success panels | `uv run --managed-python scripts/add_panel.py PAGE_ID --after-heading "..." --panel-type info --content "..."` |
+| `scripts/insert_section.py` | 📑 Insert new section (heading + content) | `uv run --managed-python scripts/insert_section.py PAGE_ID --new-heading "..." --level 2 [--after-heading "..."]` |
+| `scripts/add_to_codeblock.py` | 💻 Add line to code block | `uv run --managed-python scripts/add_to_codeblock.py PAGE_ID --search-text "..." --add-line "..." [--position after]` |
+| `scripts/add_blockquote.py` | 💬 Add blockquote (citation) | `uv run --managed-python scripts/add_blockquote.py PAGE_ID --quote "..." [--after-heading "..."\|--at-end]` |
+| `scripts/add_rule.py` | ➖ Add horizontal rule (divider) | `uv run --managed-python scripts/add_rule.py PAGE_ID [--after-heading "..."\|--at-end]` |
+| `scripts/add_media.py` | 🖼️ Add image (uploads and embeds) | `uv run --managed-python scripts/add_media.py PAGE_ID --image-path "./img.png" [--after-heading "..."\|--at-end] [--width 500]` |
+| `scripts/add_status.py` | 🏷️ Add status label (TODO/DONE/etc.) | `uv run --managed-python scripts/add_status.py PAGE_ID --search-text "..." --status "TODO" [--color blue]` |
+| `scripts/add_mention.py` | 👤 Add @mention (notify user) | `uv run --managed-python scripts/add_mention.py PAGE_ID --search-text "..." --user-id "557058..." [--display-name "John"]` |
+| `scripts/add_date.py` | 📅 Add date (inline timestamp) | `uv run --managed-python scripts/add_date.py PAGE_ID --search-text "..." --date "2026-03-15"` |
+| `scripts/add_emoji.py` | 😀 Add emoji | `uv run --managed-python scripts/add_emoji.py PAGE_ID --search-text "..." --emoji ":smile:"` |
+| `scripts/add_media_group.py` | 🖼️🖼️ Add image group (multiple images) | `uv run --managed-python scripts/add_media_group.py PAGE_ID --images "./img1.png" "./img2.png" [--after-heading "..."\|--at-end]` |
+| `scripts/add_nested_expand.py` | 📂 Add nested expand panel | `uv run --managed-python scripts/add_nested_expand.py PAGE_ID --parent-expand "Details" --title "More" --content "..."` |
+| `scripts/add_inline_card.py` | 🔗 Add inline card (URL preview) | `uv run --managed-python scripts/add_inline_card.py PAGE_ID --search-text "..." --url "https://..."` |
+| `scripts/upload_confluence.py` | 📝 Upload Markdown (supports large files, images) | `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID` |
+| `scripts/download_confluence.py` | 📥 Download as Markdown (with attachments) | `uv run --managed-python scripts/download_confluence.py PAGE_ID` |
+| `scripts/convert_markdown_to_wiki.py` | 🔄 Markdown ↔ Wiki Markup conversion | `uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki` |
 | `scripts/mcp_json_diff_roundtrip.py` | ✏️ Intelligent text editing (preserves macros) | Used by Method 6, see above |
 
 ## Prerequisites
 
 **Required:**
-- **`uv` package manager** - All scripts use PEP 723 inline metadata, must run with `uv run`
+- **`uv` package manager** - All scripts use PEP 723 inline metadata, must run with `uv run --managed-python`
 - Atlassian MCP Server (`mcp__atlassian`) with Confluence credentials (for MCP tools)
 - Environment variables: `CONFLUENCE_URL`, `CONFLUENCE_USER`, `CONFLUENCE_API_TOKEN` (for REST API scripts)
 

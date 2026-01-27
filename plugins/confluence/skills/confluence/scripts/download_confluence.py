@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.14"
 # dependencies = [
 #   "atlassian-python-api>=3.41.0",
 #   "python-dotenv>=1.0.0",

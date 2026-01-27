@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.9"
+# requires-python = ">=3.14"
 # dependencies = [
 #   "requests>=2.31.0",
 #   "python-dotenv>=1.0.0",
