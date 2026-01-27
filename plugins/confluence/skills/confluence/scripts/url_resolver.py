@@ -9,12 +9,12 @@ Confluence URL Resolver
 Decode and resolve various Confluence URL formats to page IDs.
 
 Supported formats:
-- Short URLs: https://site.atlassian.net/wiki/x/ZQGBfg
+- Short URLs: https://site.atlassian.net/wiki/x/2oEBfw
 - Full URLs: https://site.atlassian.net/wiki/spaces/SPACE/pages/123456789/Title
 - Direct page IDs: 123456789
 
 Usage:
-    python url_resolver.py "https://site.atlassian.net/wiki/x/ZQGBfg"
+    python url_resolver.py "https://site.atlassian.net/wiki/x/2oEBfw"
     python url_resolver.py "https://site.atlassian.net/wiki/spaces/SPACE/pages/123456/Title"
     python url_resolver.py "123456789"
 """
@@ -29,8 +29,10 @@ def decode_tiny_url(tiny_code: str) -> int:
     """
     Decode Confluence TinyUI short URL to page ID.
 
-    Confluence short URLs use Base64 encoding with URL-safe characters.
-    Example: /wiki/x/ZQGBfg -> page ID 2122383717
+    Confluence short URLs use Base64 encoding with URL-safe characters
+    and little-endian byte order for the page ID.
+
+    Example: /wiki/x/2oEBfw -> page ID 2130805210
 
     Args:
         tiny_code: The code from /wiki/x/{code}
@@ -52,8 +54,9 @@ def decode_tiny_url(tiny_code: str) -> int:
         # Decode Base64
         decoded_bytes = base64.b64decode(standard_b64)
 
-        # Convert bytes to integer (big-endian)
-        page_id = int.from_bytes(decoded_bytes, 'big')
+        # Convert bytes to integer (little-endian)
+        # Confluence uses little-endian byte order for page IDs
+        page_id = int.from_bytes(decoded_bytes, 'little')
 
         return page_id
     except Exception as e:
@@ -78,8 +81,8 @@ def resolve_confluence_url(url_or_id: Union[str, int]) -> Dict[str, str]:
         - value: The resolved page ID (as string) or original value
 
     Examples:
-        >>> resolve_confluence_url("https://site.atlassian.net/wiki/x/ZQGBfg")
-        {'type': 'page_id', 'value': '2122383717'}
+        >>> resolve_confluence_url("https://site.atlassian.net/wiki/x/2oEBfw")
+        {'type': 'page_id', 'value': '2130805210'}
 
         >>> resolve_confluence_url("https://site.atlassian.net/wiki/spaces/SPACE/pages/123456/Title")
         {'type': 'page_id', 'value': '123456'}
@@ -158,7 +161,7 @@ def main():
         print("Usage: python url_resolver.py <url_or_page_id>")
         print()
         print("Examples:")
-        print("  python url_resolver.py 'https://site.atlassian.net/wiki/x/ZQGBfg'")
+        print("  python url_resolver.py 'https://site.atlassian.net/wiki/x/2oEBfw'")
         print("  python url_resolver.py 'https://site.atlassian.net/wiki/spaces/SPACE/pages/123456/Title'")
         print("  python url_resolver.py '123456789'")
         sys.exit(1)

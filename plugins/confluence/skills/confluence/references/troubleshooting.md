@@ -15,12 +15,27 @@ export CONFLUENCE_API_TOKEN="your-api-token"
 
 ### "401 Unauthorized"
 
-**Cause:** Invalid credentials or expired token.
+**Cause 1: REST API - Invalid credentials or expired token**
 
 **Fix:**
 1. Verify email address is correct
 2. Generate new API token at https://id.atlassian.com/manage-profile/security/api-tokens
 3. Ensure token has Confluence access
+
+**Cause 2: MCP Tools - Expired OAuth token**
+
+When MCP tools (e.g., `searchConfluenceUsingCql`, `getConfluencePage`) return:
+```
+Authentication failed: {"code":401,"message":"Unauthorized"}
+```
+
+**Fix:** Re-authenticate using Claude Code command:
+```bash
+/mcp
+```
+Then follow the OAuth flow to reconnect to `plugin:confluence:atlassian`.
+
+**Note:** This is normal after extended periods of inactivity. OAuth tokens expire and need periodic renewal.
 
 ### "403 Forbidden"
 

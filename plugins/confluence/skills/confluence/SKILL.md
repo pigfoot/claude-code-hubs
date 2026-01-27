@@ -1,6 +1,6 @@
 ---
 name: confluence
-description: Comprehensive Confluence documentation management. Use when asked to "upload to Confluence", "download Confluence pages", "convert Markdown to Wiki Markup", "sync documentation to Confluence", "search Confluence", "create Confluence page", "update Confluence page", "export Confluence", "publish to Confluence", or "Confluence CQL query". Handles Wiki Markup conversion, Mermaid/PlantUML diagrams, image handling, large document uploads without size limits, and Git-to-Confluence sync with mark CLI.
+description: Comprehensive Confluence documentation management. Use when user provides Confluence URLs (including short URLs like /wiki/x/...), or asks to "read Confluence page", "view Confluence page", "upload to Confluence", "download Confluence pages", "convert Markdown to Wiki Markup", "sync documentation to Confluence", "search Confluence", "create Confluence page", "update Confluence page", "export Confluence", or "Confluence CQL query". Handles Wiki Markup conversion, Mermaid/PlantUML diagrams, image handling, large document uploads without size limits, Git-to-Confluence sync with mark CLI, and automatic short URL decoding.
 allowed-tools: ["mcp__plugin_confluence_atlassian__*"]
 version: 0.1.0
 ---
@@ -76,29 +76,42 @@ MCP tools are fine for **reading** pages and **simple text edits** but **fail fo
 | **CI/CD** | Git-to-Confluence sync | `mark` CLI | Fast | Best for automation |
 | **Conversion** | Markdown ↔ Wiki | `convert_markdown_to_wiki.py` | Fast | Format conversion |
 
-### Quick Selection Guide
-
-**I want to...**
-- 🔍 Understand page structure (what components are on the page) → Use **`analyze_page.py`** first
-- ✏️ Fix typos or improve wording → Use **Method 6** (preserves macros)
-- 📋 Add a row to a table → Use **`add_table_row.py`**
-- 📝 Add an item to a bullet list → Use **`add_list_item.py`**
-- 💡 Add a warning/info box → Use **`add_panel.py`**
-- 📑 Create a new section → Use **`insert_section.py`**
-- 💻 Add a line to a code block → Use **`add_to_codeblock.py`**
-- 💬 Add a quote/citation → Use **`add_blockquote.py`**
-- ➖ Add a divider line → Use **`add_rule.py`**
-- 🖼️ Add an image → Use **`add_media.py`** (single) or **`add_media_group.py`** (multiple)
-- 🏷️ Add a status badge (TODO/DONE) → Use **`add_status.py`**
-- 👤 Mention a user (@name) → Use **`add_mention.py`**
-- 📅 Add a date → Use **`add_date.py`**
-- 😀 Add an emoji → Use **`add_emoji.py`**
-- 🔗 Add a link card → Use **`add_inline_card.py`**
-- 📤 Upload a complete document → Use **`upload_confluence.py`**
-- 📥 Download for editing → Use **`download_confluence.py`**
-- 🔍 Just read/search → Use **MCP tools** directly
-
 ## Core Workflows
+
+### 📖 Reading Confluence Pages from URLs
+
+**When user provides a Confluence URL**, automatically resolve and read the page:
+
+#### Workflow
+1. **Detect URL format**:
+   - Short URL: `https://site.atlassian.net/wiki/x/2oEBfw`
+   - Full URL: `https://site.atlassian.net/wiki/spaces/SPACE/pages/123456789/Title`
+   - Direct page ID: `123456789`
+
+2. **Resolve to page ID**:
+   ```bash
+   uv run {base_dir}/scripts/url_resolver.py "URL"
+   ```
+
+3. **Read page content** (via MCP):
+   ```javascript
+   mcp__plugin_confluence_atlassian__getConfluencePage({
+     cloudId: "...",
+     pageId: "resolved_page_id",
+     contentFormat: "markdown"
+   })
+   ```
+
+#### Examples
+```
+User: "https://site.atlassian.net/wiki/x/2oEBfw"
+→ Resolve: page ID 2130805210
+→ Read page and display content
+
+User: "Read https://site.atlassian.net/wiki/spaces/DEV/pages/123456/API-Docs"
+→ Extract page ID: 123456
+→ Read page and display content
+```
 
 ### 🆕 Method 6: Intelligent Roundtrip Editing (Recommended for Editing Existing Pages)
 
@@ -129,42 +142,12 @@ Simply use natural language commands, system handles automatically:
 
 #### Workflow
 
-1. **Read Page** (via MCP)
-   ```
-   📖 Reading page 123456...
-   ```
-
-2. **Detect Macros** (automatic)
-   ```
-   🔍 Found 3 macros with editable content:
-      - expand: "Advanced Configuration" (127 chars)
-      - panel: "Important Notes" (89 chars)
-   ```
-
-3. **Choose Mode** (interactive prompt)
-   ```
-   ⚙️  Choose editing mode:
-   [1] Safe Mode (default) - Edit text outside macros (recommended)
-   [2] Advanced Mode - Edit macro body content too
-   ```
-
-4. **Automatic Backup**
-   ```
-   💾 Creating backup...
-      Backup saved: .confluence_backups/123456/2026-01-23T19-25-02.json
-   ```
-
-5. **Claude Editing**
-   ```
-   🤖 Claude editing based on your instruction...
-   🔄 Found 5 text changes
-   ```
-
-6. **Write Back to Confluence**
-   ```
-   📝 Writing changes back to Confluence...
-   ✅ Page updated successfully!
-   ```
+1. Read page via MCP
+2. Auto-detect macros
+3. Choose mode: Safe (edit outside macros) or Advanced (edit inside macros)
+4. Auto-backup to `.confluence_backups/{page_id}/`
+5. Claude edits based on instruction
+6. Write back to Confluence (auto-restore on failure)
 
 #### Two Modes
 
@@ -179,33 +162,13 @@ Simply use natural language commands, system handles automatically:
 - Automatic backup + auto-restore on failure
 - Suitable when need to edit info boxes, warning panels content
 
-#### Backup and Restore
+#### Backup/Restore
 
-**Automatic Backup** (before each edit):
-```
-.confluence_backups/
-  └── 123456/                    # Page ID
-      ├── 2026-01-23T19-25-02.json
-      ├── 2026-01-23T18-30-15.json
-      └── ...                    # Keeps last 10 backups
-```
-
-**Manual Restore** (if needed):
-```
-"Rollback Confluence page 123456 to previous backup"
-```
-System will list available backups for you to choose which version to restore.
-
-**Automatic Restore** (on write failure):
-If Confluence update fails, system automatically restores from backup, no manual handling needed.
-
-#### Technical Details (for reference)
-
-- Uses ADF (Atlassian Document Format) JSON diff/patch technology
-- Macro nodes completely untouched, structure guaranteed unchanged
-- Uses word overlap heuristic (30%) to identify text changes
-- OAuth authentication (no need to manage API tokens)
-- Core implementation: `scripts/mcp_json_diff_roundtrip.py`
+- Auto-backup before each edit (keeps last 10 in `.confluence_backups/{page_id}/`)
+- Manual restore: "Rollback Confluence page 123456 to previous backup"
+- Auto-restore on write failure
+- Uses ADF JSON diff/patch, macro-preserving, OAuth auth
+- Implementation: `scripts/mcp_json_diff_roundtrip.py`
 
 ### Upload Markdown to Confluence
 
@@ -224,160 +187,34 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --dry-
 
 ### Structural Modifications (Fast Method) 🚀
 
-**Purpose**: Directly modify table structures (add rows, modify layout, etc.), avoiding MCP's AI processing delays.
+**Performance**: Direct REST API (~1.2s) vs MCP (~13min) = 650x speedup
 
-**Performance Comparison**:
-- MCP Roundtrip via Claude: ~13 minutes (AI processing delays)
-- Python REST API Direct: **~1.2 seconds** (650x speedup)
-
-**Why So Fast?**
-- Avoids AI tool invocation delays (accounts for 91% of time)
-- Direct REST API, no intermediate files
-- Pure Python operation, no token generation overhead
-
-#### Add Table Row
-
+**Example - Add Table Row**:
 ```bash
-# Basic usage
+# Preview first (recommended)
 uv run {base_dir}/scripts/add_table_row.py PAGE_ID \
   --table-heading "Access Control Inventory" \
   --after-row-containing "GitHub" \
-  --cells "Location" "Access" "Privilege" "Auth" "Issues"
-
-# Real example
-uv run {base_dir}/scripts/add_table_row.py 2117534137 \
-  --table-heading "Access Control Inventory" \
-  --after-row-containing "GitHub" \
-  --cells "Elasticsearch Cluster - Production" "@Data Engineering Team" "Read-Only" "API Key + IP Whitelist" "Daily snapshots to S3"
-
-# Dry run preview (recommended to run first)
-uv run {base_dir}/scripts/add_table_row.py 2117534137 \
-  --table-heading "Access Control Inventory" \
-  --after-row-containing "GitHub" \
-  --cells "Test" "Test" "Test" "Test" "Test" \
+  --cells "Service" "Owner" "Access" \
   --dry-run
+
+# Actual update
+uv run {base_dir}/scripts/add_table_row.py 2117534137 \
+  --table-heading "Access Control Inventory" \
+  --after-row-containing "GitHub" \
+  --cells "Elasticsearch Cluster" "@Data Team" "Read-Only"
 ```
 
-**Parameter Description**:
-- `PAGE_ID`: Confluence page ID (from URL)
-- `--table-heading`: Heading text before the table
+**Key Parameters**:
+- `PAGE_ID`: Confluence page ID (from URL or url_resolver.py)
+- `--table-heading`: Heading text before the target table
 - `--after-row-containing`: Text in first cell of row to insert after
-- `--cells`: New row's cell contents (space-separated)
+- `--cells`: New row's cell contents (space-separated, use quotes if contains spaces)
 - `--dry-run`: Preview mode, doesn't actually update
 
-**Prerequisites**:
-- Environment must be configured: `CONFLUENCE_URL`, `CONFLUENCE_USER`, `CONFLUENCE_API_TOKEN`
-- Uses ADF (Atlassian Document Format) operations
-- Direct REST API v2, no MCP dependency
+**Prerequisites**: Set environment variables `CONFLUENCE_URL`, `CONFLUENCE_USER`, `CONFLUENCE_API_TOKEN`
 
-**Applicable Scenarios**:
-- ✅ Add table rows
-- ✅ Batch structural modifications
-- ✅ Automation scripts
-- ✅ Operations requiring fast execution
-
-**Not Applicable**:
-- ❌ Text editing (use Method 6 - mcp_json_diff_roundtrip.py)
-- ❌ Editing that requires preserving macros (use Method 6)
-
-#### Add List Item
-
-```bash
-# Add to bullet list
-uv run {base_dir}/scripts/add_list_item.py PAGE_ID \
-  --after-heading "Requirements" \
-  --item "New security requirement" \
-  --position end
-
-# Add to numbered list at start
-uv run {base_dir}/scripts/add_list_item.py PAGE_ID \
-  --after-heading "Steps" \
-  --item "Initial setup phase" \
-  --position start \
-  --list-type numbered
-```
-
-**Parameters**:
-- `--after-heading`: Heading text before the list
-- `--item`: Text content for the new list item
-- `--position`: `start` or `end` (default: end)
-- `--list-type`: `bullet` or `numbered` (default: bullet)
-
-#### Add Panel
-
-```bash
-# Add warning panel
-uv run {base_dir}/scripts/add_panel.py PAGE_ID \
-  --after-heading "Overview" \
-  --panel-type warning \
-  --content "Important: Review access controls quarterly"
-
-# Add info panel
-uv run {base_dir}/scripts/add_panel.py PAGE_ID \
-  --after-heading "Setup" \
-  --panel-type info \
-  --content "This feature requires admin privileges"
-```
-
-**Parameters**:
-- `--after-heading`: Heading to insert panel after
-- `--panel-type`: `info`, `warning`, `note`, or `success`
-- `--content`: Text content for the panel
-
-**Panel Types**:
-- `info` (blue) - General information
-- `warning` (yellow) - Important warnings
-- `note` (gray) - Side notes
-- `success` (green) - Success messages
-
-#### Insert Section
-
-```bash
-# Insert new section with content
-uv run {base_dir}/scripts/insert_section.py PAGE_ID \
-  --after-heading "Overview" \
-  --new-heading "Security Considerations" \
-  --level 2 \
-  --content "This section describes security measures..."
-
-# Insert at end of page
-uv run {base_dir}/scripts/insert_section.py PAGE_ID \
-  --new-heading "Appendix" \
-  --level 2 \
-  --content "Additional reference materials..."
-```
-
-**Parameters**:
-- `--after-heading`: Heading to insert after (omit to insert at end)
-- `--new-heading`: Text for the new heading
-- `--level`: Heading level 1-6 (default: 2)
-- `--content`: Paragraph text (optional)
-
-#### Add Line to Code Block
-
-```bash
-# Add install command after existing line
-uv run {base_dir}/scripts/add_to_codeblock.py PAGE_ID \
-  --search-text "brew install uv" \
-  --add-line "brew install node" \
-  --position after
-
-# Add command before existing line
-uv run {base_dir}/scripts/add_to_codeblock.py PAGE_ID \
-  --search-text "npm install" \
-  --add-line "npm install --save-dev jest" \
-  --position before
-```
-
-**Parameters**:
-- `--search-text`: Text to search for in code blocks
-- `--add-line`: Line to add
-- `--position`: `before` or `after` (default: after)
-
-**Use Cases**:
-- Add installation commands to setup scripts
-- Insert additional configuration lines
-- Add dependencies to package manager commands
+**All other tools** (list, panel, section, etc.) follow similar pattern. See Quick Decision Matrix table for full list.
 
 ### Download Confluence to Markdown
 
@@ -453,53 +290,21 @@ mcp__atlassian__confluence_update_page({
 
 | ❌ Wrong | ✅ Correct |
 |----------|-----------|
-| Creating temp scripts: `/tmp/analyze_*.py` | Use existing: `analyze_page.py` |
-| Using raw XML: `<ac:image>...` | Use markdown: `![alt](path.png)` |
-| Using MCP for uploads | Use `upload_confluence.py` |
-| Forgetting to convert diagrams | Pre-convert Mermaid/PlantUML to PNG/SVG |
+| Creating temp scripts | Use existing: `analyze_page.py` |
+| Using raw XML | Use markdown: `![alt](path.png)` |
+| MCP for uploads | Use `upload_confluence.py` |
+| Forgetting diagram conversion | Pre-convert Mermaid/PlantUML to PNG/SVG |
+| Ignoring 401 Unauthorized | Run `/mcp` to re-authenticate |
 
 ## Checklists
 
-### Upload Checklist
+**Upload**: Convert diagrams (Mermaid/PlantUML) → Use markdown image syntax → Dry-run test → Upload with script → Verify page accessible
 
-```
-Upload Progress:
-- [ ] Diagrams converted to PNG/SVG (if Mermaid/PlantUML present)
-- [ ] All images use markdown syntax: ![alt](path)
-- [ ] No raw Confluence XML in markdown
-- [ ] All image files verified to exist
-- [ ] Dry-run tested: `--dry-run`
-- [ ] Upload executed with script (NOT MCP)
-- [ ] Page URL verified accessible
-```
-
-### Download Checklist
-
-```
-Download Progress:
-- [ ] Page ID obtained from Confluence URL
-- [ ] Credentials configured in .env file
-- [ ] Output directory specified
-- [ ] --download-children flag set (if hierarchy needed)
-- [ ] Download completed successfully
-- [ ] Attachments downloaded to {Page}_attachments/
-- [ ] Frontmatter contains correct metadata
-```
+**Download**: Get page ID (use url_resolver.py for short URLs) → Configure credentials (.env) → Set output directory → Run download script → Verify attachments in `{Page}_attachments/`
 
 ## Available MCP Tools
 
-| Tool | Description |
-|------|-------------|
-| `confluence_search` | Search using CQL or text |
-| `confluence_get_page` | Retrieve page by ID or title |
-| `confluence_create_page` | Create new page (⚠️ size limited) |
-| `confluence_update_page` | Update existing page (⚠️ size limited) |
-| `confluence_delete_page` | Delete page |
-| `confluence_get_page_children` | Get child pages |
-| `confluence_add_label` | Add label to page |
-| `confluence_get_labels` | Get page labels |
-| `confluence_add_comment` | Add comment to page |
-| `confluence_get_comments` | Get page comments |
+Search, read pages, create/update (⚠️ size limited), delete, labels, comments. See `mcp__plugin_confluence_atlassian__*` for full list.
 
 ## Utility Scripts
 
@@ -549,6 +354,7 @@ Download Progress:
 
 - [Wiki Markup Guide](references/wiki_markup_guide.md) - Complete syntax reference
 - [CQL Reference](references/cql_reference.md) - Confluence Query Language syntax
+- [Mention Account ID Lookup](references/mention-account-id-lookup.md) - How to find user account IDs for @mentions
 - [Troubleshooting](references/troubleshooting.md) - Common errors and fixes
 
 ## When NOT to Use Scripts
