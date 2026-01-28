@@ -5,5 +5,8 @@
   "author": {
     "name": "pigfoot",
     "email": "pigfoot@gmail.com"
-  }
+  },
+  "skills": [
+    "./skills/github-actions-container-build"
+  ]
 }
