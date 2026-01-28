@@ -1,24 +1,30 @@
 ---
+
 # === Required (All Platforms) ===
+
 name: nano-banana
 description: |
   Use when users request image generation, AI art creation, image editing with Gemini models, need help crafting prompts, or want brand-styled imagery. Handles both direct generation and interactive prompt design.
 
 # === Claude Code / OpenAI Codex ===
+
 allowed-tools: Bash Write Read AskUserQuestion
 metadata:
   short-description: Unified image generation workflow with Gemini/Imagen models
   version: "0.0.9"
 
 # === GitHub Copilot ===
+
 license: MIT
 ---
 
 # Nano Banana
 
-Unified image generation workflow using a fixed Python script with JSON configuration. Eliminates AI hallucinations by avoiding dynamic code generation.
+Unified image generation workflow using a fixed Python script with JSON configuration. Eliminates AI hallucinations by
+avoiding dynamic code generation.
 
 Supports two modes:
+
 - **Unified Generation**: All image requests use generate_images.py with JSON config
 - **Interactive Prompting**: Guide user through prompt design with proven techniques
 
@@ -28,7 +34,7 @@ Supports two modes:
 
 ### API Selection Rule
 
-**BEFORE writing ANY code, determine which API to use:**
+#### BEFORE writing ANY code, determine which API to use
 
 ```python
 model = os.environ.get("NANO_BANANA_MODEL") or "gemini-3-pro-image-preview"
@@ -53,7 +59,7 @@ These are **NOT interchangeable**. Using the wrong API will cause errors.
 | **Response** | `response.parts` | `response.generated_images` |
 | **Special Config** | `response_modalities=['IMAGE']` | Not used |
 
-**Example model detection:**
+#### Example model detection
 
 ```python
 # These trigger Imagen API:
@@ -99,7 +105,8 @@ if not model:
 # Use model EXACTLY as-is - do NOT add suffixes or change names
 ```
 
-**Why this matters:**
+#### Why this matters
+
 - Custom endpoints have their own model names (e.g., `gemini-3-pro-image` without `-preview`)
 - User explicitly set the model they want
 - DO NOT apply Google's naming conventions to custom endpoints
@@ -114,19 +121,22 @@ if not model:
 - Brand styles ("use style trend", "notebooklm style")
 - Reproducible generation ("use seed 42", "regenerate that image")
 
-**Mode selection:**
+### Mode selection
+
 - **Interactive Prompting**: User asks for prompt help OR prompt too vague (<5 words)
 - **Unified Generation**: User provides detailed prompt (uses generate_images.py)
 
 ### Parsing User Intent for Seed & Temperature
 
-**Extract seed from user message:**
+#### Extract seed from user message
+
 - "seed 42" → `"seed": 42`
 - "use seed 392664860" → `"seed": 392664860`
 - "regenerate with the same seed" → Use seed from previous results JSON
 - "seed: 123" (inline) → `"seed": 123`
 
-**Extract temperature from user message:**
+#### Extract temperature from user message
+
 - "temperature 0.5" → `"temperature": 0.5`
 - "temp 1.5" → `"temperature": 1.5`
 - "lower temperature" → `"temperature": 0.5` (suggest conservative value)
@@ -134,7 +144,8 @@ if not model:
 - "more creative" → `"temperature": 1.5`
 - "temperature: 0.8" (inline) → `"temperature": 0.8`
 
-**Combined examples:**
+#### Combined examples
+
 ```
 User: "Generate a robot image, seed 42, temperature 0.8"
 → Config: {"slides": [{"number": 1, "prompt": "robot", "seed": 42, "temperature": 0.8}]}
@@ -146,7 +157,8 @@ User: "Create 3 slides with same seed 100"
 → Config: {"seed": 100, "slides": [{...}, {...}, {...}]}
 ```
 
-**If user asks about reproducibility:**
+#### If user asks about reproducibility
+
 - Explain that seed enables regenerating the same image
 - Mention that results JSON automatically records seeds
 - Show example of how to use seed from previous generation
@@ -155,7 +167,8 @@ User: "Create 3 slides with same seed 100"
 
 **Detect:** `style: "trendlife"`, `style: "notebooklm"`, or natural language ("use trendlife style", "notebooklm style")
 
-**Styles:**
+### Styles
+
 - **TrendLife**: Trend Micro's TrendLife product brand (Trend Red #D71920) with automatic logo overlay
 - **NotebookLM**: Clean presentation aesthetic (⚠️ **NEVER** use "NotebookLM" brand/logo in prompts)
 
@@ -165,9 +178,10 @@ User: "Create 3 slides with same seed 100"
 
 ## Logo Overlay (TrendLife Style)
 
-**TrendLife style includes automatic logo overlay:**
+### TrendLife style includes automatic logo overlay
 
 When `style: "trendlife"` is detected:
+
 1. Generate slide image with TrendLife colors (no logo in prompt)
 2. Detect layout type from prompt content
 3. Apply logo overlay with `logo_overlay.overlay_logo()`
@@ -175,7 +189,8 @@ When `style: "trendlife"` is detected:
 
 ### Layout Detection Rules
 
-**Automatic detection based on keywords:**
+#### Automatic detection based on keywords
+
 - **"title slide"**, **"cover slide"**, **"opening"** → title layout (15% logo, bottom-right)
 - **"end slide"**, **"closing"**, **"thank you"**, **"conclusion"** → end layout (20% logo, center-bottom)
 - **"divider"**, **"section break"** → divider layout (15% logo, bottom-right)
@@ -228,7 +243,8 @@ output_with_logo.replace(output_path)
 
 **Explicit:** `style: "trendlife"`
 
-**Natural Language:**
+#### Natural Language
+
 - "trendlife style"
 - "use trendlife"
 - "trendlife brand"
@@ -243,7 +259,7 @@ output_with_logo.replace(output_path)
 | `imagen` | `generate_images()` | `GenerateImagesConfig` |
 | Anything else | `generate_content()` | `GenerateContentConfig` |
 
-**See CRITICAL section above for complete details.**
+#### See CRITICAL section above for complete details
 
 ### Unified Generation Workflow
 
@@ -261,13 +277,14 @@ All image generation uses the same fixed Python script with JSON config:
 3. **Track Progress:** Monitor progress/results files (for background tasks)
 4. **Return Paths:** Report generated image locations
 
-**IMPORTANT:**
+#### IMPORTANT
+
 - Always write config to system temp directory, NEVER to skill base directory
 - Always use `{base_dir}/generate_images.py` for the script path (cross-platform compatible)
 
-**Config Requirements:**
+#### Config Requirements
 
-**Minimal Config (recommended):**
+#### Minimal Config (recommended)
 
 ```json
 {
@@ -276,7 +293,7 @@ All image generation uses the same fixed Python script with JSON config:
 }
 ```
 
-**Full Config (optional fields):**
+#### Full Config (optional fields)
 
 ```json
 {
@@ -297,31 +314,36 @@ All image generation uses the same fixed Python script with JSON config:
 }
 ```
 
-**Format Selection Guide:**
-- **webp (RECOMMENDED)**: Default format, automatically uses lossless compression for presentation styles (trendlife, professional, data-viz). Same quality as PNG but 25-35% smaller file size.
+#### Format Selection Guide
+
+- **webp (RECOMMENDED)**: Default format, automatically uses lossless compression for presentation styles (trendlife,
+  professional, data-viz). Same quality as PNG but 25-35% smaller file size.
 - **png**: Only use if webp compatibility is a concern (rare). Larger file size.
 - **jpg**: For photos only, not suitable for slides/diagrams (lossy compression).
 
 ### Temperature & Seed Parameters
 
-**⚡ NEW: Reproducible Generation**
+#### ⚡ NEW: Reproducible Generation
 
 #### Seed Parameter (Recommended)
 
 **Purpose:** Enable reproducible image generation
 
-**How it works:**
+#### How it works
+
 - Same seed + same prompt + same temperature = visually identical image
 - Default: Auto-generated timestamp-based seed (recorded in results JSON)
 - Use case: "I like this image, regenerate it exactly"
 
-**User natural language patterns:**
+#### Seed: User natural language patterns
+
 - "use seed 42"
 - "regenerate with seed 392664860"
 - "same seed as before"
 - "seed: 123" (inline spec)
 
-**Config examples:**
+#### Config examples
+
 ```json
 // Global seed (all slides use same seed)
 {"seed": 42, "slides": [...]}
@@ -336,9 +358,11 @@ All image generation uses the same fixed Python script with JSON config:
 {"slides": [...]}  // Results JSON will contain: "seed": 1738051234
 ```
 
-**Results tracking:**
+#### Results tracking
+
 - All generated images record their actual seed in `{output_dir}/generation-results.json`
 - Example output:
+
 ```json
 {
   "outputs": [
@@ -353,27 +377,32 @@ All image generation uses the same fixed Python script with JSON config:
 
 **Official guidance:** Gemini 3 recommends keeping default value 1.0
 
-**Effect:**
+#### Effect
+
 - ⚠️ **Limited impact observed in testing** - changes output but effect is unpredictable
 - No clear "low temperature = conservative, high temperature = creative" pattern
 - Changes generation result when combined with same seed
 
-**User natural language patterns:**
+#### Temperature: User natural language patterns
+
 - "temperature 0.5"
 - "use lower temperature"
 - "more creative (temperature 1.5)"
 - "temperature: 0.8" (inline spec)
 
-**Recommendation:**
+#### Recommendation
+
 - ✅ Use seed for reproducibility (highly effective)
 - ⚠️ Use temperature conservatively for experimentation only
 - 💡 Keep default 1.0 unless exploring variations
 
-**Priority rules:**
+#### Priority rules
+
 - slide.temperature > config.temperature > 1.0 (default)
 - slide.seed > config.seed > auto-generate
 
-**Field Rules:**
+#### Field Rules
+
 - ✅ `output_dir` MUST be relative path with NNN-short-name format: `./001-feature-name/`
   - NNN = 3-digit number (001, 002, etc.)
   - short-name = brief descriptive name (lowercase, hyphens)
@@ -382,12 +411,13 @@ All image generation uses the same fixed Python script with JSON config:
 - ❌ NO plain names without numbers (e.g., `./slides/` is WRONG)
 - ❌ NO `model` field (use NANO_BANANA_MODEL env var)
 
-**Output Directory Behavior:**
+#### Output Directory Behavior
+
 - Relative paths resolve to user's current working directory
 - Script is executed with absolute path, but cwd remains in user's directory
 - Use sequential numbering for different presentation topics
 
-**Example: Config File Creation**
+#### Example: Config File Creation
 
 ```bash
 # Linux/macOS: Write to /tmp/
@@ -397,7 +427,8 @@ Write tool: /tmp/nano-banana-config-1234567890.json
 Write tool: C:/Users/<user>/AppData/Local/Temp/nano-banana-config-1234567890.json
 ```
 
-**Multi-Slide Generation:**
+#### Multi-Slide Generation
+
 - **Any slide count** → Uses same workflow (generate_images.py)
 - **5+ slides** → Automatic background execution with progress tracking
 - **Context efficient** → <500 tokens for any slide count
@@ -428,7 +459,7 @@ Write tool: C:/Users/<user>/AppData/Local/Temp/nano-banana-config-1234567890.jso
 5. **Present** - Show prompt with explanation and variations
 6. **Execute** - Generate using unified generation workflow (generate_images.py)
 
-**Brand Style Integration:**
+#### Brand Style Integration
 
 - **NotebookLM style** (`style: "notebooklm"`):
   - Apply aesthetic: polished tech infographic, clean slide layout, minimal text

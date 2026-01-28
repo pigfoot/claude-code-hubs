@@ -4,7 +4,8 @@ Python scripting and Gemini/Imagen image generation using uv with inline script 
 
 ## ✨ Recent Improvements (v0.0.9)
 
-**Reproducible Generation & Parameter Control:**
+### Reproducible Generation & Parameter Control
+
 - ✅ **Seed parameter** - Reproducible image generation with automatic seed tracking
   - Auto-generate timestamp-based seeds (recorded in results JSON)
   - Manual seed specification for exact reproduction
@@ -16,19 +17,22 @@ Python scripting and Gemini/Imagen image generation using uv with inline script 
 - ✅ **Comprehensive testing** - 28+ test images validating seed reproducibility
 - ✅ **Documentation** - Complete usage examples, natural language parsing guide, experiment results
 
-**Key Findings:**
+#### Key Findings
+
 - Seed: ✅ Highly effective - same seed produces visually identical images
 - Temperature: ⚠️ Limited effect - changes output but unpredictable (recommend keeping default 1.0)
 
 ## Previous Improvements (v0.0.8)
 
-**uv Compatibility Enhancement:**
+### uv Compatibility Enhancement
+
 - ✅ **PEP 723 for library modules** - Added inline dependency metadata to `logo_overlay.py`
 - ✅ **Fixed intermittent failures** - Logo overlay now works when Claude creates temporary scripts
 - ✅ **Documentation updates** - Added PEP 723 headers to all usage examples
 - ✅ **Automatic dependency resolution** - `uv run` correctly installs Pillow even when importing logo_overlay
 
-**Previous Improvements (v0.0.7):**
+#### Previous Improvements (v0.0.7)
+
 - ✅ **Zero hallucination rate** - Fixed Python script approach replaces dynamic code generation
 - ✅ **Unified workflow** - Same process for 1-100 images (no more dual paths)
 - ✅ **Minimal config** - Only `slides` + `output_dir` required, no model field
@@ -36,11 +40,13 @@ Python scripting and Gemini/Imagen image generation using uv with inline script 
 - ✅ **Enhanced documentation** - NNN-short-name format enforcement, webp format guide
 - ✅ **Path resolution** - Execute script with absolute path while maintaining user's cwd
 
-**Previous Improvements (v0.0.6):**
+#### Previous Improvements (v0.0.6)
+
 - ✅ **TrendLife Brand Support** - Automatic logo overlay, brand colors
 - ✅ **API documentation fixes** - Added missing `image_config` to basic examples
 
-**Previous Improvements (v0.0.4):**
+#### Previous Improvements (v0.0.4)
+
 - ✅ **Batch generation** - Generate 5+ slides in background with 80% context reduction
 - ✅ Fixed API confusion between Gemini and Imagen (automatic detection)
 - ✅ Added Imagen support for multi-image generation
@@ -69,7 +75,7 @@ Python scripting and Gemini/Imagen image generation using uv with inline script 
 
 Configure environment variables in `~/.claude/settings.json` so they're available to all skills.
 
-**macOS / Linux / WSL / Git Bash:**
+#### macOS / Linux / WSL / Git Bash
 
 ```bash
 # Replace with your actual API key
@@ -92,7 +98,7 @@ EOFSETTINGS
 echo "Configuration updated successfully"
 ```
 
-**Windows PowerShell:**
+#### Windows PowerShell
 
 ```powershell
 # Replace with your actual API key
@@ -120,7 +126,8 @@ $settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
 Write-Host "Configuration updated successfully" -ForegroundColor Green
 ```
 
-**Verify installation:**
+#### Verify installation
+
 ```bash
 # macOS / Linux
 cat ~/.claude/settings.json
@@ -167,18 +174,20 @@ else:
     use_gemini_api = True   # → generate_content()
 ```
 
-**Supported Models:**
+#### Supported Models
+
 - **Gemini**: `gemini-3-pro-image-preview`, `gemini-2.5-flash-image`, or custom names
 - **Imagen**: `imagen-4.0-generate-001`, or custom names containing "imagen"
 
-**⚠️ Custom Endpoints:**
+#### ⚠️ Custom Endpoints
+
 - Model names from custom endpoints are used **exactly as-is**
 - Do NOT add `-preview` or other suffixes
 - Example: If your endpoint uses `gemini-3-pro-image` (no `-preview`), set it exactly like that
 
 ### Examples
 
-**Complete configuration (all variables):**
+#### Complete configuration (all variables)
 
 ```bash
 # Required
@@ -193,7 +202,7 @@ export NANO_BANANA_QUALITY="95"                         # Quality 1-100 (webp/jp
 export GOOGLE_GEMINI_BASE_URL="https://api.example.com/v1"
 ```
 
-**Official Google API (default):**
+#### Official Google API (default)
 
 ```bash
 export GEMINI_API_KEY="your-api-key"  # Or GOOGLE_API_KEY (backward compatible)
@@ -203,7 +212,7 @@ export GEMINI_API_KEY="your-api-key"  # Or GOOGLE_API_KEY (backward compatible)
 # export NANO_BANANA_FORMAT="jpg"
 ```
 
-**Custom Endpoint (self-hosted or proxy):**
+#### Custom Endpoint (self-hosted or proxy)
 
 ```bash
 export GOOGLE_GEMINI_BASE_URL="https://your-api.example.com/v1"
@@ -213,19 +222,21 @@ export NANO_BANANA_FORMAT="webp"
 export NANO_BANANA_QUALITY="90"
 ```
 
-**High-quality PNG for professional work:**
+#### High-quality PNG for professional work
 
 ```bash
 export NANO_BANANA_FORMAT="png"
 ```
 
-**Why WebP default?**
+#### Why WebP default
+
 - Smaller file sizes (~30% smaller than JPEG at same quality)
 - Better compression than PNG for photos
 - Supports transparency (unlike JPEG)
 - Widely supported in modern browsers and tools
 
-**Note:** When using `NANO_BANANA_MODEL` with a custom model name, you typically need to set `GOOGLE_GEMINI_BASE_URL` and `GEMINI_API_KEY` to match your custom deployment.
+**Note:** When using `NANO_BANANA_MODEL` with a custom model name, you typically need to set `GOOGLE_GEMINI_BASE_URL`
+and `GEMINI_API_KEY` to match your custom deployment.
 
 ## Usage
 
@@ -235,7 +246,7 @@ The plugin operates in two modes automatically based on your request:
 
 Used when you provide a detailed prompt or inline style specification. Claude generates immediately.
 
-**Example 1: Detailed Prompt**
+#### Example 1: Detailed Prompt
 
 ```
 User: "Generate a photorealistic image of a cute cat wearing sunglasses, sitting on a beach chair at sunset, golden hour lighting, 16:9 aspect ratio"
@@ -244,7 +255,7 @@ Claude: [Generates directly using gemini-3-pro-image-preview]
 Output: 001-beach-cat/generated.webp
 ```
 
-**Example 2: With Brand Style (structured syntax)**
+#### Example 2: With Brand Style (structured syntax)
 
 ```
 User: "Generate a cybersecurity dashboard infographic, style: trend"
@@ -254,7 +265,7 @@ Output: 001-security-dashboard/generated.webp
 # Colors: Trend Red #d71920, Guardian Red #6f0000, grays, black/white
 ```
 
-**Example 3: With Brand Style (natural language)**
+#### Example 3: With Brand Style (natural language)
 
 ```
 User: "Use style trend to generate an LLM introduction infographic"
@@ -263,7 +274,7 @@ Claude: [Detects "style trend" mention, applies Trend Micro colors, generates]
 Output: 001-llm-intro/generated.webp
 ```
 
-**Example 4: Image Editing**
+#### Example 4: Image Editing
 
 ```
 User: "Edit 001-cute-cat/generated.webp and add a party hat"
@@ -272,7 +283,7 @@ Claude: [Loads image, generates with edit prompt]
 Output: 002-party-hat/edited.webp
 ```
 
-**Example 5: Slide Deck / Presentation (NotebookLM style)**
+#### Example 5: Slide Deck / Presentation (NotebookLM style)
 
 ```
 User: "Create a slide explaining how transformers work, use notebooklm style"
@@ -286,7 +297,7 @@ Output: 001-transformer-architecture/generated.webp
 
 Used when you request help crafting prompts or provide vague descriptions. Claude guides you through prompt design.
 
-**Example 6: Explicit Prompting Request**
+#### Example 6: Explicit Prompting Request
 
 ```
 User: "Help me write a good prompt for a professional poster"
@@ -312,7 +323,7 @@ Claude:
   Step 6: [Generates with crafted prompt]
 ```
 
-**Example 7: Vague Prompt (triggers prompting)**
+#### Example 7: Vague Prompt (triggers prompting)
 
 ```
 User: "Make a logo"
@@ -343,7 +354,7 @@ Claude:
 
 #### Slide Deck Visual Styles
 
-**Available when creating slides/presentations:**
+#### Available when creating slides/presentations
 
 | Visual Style | Best For | Characteristics |
 |--------------|----------|-----------------|
@@ -353,7 +364,8 @@ Claude:
 | **Process Flow** | Step-by-step guides, workflows | Numbered steps, connecting arrows, geometric shapes |
 | **Overview** | Concept summaries, topic intros | Bento grid layout, pastel colors, icon-driven |
 
-**Claude automatically chooses the most appropriate visual style** based on your content type. To request a specific style:
+**Claude automatically chooses the most appropriate visual style** based on your content type. To request a specific
+style:
 
 ```
 "Create a professional infographic explaining CI/CD pipelines"
@@ -364,6 +376,7 @@ Claude:
 #### Automatic Features for Slide Decks
 
 When creating slides/presentations:
+
 - ✅ **Lossless WebP** format (VP8L encoding)
   - 20-30% smaller than PNG
   - Zero quality loss
@@ -377,7 +390,8 @@ When creating slides/presentations:
 
 ### The Problem
 
-When generating multiple images (e.g., 10 slides for a presentation), each image's output accumulates in the conversation context:
+When generating multiple images (e.g., 10 slides for a presentation), each image's output accumulates in the
+conversation context:
 
 - **Per image output:** ~150-200 tokens (generation logs, paths, status)
 - **10 slides:** 1,500-2,000 tokens consumed
@@ -389,16 +403,19 @@ When generating multiple images (e.g., 10 slides for a presentation), each image
 
 Execute Python script 10 times sequentially in the main conversation.
 
-**Token Consumption:**
+#### Option 1: Token Consumption
+
 - Main context: **1,500-2,000 tokens**
 - API cost: Low (single conversation)
 
-**Pros:**
+#### Option 1: Pros
+
 - ✅ Simple implementation
 - ✅ Immediate feedback per image
 - ✅ Easy debugging with visible output
 
-**Cons:**
+#### Option 1: Cons
+
 - ❌ Context accumulates quickly
 - ❌ Verbose output fills conversation
 
@@ -408,22 +425,26 @@ Execute Python script 10 times sequentially in the main conversation.
 
 Spawn independent subagent for each slide generation.
 
-**Token Consumption:**
+#### Option 2: Token Consumption
+
 - Main context: **~1,400 tokens** (Task tool calls + results)
 - Total API cost: **~32,000 tokens** (10 subagents × 3,200 tokens each)
 
-**Cost Breakdown per Subagent:**
+#### Cost Breakdown per Subagent
+
 - System prompt: ~1,000 tokens
 - Skill loading (nano-banana): ~1,500 tokens
 - Task understanding + execution: ~500 tokens
 - Output: ~200 tokens
 
-**Pros:**
+#### Pros
+
 - ✅ Isolated context per image
 - ✅ Parallel execution possible
 - ✅ Cleaner main conversation
 
-**Cons:**
+#### Cons
+
 - ❌ **15x higher API cost** (32,000 vs 2,000 tokens)
 - ❌ Slow startup overhead (2-5s per subagent)
 - ❌ Complex coordination (error handling, retries, timeouts)
@@ -436,28 +457,32 @@ Spawn independent subagent for each slide generation.
 
 Run batch generation in background task, poll progress file periodically.
 
-**Token Consumption:**
+#### Option 3: Token Consumption
+
 - Main context: **~390 tokens total**
   - Start background task: ~20 tokens
   - Poll progress (3 times): ~120 tokens
   - Read final results: ~250 tokens
 - API cost: Same as current (no additional subagents)
 
-**Workflow:**
+#### Workflow
+
 1. Create slides configuration JSON
 2. Start background task with `Bash(run_in_background=True)`
 3. Python script writes progress to `/tmp/nano-banana-progress.json`
 4. Poll progress file every 10-15 seconds
 5. Read final results from `/tmp/nano-banana-results.json`
 
-**Pros:**
+#### Option 3: Pros
+
 - ✅ **80% context reduction** (1,800 → 390 tokens)
 - ✅ **Zero additional API cost** (same as current)
 - ✅ **Fastest execution** (Python runs at full speed, no subagent overhead)
 - ✅ **Progress tracking** (can show updates to user)
 - ✅ **Low complexity** (simpler than subagent coordination)
 
-**Cons:**
+#### Option 3: Cons
+
 - ❌ Requires polling mechanism
 - ❌ Less immediate feedback (progress shown in batches)
 
@@ -503,7 +528,7 @@ Read("/tmp/nano-banana-results.json")
 # → {"completed": 10, "outputs": ["/path/to/deck/slide-1.webp", ...], "duration": "45s"}
 ```
 
-**Context in Main Conversation:**
+#### Context in Main Conversation
 
 ```
 Generating 10 slides in background...
@@ -518,7 +543,7 @@ Progress: 7/10 slides completed (70%)
 
 ### Decision Rationale
 
-**Why Background Bash won:**
+#### Why Background Bash won
 
 1. **Cost Efficiency:** Subagent approach costs 15x more API tokens for the same result
 2. **Performance:** No subagent startup overhead, Python runs at native speed
@@ -526,12 +551,14 @@ Progress: 7/10 slides completed (70%)
 4. **Context Optimization:** 80% reduction in context usage (critical for long conversations)
 5. **Scalability:** Works equally well for 5 slides or 50 slides
 
-**When Subagent still makes sense:**
+#### When Subagent still makes sense
+
 - Each slide requires Claude's judgment/reasoning (e.g., auto-selecting visual style based on content analysis)
 - Slides are completely independent and benefit from parallel processing
 - User doesn't care about API cost
 
-**Current Status:** Feature planned for future release. Current implementation uses direct execution (best for 1-3 images).
+**Current Status:** Feature planned for future release. Current implementation uses direct execution (best for 1-3
+images).
 
 ## Quick Example
 

@@ -10,7 +10,8 @@ Add temperature and seed parameters to nano-banana plugin for reproducible image
 
 ## Problem
 
-Users could not reproduce previously generated images they liked. Each generation was completely random with no way to recreate the same result.
+Users could not reproduce previously generated images they liked. Each generation was completely random with no way to
+recreate the same result.
 
 ## Solution
 
@@ -30,6 +31,7 @@ Implemented two parameters:
 ## Implementation
 
 ### Files Modified
+
 - `plugins/nano-banana/skills/nano-banana/generate_images.py`
   - Added seed auto-generation
   - Added temperature support
@@ -69,12 +71,14 @@ See [experiment-results.md](./experiment-results.md) for detailed testing result
 ## User Impact
 
 **Before:**
+
 ```
 User: "I love that image! Can you recreate it?"
 → Impossible - no way to reproduce
 ```
 
 **After:**
+
 ```
 User: "Regenerate with seed 392664860"
 → Generates visually identical image

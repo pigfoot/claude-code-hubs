@@ -28,6 +28,7 @@ User Request
 **Decision:** Use `CONFLUENCE_USER` instead of `CONFLUENCE_USERNAME`
 
 **Rationale:**
+
 - Follows industry convention (`DB_USER`, `MYSQL_USER`, `POSTGRES_USER`)
 - Shorter and cleaner
 - Consistent with other environment variables
@@ -37,6 +38,7 @@ User Request
 **Decision:** REST API is primary when credentials available, MCP as fallback
 
 **Rationale:**
+
 - REST API is 25x faster for writes (1s vs 26s)
 - REST API has permanent authentication (no 55-min expiry)
 - MCP provides zero-config experience for users without API token
@@ -47,6 +49,7 @@ User Request
 **Decision:** Local Base64 decoding for short URLs
 
 **Rationale:**
+
 - No network call needed for URL resolution
 - Works offline
 - Handles all Confluence URL formats consistently
@@ -56,6 +59,7 @@ User Request
 **Decision:** Confidence threshold of 0.6 for prompting CQL alternative
 
 **Rationale:**
+
 - Based on empirical testing with Rovo vs CQL searches
 - Low threshold avoids excessive prompts
 - User can always choose to ignore suggestion

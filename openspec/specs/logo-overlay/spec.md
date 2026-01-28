@@ -1,11 +1,15 @@
 # logo-overlay Specification
 
 ## Purpose
+
 TBD - created by archiving change 002-trendlife-style-improvement. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Automatic Logo Overlay for Brand Styles
 
-The system SHALL automatically overlay brand logos on AI-generated slides when a brand style (e.g., TrendLife) is detected.
+The system SHALL automatically overlay brand logos on AI-generated slides when a brand style (e.g., TrendLife) is
+detected.
 
 **ID:** `logo-overlay-001`
 **Priority:** High
@@ -15,6 +19,7 @@ The system SHALL automatically overlay brand logos on AI-generated slides when a
 **Given:** User generates a slide with TrendLife style
 **When:** Image generation completes
 **Then:**
+
 - TrendLife logo is automatically loaded from `assets/logos/trendlife-logo.png`
 - Logo is overlaid on the generated image
 - Logo positioning is determined by layout type
@@ -25,6 +30,7 @@ The system SHALL automatically overlay brand logos on AI-generated slides when a
 **Given:** User generates a slide without brand style
 **When:** Image generation completes
 **Then:**
+
 - No logo overlay is performed
 - Generated image is returned as-is
 - Processing time is not impacted
@@ -34,6 +40,7 @@ The system SHALL automatically overlay brand logos on AI-generated slides when a
 **Given:** Logo file is missing or corrupted
 **When:** Logo overlay is triggered
 **Then:**
+
 - Error is logged with clear message
 - Generated image is returned without logo
 - User is notified: "Warning: Logo overlay failed, image generated without logo"
@@ -55,6 +62,7 @@ The system SHALL position logos differently based on detected slide layout type 
 **Given:** Layout type is detected as "title"
 **When:** Logo overlay is applied
 **Then:**
+
 - Logo is placed in bottom-right corner
 - Logo width is 15% of slide width
 - Padding: 40px from right edge, 30px from bottom edge
@@ -65,6 +73,7 @@ The system SHALL position logos differently based on detected slide layout type 
 **Given:** Layout type is detected as "content"
 **When:** Logo overlay is applied
 **Then:**
+
 - Logo is placed in bottom-right corner
 - Logo width is 12% of slide width
 - Padding: 40px from right edge, 30px from bottom edge
@@ -75,6 +84,7 @@ The system SHALL position logos differently based on detected slide layout type 
 **Given:** Layout type is detected as "end"
 **When:** Logo overlay is applied
 **Then:**
+
 - Logo is placed in center-bottom position
 - Logo width is 20% of slide width
 - Padding: 0px horizontal (centered), 50px from bottom edge
@@ -90,7 +100,8 @@ The system SHALL position logos differently based on detected slide layout type 
 | end | center-bottom | 20% | 0px, 50px | 100% |
 | default | bottom-right | 12% | 40px, 30px | 100% |
 
-**Rationale:** Different layout types have different visual hierarchies requiring adaptive logo placement for optimal appearance.
+**Rationale:** Different layout types have different visual hierarchies requiring adaptive logo placement for optimal
+appearance.
 
 ---
 
@@ -106,6 +117,7 @@ The system SHALL automatically detect slide layout type from prompt content and 
 **Given:** User prompt contains "title slide", "cover slide", or "opening"
 **When:** Layout detection runs
 **Then:**
+
 - Layout type is set to "title"
 - Title-specific logo positioning is applied
 
@@ -114,6 +126,7 @@ The system SHALL automatically detect slide layout type from prompt content and 
 **Given:** User prompt contains "end slide", "closing", "thank you", or "conclusion"
 **When:** Layout detection runs
 **Then:**
+
 - Layout type is set to "end"
 - Center-bottom logo positioning is applied
 
@@ -122,6 +135,7 @@ The system SHALL automatically detect slide layout type from prompt content and 
 **Given:** Slide number is 1 and no specific keywords present
 **When:** Layout detection runs
 **Then:**
+
 - Layout type is set to "title"
 - Assumed to be presentation opener
 
@@ -130,10 +144,12 @@ The system SHALL automatically detect slide layout type from prompt content and 
 **Given:** No layout keywords detected and slide number > 1
 **When:** Layout detection runs
 **Then:**
+
 - Layout type is set to "content"
 - Standard logo positioning is applied
 
 **Detection Logic:**
+
 ```
 if "title slide" OR "cover" OR "opening" in prompt:
     return "title"
@@ -163,11 +179,13 @@ The system SHALL maintain brand logo assets in an organized structure with prope
 **Given:** Agent needs to apply logo overlay
 **When:** Agent accesses logo assets
 **Then:**
+
 - Logos are located in `assets/logos/` directory
 - Each logo has usage guidelines in `README.md`
 - Logo file naming is consistent: `{brand}-logo.png`
 
 **Asset Structure:**
+
 ```
 assets/
 ├── logos/
@@ -183,11 +201,13 @@ assets/
 **Given:** Developer needs to add new brand logo
 **When:** Developer reads `assets/logos/README.md`
 **Then:**
+
 - Logo specifications are documented (format, dimensions, DPI)
 - Processing steps are provided (cropping, optimization)
 - Usage constraints are clear (aspect ratio, minimum size)
 
-**Rationale:** Organized asset management enables future expansion (TrendAI, white logos) and maintains quality standards.
+**Rationale:** Organized asset management enables future expansion (TrendAI, white logos) and maintains quality
+standards.
 
 ---
 
@@ -203,6 +223,7 @@ The system SHALL use Pillow library for pixel-perfect logo compositing with prop
 **Given:** Logo is PNG with transparent background
 **When:** Logo is overlaid on generated slide
 **Then:**
+
 - Alpha channel is properly preserved
 - Logo edges are anti-aliased and smooth
 - Background shows through transparent areas
@@ -213,6 +234,7 @@ The system SHALL use Pillow library for pixel-perfect logo compositing with prop
 **Given:** Logo needs to be resized to 12% of slide width
 **When:** Logo is resized
 **Then:**
+
 - LANCZOS resampling algorithm is used
 - Aspect ratio is maintained exactly
 - Logo remains sharp at target size
@@ -223,25 +245,29 @@ The system SHALL use Pillow library for pixel-perfect logo compositing with prop
 **Given:** Logo overlay is complete
 **When:** Final image is saved
 **Then:**
+
 - WebP format is used with lossless=True
 - Quality is set to 95
 - File size remains reasonable (<1MB per slide)
 - Logo clarity is preserved
 
 **Technical Requirements:**
+
 - Use PIL/Pillow for image manipulation
 - RGBA mode for all operations
 - LANCZOS resampling for resize operations
 - WebP lossless output format
 - Alpha blending for compositing
 
-**Rationale:** Pillow provides precise control over image quality while maintaining logo integrity, superior to prompt-based logo generation.
+**Rationale:** Pillow provides precise control over image quality while maintaining logo integrity, superior to
+prompt-based logo generation.
 
 ---
 
 ### Requirement: Performance Targets for Logo Overlay
 
-The system SHALL complete logo overlay operations within specified performance targets to maintain responsive user experience.
+The system SHALL complete logo overlay operations within specified performance targets to maintain responsive user
+experience.
 
 **ID:** `logo-overlay-006`
 **Priority:** Medium
@@ -251,6 +277,7 @@ The system SHALL complete logo overlay operations within specified performance t
 **Given:** Generated slide image is ready (1920×1080 pixels)
 **When:** Logo overlay is performed
 **Then:**
+
 - Overlay completes in <200ms
 - Memory usage stays below 100MB for single operation
 - CPU usage is reasonable for background task
@@ -260,6 +287,7 @@ The system SHALL complete logo overlay operations within specified performance t
 **Given:** 10 slides are generated in batch mode
 **When:** Logo overlay is applied to all slides
 **Then:**
+
 - Total overlay time for 10 slides: <2 seconds
 - Sequential processing (one at a time)
 - Memory is released after each slide
@@ -288,6 +316,7 @@ The system SHALL allow users to manually override logo positioning and opacity w
 
 **Given:** User needs logo in non-standard position
 **When:** User provides manual override:
+
 ```python
 overlay_logo(
     background_path=slide_path,
@@ -297,7 +326,9 @@ overlay_logo(
     opacity=0.8  # Override: 80% opacity
 )
 ```
+
 **Then:**
+
 - Specified layout type is used instead of auto-detection
 - Opacity is set to 80% as requested
 - Manual configuration takes precedence over defaults
@@ -307,9 +338,10 @@ overlay_logo(
 **Given:** User does not provide manual overrides
 **When:** Logo overlay runs
 **Then:**
+
 - Automatic layout detection is used
 - Default opacity (100%) is applied
 - Standard behavior continues
 
-**Rationale:** Manual override provides flexibility for edge cases while maintaining simple automatic behavior as default.
-
+**Rationale:** Manual override provides flexibility for edge cases while maintaining simple automatic behavior as
+default.

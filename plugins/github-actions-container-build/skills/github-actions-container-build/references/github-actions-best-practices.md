@@ -36,14 +36,17 @@ Question 1: Is your repo public?
 ### Why This Matters
 
 **Standard ARM64 runners (`ubuntu-24.04-arm`):**
+
 - ✅ **Public repos**: Free, unlimited, works out of the box
 - ❌ **Private repos**: **Don't work at all** (workflow will fail)
 
 **ARM64 Larger Runners (custom runners):**
+
 - ✅ **Private repos with Team/Enterprise**: Available (requires setup + billing)
 - ❌ **Free tier**: Not available
 
 **QEMU Emulation:**
+
 - ✅ **All repos**: Works on free tier
 - ⚠️ **Performance**: 10-50x slower than native
 
@@ -51,7 +54,8 @@ Question 1: Is your repo public?
 
 ## Multi-arch Build Approaches Compared
 
-GitHub made arm64 runners (`ubuntu-24.04-arm`) generally available in September 2024 with **37% lower cost** than x64 runners, fundamentally changing the multi-arch build landscape by eliminating the need for slow QEMU emulation.
+GitHub made arm64 runners (`ubuntu-24.04-arm`) generally available in September 2024 with **37% lower cost** than x64
+runners, fundamentally changing the multi-arch build landscape by eliminating the need for slow QEMU emulation.
 
 ### The Four Podman Approaches
 
@@ -66,7 +70,8 @@ GitHub made arm64 runners (`ubuntu-24.04-arm`) generally available in September 
 
 ## 1. Push-by-Digest (2025 Best Practice - Default)
 
-**This is the recommended approach.** Images are pushed by digest without intermediate tags. Only tiny digest files (~70 bytes) transfer as artifacts.
+**This is the recommended approach.** Images are pushed by digest without intermediate tags. Only tiny digest files (~70
+bytes) transfer as artifacts.
 
 ```yaml
 # Build job (runs on each architecture)
@@ -257,17 +262,20 @@ podman build --platform linux/arm64 -t myimage .
 
 ### Registry Format Compatibility
 
-**Podman uses OCI format by default**, which is supported by modern container registries (ghcr.io, Docker Hub, ECR, ACR, GCR).
+**Podman uses OCI format by default**, which is supported by modern container registries (ghcr.io, Docker Hub, ECR, ACR,
+GCR).
 
 **When to specify format:**
 
 - **Modern single registry (default)**: Use OCI format (Podman default, no flag needed)
+
   ```bash
   # ghcr.io, Docker Hub, ECR, ACR, GCR - OCI format (default)
   podman manifest push --all myimage docker://ghcr.io/user/image:tag
   ```
 
 - **Quay.io or cross-registry**: Use v2s2 format for maximum compatibility
+
   ```bash
   # Quay.io or pushing to multiple different registries
   podman manifest push --all --format v2s2 myimage docker://quay.io/user/image:tag
@@ -276,6 +284,7 @@ podman build --platform linux/arm64 -t myimage .
 - **Avoid v2s1**: Deprecated format, many registries no longer support it
 
 **Build format**: Always use `--format docker` when building to ensure compatibility:
+
 ```bash
 podman build --format docker -t myimage .
 ```
@@ -284,7 +293,8 @@ podman build --format docker -t myimage .
 
 ### Tag Command Incompatibility
 
-`podman tag` doesn't work correctly with manifest lists in some versions. Use `buildah tag` or recreate manifests when retagging.
+`podman tag` doesn't work correctly with manifest lists in some versions. Use `buildah tag` or recreate manifests when
+retagging.
 
 ### QEMU Registration Loss
 
@@ -328,6 +338,7 @@ runs-on: ${{ matrix.runner }}
 ### When to Use QEMU
 
 Use QEMU for private repositories on GitHub Free plan:
+
 - Native ARM64 runners require GitHub Team/Enterprise
 - QEMU provides ARM64 compatibility without additional costs
 - Acceptable tradeoff for private projects with limited CI budgets
@@ -363,11 +374,13 @@ jobs:
 ### Performance Comparison
 
 **Native ARM64 (Public Repos):**
+
 - AMD64 build: ~2-3 minutes
 - ARM64 build: ~2-3 minutes (parallel)
 - Total: ~3 minutes (parallel execution)
 
 **QEMU (Private Repos):**
+
 - Multi-arch build: ~30-90 minutes
 - Total: ~30-90 minutes (sequential emulation)
 
@@ -379,11 +392,13 @@ jobs:
 
 For private repositories with GitHub Team or Enterprise Cloud plans that need native ARM64 performance.
 
-**Important:** Standard ARM64 runners (`ubuntu-24.04-arm`) **don't work in private repos**. You must use larger runners instead.
+**Important:** Standard ARM64 runners (`ubuntu-24.04-arm`) **don't work in private repos**. You must use larger runners
+instead.
 
 ### Setup Steps
 
 **1. Create ARM64 Larger Runner:**
+
 - Go to **Organization Settings → Actions → Runners → New runner**
 - Select **"Larger runners"**
 - Choose **"Ubuntu 24.04 by Arm Limited"** partner image
@@ -393,6 +408,7 @@ For private repositories with GitHub Team or Enterprise Cloud plans that need na
   - **8-core, 32GB RAM** (for heavy builds)
 
 **2. Update Workflow:**
+
 ```yaml
 strategy:
   matrix:
@@ -424,7 +440,8 @@ strategy:
 
 ### Why podman-static?
 
-Ubuntu 24.04's default podman (4.9.3) uses buildah 1.33.7, which doesn't support heredoc syntax in Containerfiles. Use `podman-static` for modern buildah:
+Ubuntu 24.04's default podman (4.9.3) uses buildah 1.33.7, which doesn't support heredoc syntax in Containerfiles. Use
+`podman-static` for modern buildah:
 
 ```yaml
 - name: Install podman-static for heredoc support
@@ -452,9 +469,10 @@ Ubuntu 24.04's default podman (4.9.3) uses buildah 1.33.7, which doesn't support
 ```
 
 **Why install to /usr/bin (not /usr/local/bin)?**
+
 - Avoids AppArmor permission issues on Ubuntu
 - Default AppArmor profile only allows `/usr/bin` paths
-- Ref: https://github.com/mgoltzsche/podman-static#apparmor-profile
+- Ref: <https://github.com/mgoltzsche/podman-static#apparmor-profile>
 
 ---
 
@@ -494,6 +512,7 @@ steps:
 ```
 
 **Setup Docker Hub secrets:**
+
 1. Go to **Settings → Secrets and variables → Actions**
 2. Add these secrets:
    - `DOCKERHUB_USERNAME`: Your Docker Hub account username
@@ -573,7 +592,8 @@ jobs:
             $(cd /tmp/digests && printf 'ghcr.io/${{ github.repository }}@%s ' *)
 ```
 
-**Note:** This plugin's default workflows use Podman. Docker buildx is provided as an alternative for teams already using Docker tooling.
+**Note:** This plugin's default workflows use Podman. Docker buildx is provided as an alternative for teams already
+using Docker tooling.
 
 ---
 
@@ -605,11 +625,14 @@ podman manifest inspect "$IMAGE:latest"
 ### Common Issues
 
 1. **Container networking SSL errors (ubuntu-24.04 runners >= 20251208.163.1)**
-   - **Symptom**: `UNKNOWN_CERTIFICATE_VERIFICATION_ERROR` or SSL certificate failures during package installation (`bun install`, `npm install`, `pip install`, `cargo build`, etc.) inside containers
+   - **Symptom**: `UNKNOWN_CERTIFICATE_VERIFICATION_ERROR` or SSL certificate failures during package installation (`bun
+     install`, `npm install`, `pip install`, `cargo build`, etc.) inside containers
    - **Root Cause**: Runner image networking configuration change affecting container bridge networking
    - **Solution**: Add `--network=host` to `podman build`
-   - **Evidence**: [Test repository](https://github.com/pigfoot/test-bun-ssl-issue) | [GitHub Issue #13422](https://github.com/actions/runner-images/issues/13422)
+   - **Evidence**: [Test repository](https://github.com/pigfoot/test-bun-ssl-issue) | [GitHub Issue
+     #13422](https://github.com/actions/runner-images/issues/13422)
    - **Example**:
+
      ```yaml
      - name: Build image
        run: |
@@ -620,6 +643,7 @@ podman manifest inspect "$IMAGE:latest"
            -f ./Containerfile \
            .
      ```
+
    - **Trade-off**: Reduces network isolation during build (acceptable for CI/CD)
    - **Status**: Known issue, workaround required until GitHub resolves runner image networking
 

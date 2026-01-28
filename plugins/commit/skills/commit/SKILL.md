@@ -2,7 +2,7 @@
 name: commit
 description: Smart commit creation with conventional commits, emoji, and GPG signing. Use when user says "commit" or requests committing changes. Handles staged file detection, suggests splits for multi-concern changes, and applies proper commit format.
 allowed-tools: "Bash(git *)"
-version: 1.0.0
+version: 0.0.1
 ---
 
 # Commit Skill
@@ -10,12 +10,14 @@ version: 1.0.0
 Creates well-formatted commits following conventional commit standards with emoji prefixes.
 
 ## When to Use
+
 - User says "commit", "commit these changes", or uses `/commit`
 - After code changes are ready to be committed
 - Need help with commit message formatting
 - Want automatic detection of multi-concern changes
 
 ## Core Features
+
 - **GPG signing** with cached passphrase (if `$GPG_PASSPHRASE` set)
 - **Staged vs unstaged detection** - commits only staged files when present
 - **Split suggestions** - analyzes diffs for multiple logical changes
@@ -27,11 +29,11 @@ Creates well-formatted commits following conventional commit standards with emoj
 
 ## Process
 
-**⚠️ CRITICAL: ALWAYS start with Step 1 (Environment Check) before attempting any commit**
+### ⚠️ CRITICAL: ALWAYS start with Step 1 (Environment Check) before attempting any commit
 
 ### 1. Environment Check (MANDATORY FIRST STEP)
 
-**MUST cache GPG passphrase if available:**
+#### MUST cache GPG passphrase if available
 
 ```bash
 # If GPG_PASSPHRASE is set, cache it to gpg-agent
@@ -44,22 +46,26 @@ else
 fi
 ```
 
-**Why this matters:**
+#### Why this matters
+
 - GPG_PASSPHRASE purpose: Allow GPG to sign automatically without interactive password prompt
 - If GPG_PASSPHRASE is set → **Must cache first**, otherwise git commit --gpg-sign will fail
 - If GPG_PASSPHRASE not set → GPG will attempt interactive password prompt (fails in Claude Code environment)
 
-**GPG signing decision:**
+#### GPG signing decision
+
 - Whether to use --gpg-sign should be determined by project policy or git config
 - In this project: **always use --gpg-sign** (assumes GPG is configured)
 
-**When committing:**
+#### When committing
+
 ```bash
 # Always use --gpg-sign (passphrase is cached if GPG_PASSPHRASE was set)
 git commit --signoff --gpg-sign -m "..."
 ```
 
 ### 2. Analyze Changes
+
 ```bash
 git status --short
 
@@ -72,13 +78,16 @@ fi
 ```
 
 ### 3. Multi-Concern Detection
+
 Suggest split if:
+
 - **Different patterns**: `src/` + `test/` + `docs/`
 - **Mixed types**: feat + fix + docs
 - **Unrelated concerns**: auth logic + UI styling
 - **Large changeset**: >500 lines
 
-**Ask user:**
+#### Ask user
+
 ```
 Multiple concerns detected:
 1. Auth changes (src/auth/*)
@@ -94,9 +103,11 @@ Split into 3 commits?
 ```
 
 ### 4. Create Commit
+
 Format: `<emoji> <type>: <description>`
 
-**Rules:**
+#### Rules
+
 - Imperative mood ("add" not "added")
 - First line <72 chars
 - Atomic (single purpose)
@@ -107,7 +118,9 @@ git commit --signoff ${USE_GPG:+--gpg-sign} -m "<emoji> <type>: <description>"
 ```
 
 ### 5. Handle --no-verify
+
 If user requests `--no-verify`:
+
 ```
 ⚠️  Requested to skip pre-commit hooks.
 
@@ -139,42 +152,55 @@ Only proceed if confirmed.
 | revert | ⏪️ | Revert changes |
 | wip | 🚧 | Work in progress |
 
-**Extended emoji map:**
-🚚 move | ➕ add-dep | ➖ remove-dep | 🌱 seed | 🧑‍💻 dx | 🏷️ types | 👔 business | 🚸 ux | 🩹 minor-fix | 🥅 errors | 🔥 remove | 🎨 structure | 🚑️ hotfix | 🎉 init | 🔖 release | 💚 ci-fix | 📌 pin-deps | 👷 ci-build | 📈 analytics | ✏️ typos | 📄 license | 💥 breaking | 🍱 assets | ♿️ a11y | 💡 comments | 🗃️ db | 🔊 logs | 🔇 remove-logs | 🙈 gitignore | 📸 snapshots | ⚗️ experiment | 🚩 flags | 💫 animations | ⚰️ dead-code | 🦺 validation | ✈️ offline
+### Extended emoji map
+
+🚚 move | ➕ add-dep | ➖ remove-dep | 🌱 seed | 🧑‍💻 dx | 🏷️ types | 👔 business | 🚸 ux | 🩹 minor-fix | 🥅 errors |
+🔥 remove | 🎨 structure | 🚑️ hotfix | 🎉 init | 🔖 release | 💚 ci-fix | 📌 pin-deps | 👷 ci-build | 📈 analytics |
+✏️ typos | 📄 license |
+💥 breaking | 🍱 assets | ♿️ a11y | 💡 comments | 🗃️ db | 🔊 logs | 🔇 remove-logs | 🙈 gitignore | 📸 snapshots | ⚗️
+experiment | 🚩 flags | 💫 animations | ⚰️ dead-code | 🦺 validation | ✈️ offline
 
 ---
 
 ## Split Decision Examples
 
 ### ❌ Bad - Mixed concerns
+
 ```diff
 + src/auth/login.ts (feat)
 + src/components/Button.css (style)
 + README.md (docs)
 ```
+
 **Split into:** 3 separate commits
 
 ### ✅ Good - Single concern
+
 ```diff
 + src/auth/login.ts
 + src/auth/middleware.ts
 + tests/auth.test.ts
 ```
+
 **One commit:** ✨ feat: add authentication
 
 ### ❌ Bad - Mixed types
+
 ```diff
 + Add export feature (feat)
 + Fix date bug (fix)
 ```
+
 **Split into:** 2 commits by type
 
 ### ❌ Bad - Large multi-feature
+
 ```diff
 300+ lines: auth system
 200+ lines: UI components
 150+ lines: database
 ```
+
 **Split into:** 3 commits by feature
 
 ---
@@ -182,6 +208,7 @@ Only proceed if confirmed.
 ## Critical Rules
 
 ### NEVER
+
 - ❌ Add Claude signature to commits
 - ❌ Commit without checking staged status
 - ❌ Skip split suggestions for multi-concern
@@ -191,6 +218,7 @@ Only proceed if confirmed.
 - ❌ **Attempt git commit before running GPG cache command**
 
 ### ALWAYS
+
 - ✅ **FIRST: Run Environment Check (Step 1) to cache GPG passphrase**
 - ✅ Use --signoff flag (always)
 - ✅ Use --gpg-sign flag (always, passphrase is cached in Step 1)
@@ -205,10 +233,13 @@ Only proceed if confirmed.
 ## Integration Notes
 
 ### With CLAUDE.md
+
 CLAUDE.md references this skill: "Use `/commit` or say 'commit changes'"
 
 ### With spec-kit
+
 Reference planning docs in commit body:
+
 ```
 ✨ feat: add user authentication
 
@@ -220,6 +251,7 @@ Related to Stage 2 of PLAN.md (User Story 1.2)
 ```
 
 ### With Husky
+
 Hooks run automatically unless --no-verify used (requires approval).
 
 ---
@@ -227,6 +259,7 @@ Hooks run automatically unless --no-verify used (requires approval).
 ## Example Sessions
 
 ### Simple commit
+
 ```
 User: "commit these changes"
 
@@ -239,6 +272,7 @@ Process:
 ```
 
 ### Split required
+
 ```
 User: "commit"
 
@@ -250,6 +284,7 @@ Process:
 ```
 
 ### Skip hooks
+
 ```
 User: "/commit --no-verify"
 
@@ -267,6 +302,7 @@ Action: Proceed with --no-verify
 ## Troubleshooting
 
 ### GPG fails
+
 ```bash
 echo $GPG_PASSPHRASE  # Check set
 gpg --clearsign <<< "test"  # Test manually
@@ -274,10 +310,12 @@ gpg --clearsign <<< "test"  # Test manually
 ```
 
 ### Hook fails
+
 Check output → fix issue → retry
 Critical case only: ask about --no-verify
 
 ### No changes
+
 ```bash
 git status
 # No changes: inform user
@@ -289,6 +327,7 @@ git status
 ## Progressive Disclosure
 
 Keep this main file under 500 lines. For extensive reference:
+
 - Emoji cheatsheet → See `emoji-reference.md` (if needed)
 - Advanced patterns → See `advanced-commits.md` (if needed)
 

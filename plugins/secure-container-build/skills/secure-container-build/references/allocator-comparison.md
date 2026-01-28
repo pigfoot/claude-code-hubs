@@ -17,18 +17,22 @@ This document explains why we recommend **mimalloc** for Rust containers and com
 
 ### 1. Consistent Performance Across Workloads
 
-mimalloc outperforms all other leading allocators (jemalloc, tcmalloc, Hoard, etc.) and maintains consistent performance across diverse benchmarks - from real-world applications to synthetic stress tests.
+mimalloc outperforms all other leading allocators (jemalloc, tcmalloc, Hoard, etc.) and maintains consistent performance
+across diverse benchmarks - from real-world applications to synthetic stress tests.
 
-**Key characteristic:** It "does consistently well over a wide range of benchmarks" rather than excelling in one area and failing in others.
+**Key characteristic:** It "does consistently well over a wide range of benchmarks" rather than excelling in one area
+and failing in others.
 
 ### 2. Small Allocation Performance
 
 For allocations < 1KB (typical in most Rust applications):
+
 - **mimalloc** excels with high throughput
 - **jemalloc** has the lowest throughput for small sizes
 - **tcmalloc** improves at >1KB but starts slower
 
-**Rust workloads** often allocate many small objects (Vec, String, Box, Arc), making mimalloc's strength in this area valuable.
+**Rust workloads** often allocate many small objects (Vec, String, Box, Arc), making mimalloc's strength in this area
+valuable.
 
 ### 3. Memory Efficiency
 
@@ -36,18 +40,21 @@ For allocations < 1KB (typical in most Rust applications):
 - glibc malloc can use **2x+ memory** under heavy loads (fragmentation)
 
 **Example:** Besu blockchain node:
+
 - glibc malloc: ~9 GiB
 - jemalloc/tcmalloc: ~4.8 GiB (47% reduction)
 
 ### 4. Easy Integration
 
 **Cargo.toml:**
+
 ```toml
 [dependencies]
 mimalloc = { version = "0.1", default-features = false }
 ```
 
 **src/main.rs:**
+
 ```rust
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
@@ -66,16 +73,19 @@ No runtime configuration needed. Works identically across glibc and musl.
 ### glibc malloc (Default)
 
 **Performance:**
+
 - **Throughput:** Poor under multi-threaded load
 - **Latency:** Unpredictable spikes
 - **Memory:** High fragmentation (2x+ usage in long-running services)
 
 **When to use:**
+
 - Simple, low-traffic applications
 - When binary size is critical (no allocator dependency)
 - Debugging/development (default, no setup)
 
 **Impact in containers:**
+
 ```
 Example: HTTP server with 1000 req/s
 - glibc malloc: ~500 MB memory usage
@@ -86,47 +96,56 @@ Example: HTTP server with 1000 req/s
 ### mimalloc (Recommended Default)
 
 **Performance:**
+
 - **Throughput:** Excellent for <1KB allocations
 - **Latency:** Consistent, low variance
 - **Memory:** Low fragmentation, compact metadata
 
 **Benchmark Results (2024):**
+
 - Small allocations (<1KB): **Best** among all allocators
 - Medium allocations (1-32KB): **Good** (slightly behind tcmalloc)
 - Large allocations (>32KB): **Fair** (jemalloc/tcmalloc better)
 
 **When to use:**
+
 - **General-purpose Rust applications** (our default)
 - Web servers, APIs, microservices
 - Applications with many small allocations
 - Containerized workloads where memory efficiency matters
 
 **Trade-offs:**
+
 - Slightly slower for very large allocations (>32KB)
 - If your app heavily uses large buffers, consider jemalloc
 
 ### jemalloc (Alternative)
 
 **Performance:**
+
 - **Throughput:** Lower for small allocations, better for large
 - **Latency:** Excellent tail latency in multi-threaded scenarios
 - **Memory:** Best memory efficiency for long-running services
 
 **Benchmark Results (2024):**
+
 - Multi-threaded (36 threads): **30% higher throughput** than tcmalloc
 - Memory efficiency: **Best** for long-running services
 - Small allocations: **Slowest** among specialized allocators
 
 **When to use:**
+
 - Long-running services (databases, caches, message queues)
 - High concurrency (>16 threads)
 - Memory-constrained environments
 
 **Trade-offs:**
+
 - Lower throughput on small allocations
 - More complex configuration options (can be overwhelming)
 
 **Why not default?**
+
 - Most Rust web apps don't run long enough to benefit from jemalloc's memory efficiency
 - Lower small allocation performance hurts typical Rust workloads
 - Container restart cycles reduce long-running fragmentation benefits
@@ -134,26 +153,31 @@ Example: HTTP server with 1000 req/s
 ### tcmalloc (Google)
 
 **Performance:**
+
 - **Throughput:** **Best for large allocations** (>1KB)
 - **Latency:** Good for single-threaded, excellent for high concurrency
 - **Memory:** Higher startup memory, better for sustained load
 
 **Benchmark Results (2024):**
+
 - Large allocations (>1KB): **50x throughput** vs glibc malloc at 4MB
 - Single-threaded: **22% better** than jemalloc for 64-byte blocks
 - Sustained throughput: Maintains performance up to 32KB allocations
 
 **When to use:**
+
 - High-throughput systems (analytics, data processing)
 - Large allocation workloads (image processing, scientific computing)
 - Google-ecosystem projects (already using tcmalloc elsewhere)
 
 **Trade-offs:**
+
 - Higher startup memory consumption
 - More complex build/runtime setup
 - Overkill for typical web services
 
 **Why not default?**
+
 - Higher complexity (requires C++ dependencies in some cases)
 - Rust's allocation patterns favor small allocations (mimalloc's strength)
 - Startup memory overhead hurts container density
@@ -163,6 +187,7 @@ Example: HTTP server with 1000 req/s
 ### Why Not jemalloc Despite Firefox/Rust History?
 
 **Historical context:**
+
 - Rust **used** jemalloc as default until Rust 1.32 (2019)
 - Switched to **system allocator** (glibc malloc) for:
   - Simpler build process
@@ -170,6 +195,7 @@ Example: HTTP server with 1000 req/s
   - Platform consistency
 
 **For containers:**
+
 - jemalloc's benefits (long-running memory efficiency) matter less
 - Container restarts reset fragmentation
 - mimalloc's small allocation performance better matches Rust patterns
@@ -177,6 +203,7 @@ Example: HTTP server with 1000 req/s
 ### Allocation Patterns in Rust
 
 **Common patterns:**
+
 ```rust
 // Small allocations (mimalloc excels)
 let s = String::from("hello");           // ~24 bytes
@@ -225,12 +252,13 @@ mimalloc:
 ### Default: Use mimalloc
 
 **For 90% of Rust applications:**
+
 ```toml
 [dependencies]
 mimalloc = { version = "0.1", default-features = false }
 ```
 
-### Consider jemalloc if:
+### Consider jemalloc if
 
 - Long-running service (>7 days uptime)
 - High concurrency (>32 threads)
@@ -242,7 +270,7 @@ mimalloc = { version = "0.1", default-features = false }
 jemallocator = "0.5"
 ```
 
-### Consider tcmalloc if:
+### Consider tcmalloc if
 
 - Large allocation workload (>1KB average)
 - Data processing pipeline
@@ -253,7 +281,7 @@ jemallocator = "0.5"
 tcmalloc = "0.3"
 ```
 
-### Stick with glibc malloc if:
+### Stick with glibc malloc if
 
 - Very simple application (<100 req/s)
 - Binary size critical (embedded systems)
@@ -292,6 +320,7 @@ mimalloc = { version = "0.1", default-features = false }
 ```
 
 **Why recommended:**
+
 - Best performance (statically linked)
 - Works with both glibc and musl
 - No runtime configuration
@@ -305,11 +334,13 @@ ENV LD_PRELOAD=/usr/lib/libmimalloc.so
 ```
 
 **Why available:**
+
 - Zero code changes
 - Good for testing allocator impact
 - Only works with glibc (not musl)
 
 **Trade-off:**
+
 - Slightly slower than static linking
 - Adds runtime dependency
 
@@ -320,11 +351,13 @@ ENV LD_PRELOAD=/usr/lib/libmimalloc.so
 ```
 
 **Why included:**
+
 - Good for most applications
 - Simplest approach
 - No dependencies
 
 **Impact:**
+
 - 2x memory usage under load
 - Acceptable for low-traffic apps
 
@@ -339,17 +372,26 @@ mimalloc = { version = "0.1", default-features = false }
 ```
 
 **Why mandatory:**
+
 - musl malloc is **7-10x slower** in multi-threaded workloads
 - LD_PRELOAD doesn't work (no dynamic linker in static images)
 - No alternative (tcmalloc/jemalloc too complex for musl static)
 
 ## Sources
 
-- [mimalloc Performance Benchmarks](https://microsoft.github.io/mimalloc/bench.html) - Official benchmark results showing mimalloc's consistent performance
-- [Exploring Different Memory Allocators](https://dev.to/frosnerd/libmalloc-jemalloc-tcmalloc-mimalloc-exploring-different-memory-allocators-4lp3) - Comprehensive comparison of allocator characteristics
-- [Malloc vs TcMalloc vs Jemalloc vs Mimalloc](https://lf-hyperledger.atlassian.net/wiki/display/BESU/Reduce+Memory+usage+by+choosing+a+different+low+level+allocator) - Real-world memory usage comparison in Besu blockchain node
-- [C++ Memory Allocation Performance Comparison](https://linuxvox.com/blog/c-memory-allocation-mechanism-performance-comparison-tcmalloc-vs-jemalloc/) - Detailed performance analysis of tcmalloc vs jemalloc
-- [Selecting malloc variant in Alpaquita Linux](https://docs.bell-sw.com/alpaquita-linux/latest/how-to/malloc/) - Production allocator selection guidelines
+- [mimalloc Performance Benchmarks](https://microsoft.github.io/mimalloc/bench.html) - Official benchmark results
+  showing mimalloc's consistent performance
+- [Exploring Different Memory
+  Allocators](https://dev.to/frosnerd/libmalloc-jemalloc-tcmalloc-mimalloc-exploring-different-memory-allocators-4lp3) -
+  Comprehensive comparison of allocator characteristics
+- [Malloc vs TcMalloc vs Jemalloc vs
+  Mimalloc](https://lf-hyperledger.atlassian.net/wiki/display/BESU/Reduce+Memory+usage+by+choosing+a+different+low+level+allocator)
+  - Real-world memory usage comparison in Besu blockchain node
+- [C++ Memory Allocation Performance
+  Comparison](https://linuxvox.com/blog/c-memory-allocation-mechanism-performance-comparison-tcmalloc-vs-jemalloc/) -
+  Detailed performance analysis of tcmalloc vs jemalloc
+- [Selecting malloc variant in Alpaquita Linux](https://docs.bell-sw.com/alpaquita-linux/latest/how-to/malloc/) -
+  Production allocator selection guidelines
 
 ## Summary
 

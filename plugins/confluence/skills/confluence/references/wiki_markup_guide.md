@@ -44,6 +44,7 @@ h6. Heading 6
 ## Lists
 
 **Unordered:**
+
 ```wiki
 * Item 1
 * Item 2
@@ -53,6 +54,7 @@ h6. Heading 6
 ```
 
 **Ordered:**
+
 ```wiki
 # First
 # Second
@@ -102,11 +104,13 @@ Tip panel content
 ## Macros
 
 **Table of Contents:**
+
 ```wiki
 {toc}
 ```
 
 **Expand/Collapse:**
+
 ```wiki
 {expand:Click to expand}
 Hidden content here
@@ -114,6 +118,7 @@ Hidden content here
 ```
 
 **Status:**
+
 ```wiki
 {status:colour=Green|title=Complete}
 {status:colour=Yellow|title=In Progress}
@@ -136,6 +141,7 @@ Second line
 ## Escaping
 
 Use backslash to escape special characters:
+
 ```wiki
 \*not bold\*
 \{not a macro\}

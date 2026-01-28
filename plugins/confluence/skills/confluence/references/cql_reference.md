@@ -50,6 +50,7 @@ field operator value [AND|OR] field operator value
 | `endOfYear()` | End of current year |
 
 **With offset:**
+
 ```
 startOfDay(-7)     -- 7 days ago
 startOfMonth(-1)   -- Start of last month
@@ -72,50 +73,59 @@ startOfYear(1)     -- Start of next year
 ## Example Queries
 
 **Pages in a space:**
+
 ```cql
 space = "DEV" AND type = page
 ```
 
 **Pages containing text:**
+
 ```cql
 space = "DEV" AND text ~ "authentication"
 ```
 
 **Pages modified this week:**
+
 ```cql
 lastmodified >= startOfWeek()
 ```
 
 **Pages I created:**
+
 ```cql
 creator = currentUser()
 ```
 
 **Pages with specific label:**
+
 ```cql
 label = "api-docs" AND space = "DEV"
 ```
 
 **Pages under a parent:**
+
 ```cql
 ancestor = "123456789"
 ```
 
 **Recent pages by multiple contributors:**
+
 ```cql
-contributor IN ("alice@example.com", "bob@example.com") 
+contributor IN ("alice@example.com", "bob@example.com")
 AND created >= startOfMonth(-1)
 ```
 
 **Excluding drafts:**
+
 ```cql
 space = "DEV" AND label != "draft"
 ```
 
 **Complex search:**
+
 ```cql
-space IN ("DEV", "PROD") 
-AND type = page 
+space IN ("DEV", "PROD")
+AND type = page
 AND (title ~ "API" OR label = "api-docs")
 AND created >= startOfYear()
 ORDER BY lastmodified DESC

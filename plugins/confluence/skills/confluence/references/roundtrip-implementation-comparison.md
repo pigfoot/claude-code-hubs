@@ -15,7 +15,9 @@ In-depth comparison of implementation methods for Confluence bidirectional editi
 | **Method 5: Hybrid Strategy** | Auto-detection + Method 1/4 | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⚠️ Smart preservation | ✅ Auto-selection |
 | **Method 6: MCP + JSON Diff** | MCP + ADF + JSON Diff + Interactive | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Preserved + Optional Body Edit** | ⭐ **Recommended** |
 
-⚠️ **Important: Methods 1-3 all lose Confluence macros** because they go through Markdown conversion. Method 4 preserves macros but cannot use Claude. **Method 6 is the recommended approach** - it preserves macros while allowing Claude to edit all text content (including optional macro bodies with user confirmation and automatic backup/rollback).
+⚠️ **Important: Methods 1-3 all lose Confluence macros** because they go through Markdown conversion. Method 4
+preserves macros but cannot use Claude. **Method 6 is the recommended approach** - it preserves macros while allowing
+Claude to edit all text content (including optional macro bodies with user confirmation and automatic backup/rollback).
 
 ---
 
@@ -236,11 +238,14 @@ if __name__ == "__main__":
 ### Cons
 
 ❌ **Requires API Token**: Users need to generate and manage tokens
-❌ **⚠️ Loses Macros**: Because of Markdown conversion, all special Confluence macros (expand, page properties, status, etc.) will be lost
+❌ **⚠️ Loses Macros**: Because of Markdown conversion, all special Confluence macros (expand, page properties, status,
+etc.) will be lost
 ❌ **Requires implementing scripts**: Need to write or maintain Python scripts
 ❌ **Version conflict handling**: Need to implement conflict detection yourself
 
-**About Macro Loss:** This is not a Method 1 problem, but a Markdown limitation. Markdown doesn't support Confluence macros, so the `Storage Format → Markdown → Storage Format` conversion process will inevitably lose macros. See [Macro Preservation Guide](./macro-preservation-guide.md).
+**About Macro Loss:** This is not a Method 1 problem, but a Markdown limitation. Markdown doesn't support Confluence
+macros, so the `Storage Format → Markdown → Storage Format` conversion process will inevitably lose macros. See
+[Macro Preservation Guide](./macro-preservation-guide.md).
 
 ### Use Cases
 
@@ -421,7 +426,8 @@ process.stdin.on('end', () => {
 ❌ **⚠️ Loses Macros**: Because of Markdown conversion, all special macros will be lost
 ❌ **MCP limitations**: Depends on MCP behavior, harder to customize
 
-**About Macro Loss:** ADF → Markdown → ADF conversion process will also lose macros because Markdown doesn't support Confluence-specific features. See [Macro Preservation Guide](./macro-preservation-guide.md).
+**About Macro Loss:** ADF → Markdown → ADF conversion process will also lose macros because Markdown doesn't support
+Confluence-specific features. See [Macro Preservation Guide](./macro-preservation-guide.md).
 
 ### Use Cases
 
@@ -610,7 +616,9 @@ ADF structure that Claude needs to understand:
 ❌ **⚠️ Loses Macros**: Claude editing ADF JSON may corrupt or lose macro structures
 ❌ **Not suitable for production**: Insufficient reliability
 
-**About Macro Loss:** Although Method 3 doesn't go through Markdown, Claude directly editing ADF JSON may accidentally delete or corrupt macro structures because Claude might treat macros as regular content nodes. See [Macro Preservation Guide](./macro-preservation-guide.md).
+**About Macro Loss:** Although Method 3 doesn't go through Markdown, Claude directly editing ADF JSON may accidentally
+delete or corrupt macro structures because Claude might treat macros as regular content nodes. See
+[Macro Preservation Guide](./macro-preservation-guide.md).
 
 ### Use Cases
 
@@ -766,6 +774,7 @@ roundtrip_direct_xml("123456789", edit_example)
 ### Overview
 
 **Hybrid Strategy** automatically detects page characteristics and selects the optimal method:
+
 - Detects macros and their importance
 - Analyzes edit complexity
 - Chooses between Method 1 (Markdown roundtrip) and Method 4 (Direct XML edit)
@@ -1191,7 +1200,9 @@ if __name__ == "__main__":
 
 ### Overview
 
-**Method 6** combines MCP for reading/writing with JSON diff/patch to preserve macros while allowing Claude to edit content. This is the **recommended approach** as it:
+**Method 6** combines MCP for reading/writing with JSON diff/patch to preserve macros while allowing Claude to edit
+content. This is the **recommended approach** as it:
+
 - Uses MCP (OAuth authentication, no API token needed)
 - Preserves all macros (they are never modified)
 - Allows Claude to intelligently edit non-macro content
@@ -1259,6 +1270,7 @@ if __name__ == "__main__":
 ### Key Insight
 
 The trick is: **we never modify macro nodes directly**. Instead:
+
 1. Convert to Markdown (macros disappear but that's OK - it's just for Claude)
 2. Claude edits the Markdown
 3. Convert back to ADF (still no macros)
@@ -1645,12 +1657,14 @@ if __name__ == "__main__":
 ### Two Modes
 
 **Safe Mode (Default):**
+
 - Skips macro body content
 - Only edits text outside macros
 - No risk to macro structure
 - Recommended for most users
 
 **Advanced Mode (Optional):**
+
 - User-confirmed macro body editing
 - Detects macros with editable content
 - Shows preview and asks for confirmation
@@ -1660,6 +1674,7 @@ if __name__ == "__main__":
 ### What CAN be edited
 
 **Safe Mode:**
+
 - Regular paragraphs
 - Headings
 - List items
@@ -1668,6 +1683,7 @@ if __name__ == "__main__":
 - Any text **outside** of macros
 
 **Advanced Mode (with confirmation):**
+
 - All of the above, PLUS
 - Text **inside** macro bodies (expand, panel, info, etc.)
 - Macro structure itself is still preserved
@@ -1675,16 +1691,19 @@ if __name__ == "__main__":
 ### Backup and Rollback
 
 **Automatic Backup:**
+
 - Created before every edit operation
 - Stored in `.confluence_backups/{page_id}/`
 - Keeps last 10 backups per page (configurable)
 
 **Automatic Rollback:**
+
 - Triggers on write failure
 - Restores from backup immediately
 - Logs error for debugging
 
 **Manual Rollback:**
+
 - List available backups with timestamps
 - Select backup to restore
 - Confirm and restore
@@ -1770,8 +1789,10 @@ Recommendation:
 | **Macros** | ❌ Lost | ❌ Lost | ❌ Lost | ✅ **Full** | ⚠️ Smart | ✅ **Full** |
 | **Macro body** | ❌ N/A | ❌ N/A | ❌ N/A | ✅ Programmatic | ⚠️ Depends | ✅ **Interactive** |
 
-\* Method 5: Simple edits preserve macros (Method 4), complex edits lose macros but get Claude intelligence (Method 1)
-\* Method 6: Macros always preserved. Macro body editing optional (Safe mode: skip, Advanced mode: interactive with confirmation and backup)
+\* Method 5: Simple edits preserve macros (Method 4), complex edits lose macros but get Claude intelligence
+(Method 1)
+\* Method 6: Macros always preserved. Macro body editing optional (Safe mode: skip, Advanced mode: interactive with
+confirmation and backup)
 
 ### Performance
 
@@ -1862,6 +1883,7 @@ Start Roundtrip Implementation Selection
 ```
 
 **Key Decision Points:**
+
 - **⭐ Default choice**: Method 6 (MCP + JSON Diff) - Claude editing + full macro preservation
 - **Edit macro body content**: ✅ Method 6 Advanced Mode (interactive with backup)
 - **No macros on page**: Method 1 is simpler (but Method 6 works fine too)
@@ -1875,6 +1897,7 @@ Start Roundtrip Implementation Selection
 ### Phased Implementation Strategy
 
 #### Phase 1: Quick Validation (1 day)
+
 ```
 Implementation: Method 3 (Pragmatic Hybrid)
 Goal: Validate MCP integration, test simple edits
@@ -1882,6 +1905,7 @@ Output: Proof of concept that can edit simple pages with Claude
 ```
 
 #### Phase 2: Production Ready (3-5 days)
+
 ```
 Implementation: Method 1 (REST API + Storage)
 Goal: Stable and reliable roundtrip workflow
@@ -1892,6 +1916,7 @@ Output:
 ```
 
 #### Phase 3: Integration Optimization (Optional)
+
 ```
 Optimization:
   - Add macro detection (don't edit pages with macros)
@@ -1971,6 +1996,7 @@ Optimization:
 - [ ] Document XPath patterns and usage
 
 ⚠️ **Important Reminder:** Method 4 can easily corrupt page structure, must:
+
 - Thoroughly test before using in production
 - Auto-backup before each edit
 - Implement XML structure validation
@@ -2002,6 +2028,7 @@ Optimization:
 - [ ] Integrate into confluence skill
 
 ✨ **Benefits of Implementing Method 5:**
+
 - Users don't need to understand the technical differences
 - Automatically preserves macros when possible
 - Warns users when trade-offs are necessary
@@ -2076,12 +2103,14 @@ Phase 3 - Testing & Documentation (2 days):
 ### 🎯 Modes and Features
 
 **Safe Mode (Default):**
+
 - Zero risk to macro structure
 - Skips macro body content
 - Fast and predictable
 - Recommended for most edits
 
 **Advanced Mode (Opt-in):**
+
 - Edits macro body content with Claude intelligence
 - Interactive detection and confirmation
 - Automatic backup before editing
@@ -2089,6 +2118,7 @@ Phase 3 - Testing & Documentation (2 days):
 - User decides risk/benefit trade-off
 
 **Why Interactive Instead of Automatic?**
+
 - Transparency: User sees what will be edited
 - Control: User decides when to take risks
 - Safety: Explicit confirmation + backup
@@ -2161,6 +2191,7 @@ See: [Macro Preservation Guide](./macro-preservation-guide.md)
 | **Auth** | Requires both API Token + MCP | MCP only (simpler) |
 
 **Method 6 wins because:**
+
 1. **Simpler** - No complex auto-detection logic
 2. **Predictable** - User always knows what to expect
 3. **MCP-only** - No need for API Token management
@@ -2171,6 +2202,7 @@ See: [Macro Preservation Guide](./macro-preservation-guide.md)
 ### Why Not Recommend Method 2?
 
 ❌ **Method 2 (MCP + ADF)** problems:
+
 1. Dual-language environment maintenance cost too high
 2. ADF conversion tools not as mature as Storage Format
 3. Poor performance (subprocess overhead)

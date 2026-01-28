@@ -3,6 +3,7 @@
 Technical documentation for skill developers and contributors.
 
 ## Table of Contents
+
 - [Markdown Conversion Engine](#markdown-conversion-engine)
 - [Technical Decisions](#technical-decisions)
 - [Output Compatibility](#output-compatibility)
@@ -14,7 +15,8 @@ Technical documentation for skill developers and contributors.
 
 ### Why mistune 3.x instead of md2cf?
 
-This plugin uses **mistune 3.x** (latest stable release) with a custom `ConfluenceStorageRenderer` instead of the older `md2cf` library.
+This plugin uses **mistune 3.x** (latest stable release) with a custom `ConfluenceStorageRenderer` instead of the older
+`md2cf` library.
 
 **Key Reasons:**
 
@@ -47,6 +49,7 @@ class ConfluenceStorageRenderer(mistune.HTMLRenderer):
 ```
 
 **Plugins enabled:**
+
 - `table` - GitHub Flavored Markdown tables
 - `strikethrough` - ~~text~~ support
 - `url` - Auto-link detection
@@ -58,36 +61,43 @@ class ConfluenceStorageRenderer(mistune.HTMLRenderer):
 ### 1. Blockquote Rendering
 
 **md2cf approach:**
+
 ```html
 <blockquote><p>Quote text</p></blockquote>
 ```
 
 **Our approach (better):**
+
 ```html
 <ac:structured-macro ac:name="quote">
   <ac:rich-text-body><p>Quote text</p></ac:rich-text-body>
 </ac:structured-macro>
 ```
 
-**Why it's better:** Confluence UI renders native quote macros with proper styling (blue left border, background color). HTML `<blockquote>` has minimal styling.
+**Why it's better:** Confluence UI renders native quote macros with proper styling (blue left border, background color).
+HTML `<blockquote>` has minimal styling.
 
 ### 2. Image Tag Style
 
 **md2cf approach:**
+
 ```html
 <ac:image><ri:attachment ri:filename="image.png"></ri:attachment></ac:image>
 ```
 
 **Our approach:**
+
 ```html
 <ac:image><ri:attachment ri:filename="image.png" /></ac:image>
 ```
 
-**Why it's different:** Self-closing XML tags (`/>`) are more modern and concise. Both are valid XML and functionally identical in Confluence.
+**Why it's different:** Self-closing XML tags (`/>`) are more modern and concise. Both are valid XML and functionally
+identical in Confluence.
 
 ### 3. Code Block Formatting
 
 **Minor differences:**
+
 - md2cf: No trailing newline in CDATA: `]]></ac:plain-text-body>`
 - Ours: Trailing newline: `\n]]></ac:plain-text-body>`
 
@@ -102,6 +112,7 @@ class ConfluenceStorageRenderer(mistune.HTMLRenderer):
 We conducted side-by-side comparison tests between md2cf (mistune 0.8.4) and our implementation (mistune 3.x).
 
 **Test document includes:**
+
 - Special characters (`<`, `>`, `&`, `"`)
 - Images (local and external)
 - Code blocks (with language syntax)
@@ -173,6 +184,7 @@ Our test suite verifies:
 10. ✅ Unicode characters (emoji, CJK)
 
 See test files:
+
 - `/tmp/test_comprehensive.md` - Edge case test document
 - `/tmp/test_full_conversion.py` - Automated validation
 
@@ -185,6 +197,7 @@ See test files:
 To add support for new markdown features:
 
 1. **Add renderer method** in `ConfluenceStorageRenderer`:
+
    ```python
    def new_feature(self, text):
        # Convert to Confluence storage format
@@ -192,6 +205,7 @@ To add support for new markdown features:
    ```
 
 2. **Enable plugin** if needed:
+
    ```python
    parser = mistune.create_markdown(
        renderer=renderer,
@@ -206,11 +220,15 @@ To add support for new markdown features:
 ### Confluence Storage Format Reference
 
 Official documentation:
+
 - [Confluence Storage Format](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html)
-- [Structured Macros](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html#ConfluenceStorageFormat-StructuredMacros)
-- [Rich Text Editor](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html#ConfluenceStorageFormat-RichTextEditor)
+- [Structured
+  Macros](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html#ConfluenceStorageFormat-StructuredMacros)
+- [Rich Text
+  Editor](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html#ConfluenceStorageFormat-RichTextEditor)
 
 Common macros used:
+
 - `ac:structured-macro ac:name="code"` - Code blocks with syntax highlighting
 - `ac:structured-macro ac:name="quote"` - Blockquotes
 - `ac:image` + `ri:attachment` - Image attachments
@@ -222,19 +240,23 @@ Common macros used:
 
 **Q: Why not use the Confluence REST API's built-in markdown conversion?**
 
-A: The REST API doesn't have a markdown conversion endpoint. We must convert to storage format client-side before uploading.
+A: The REST API doesn't have a markdown conversion endpoint. We must convert to storage format client-side before
+uploading.
 
 **Q: Can I use other markdown parsers like markdown-it or CommonMark?**
 
-A: Yes, but mistune is Python-native, fast, and has excellent plugin support. Since our upload scripts use Python (for atlassian-python-api), mistune is the natural choice.
+A: Yes, but mistune is Python-native, fast, and has excellent plugin support. Since our upload scripts use Python (for
+atlassian-python-api), mistune is the natural choice.
 
 **Q: What about Mermaid/PlantUML diagrams?**
 
-A: Convert diagrams to PNG/SVG first using external tools (mermaid-cli, plantuml), then reference with markdown image syntax: `![diagram](./diagram.png)`. Our renderer will handle them as image attachments.
+A: Convert diagrams to PNG/SVG first using external tools (mermaid-cli, plantuml), then reference with markdown image
+syntax: `![diagram](./diagram.png)`. Our renderer will handle them as image attachments.
 
 **Q: Does this work with Confluence Data Center (self-hosted)?**
 
-A: Yes! The storage format is identical. Just set `cloud=False` in the Confluence client initialization and adjust the URL to your self-hosted instance.
+A: Yes! The storage format is identical. Just set `cloud=False` in the Confluence client initialization and adjust the
+URL to your self-hosted instance.
 
 ---
 

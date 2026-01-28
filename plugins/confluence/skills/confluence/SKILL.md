@@ -37,11 +37,13 @@ uv run --managed-python {base_dir}/scripts/analyze_page.py PAGE_ID --type codeBl
 ```
 
 **Performance Reality**:
+
 - MCP roundtrip for structural changes: ~13 minutes (91% is AI processing delays)
 - Python REST API direct: ~1.2 seconds (650x faster)
 - Bottleneck: AI tool invocation intervals, NOT MCP network I/O
 
-MCP tools are fine for **reading** pages and **simple text edits** but **fail for structural modifications due to AI processing overhead**.
+MCP tools are fine for **reading** pages and **simple text edits** but **fail for structural modifications due to AI
+processing overhead**.
 
 ## Quick Decision Matrix
 
@@ -83,17 +85,20 @@ MCP tools are fine for **reading** pages and **simple text edits** but **fail fo
 **When user provides a Confluence URL**, automatically resolve and read the page:
 
 #### Workflow
+
 1. **Detect URL format**:
    - Short URL: `https://site.atlassian.net/wiki/x/2oEBfw`
    - Full URL: `https://site.atlassian.net/wiki/spaces/SPACE/pages/123456789/Title`
    - Direct page ID: `123456789`
 
 2. **Resolve to page ID**:
+
    ```bash
    uv run --managed-python {base_dir}/scripts/url_resolver.py "URL"
    ```
 
 3. **Read page content** (via MCP):
+
    ```javascript
    mcp__plugin_confluence_atlassian__getConfluencePage({
      cloudId: "...",
@@ -103,6 +108,7 @@ MCP tools are fine for **reading** pages and **simple text edits** but **fail fo
    ```
 
 #### Examples
+
 ```
 User: "https://site.atlassian.net/wiki/x/2oEBfw"
 → Resolve: page ID 2130805210
@@ -115,17 +121,20 @@ User: "Read https://site.atlassian.net/wiki/spaces/DEV/pages/123456/API-Docs"
 
 ### 🆕 Method 6: Intelligent Roundtrip Editing (Recommended for Editing Existing Pages)
 
-**Revolutionary Feature**: Edit existing Confluence pages while preserving all macros (expand panels, status badges, page properties, etc.) and allow Claude to intelligently edit text content.
+**Revolutionary Feature**: Edit existing Confluence pages while preserving all macros (expand panels, status badges,
+page properties, etc.) and allow Claude to intelligently edit text content.
 
 #### When to Use Method 6?
 
 ✅ **Good Use Cases**:
+
 - Fix typos and grammar errors on pages
 - Improve clarity and readability of existing content
 - Update documentation while preserving page structure
 - Edit pages containing important macros (without losing them)
 
 ❌ **Not Suitable For**:
+
 - Creating brand new pages → Use `upload_confluence.py`
 - Massive restructuring of entire page → Use `upload_confluence.py`
 - Batch updating multiple pages → Use Method 1 (download + edit + upload)
@@ -152,11 +161,13 @@ Simply use natural language commands, system handles automatically:
 #### Two Modes
 
 **Safe Mode (default, recommended)**:
+
 - Skips macro content, only edits outside text
 - Zero risk, macro structure completely unaffected
 - Suitable for most use cases
 
 **Advanced Mode (advanced, requires confirmation)**:
+
 - Can edit text inside macros (e.g., content in expand panels)
 - Requires explicit user confirmation
 - Automatic backup + auto-restore on failure
@@ -190,6 +201,7 @@ uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id
 **Performance**: Direct REST API (~1.2s) vs MCP (~13min) = 650x speedup
 
 **Example - Add Table Row**:
+
 ```bash
 # Preview first (recommended)
 uv run --managed-python {base_dir}/scripts/add_table_row.py PAGE_ID \
@@ -206,6 +218,7 @@ uv run --managed-python {base_dir}/scripts/add_table_row.py 2117534137 \
 ```
 
 **Key Parameters**:
+
 - `PAGE_ID`: Confluence page ID (from URL or url_resolver.py)
 - `--table-heading`: Heading text before the target table
 - `--after-row-containing`: Text in first cell of row to insert after
@@ -269,6 +282,7 @@ mcp__atlassian__confluence_update_page({
 ### Standard Workflow
 
 1. **Convert diagrams** (if Mermaid/PlantUML):
+
    ```bash
    # Mermaid
    mmdc -i diagram.mmd -o diagram.png -b transparent
@@ -277,11 +291,13 @@ mcp__atlassian__confluence_update_page({
    ```
 
 2. **Reference in markdown** (always use markdown syntax):
+
    ```markdown
    ![Architecture Diagram](./diagrams/architecture.png)
    ```
 
 3. **Upload** (script handles attachments):
+
    ```bash
    uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
    ```
@@ -298,19 +314,23 @@ mcp__atlassian__confluence_update_page({
 
 ## Checklists
 
-**Upload**: Convert diagrams (Mermaid/PlantUML) → Use markdown image syntax → Dry-run test → Upload with script → Verify page accessible
+**Upload**: Convert diagrams (Mermaid/PlantUML) → Use markdown image syntax → Dry-run test → Upload with script → Verify
+page accessible
 
-**Download**: Get page ID (use url_resolver.py for short URLs) → Configure credentials (.env) → Set output directory → Run download script → Verify attachments in `{Page}_attachments/`
+**Download**: Get page ID (use url_resolver.py for short URLs) → Configure credentials (.env) → Set output directory →
+Run download script → Verify attachments in `{Page}_attachments/`
 
 ## Available MCP Tools
 
-Search, read pages, create/update (⚠️ size limited), delete, labels, comments. See `mcp__plugin_confluence_atlassian__*` for full list.
+Search, read pages, create/update (⚠️ size limited), delete, labels, comments. See `mcp__plugin_confluence_atlassian__*`
+for full list.
 
 ## Utility Scripts
 
 **IMPORTANT**: All Python scripts must be run with `uv run --managed-python` to ensure correct dependency management.
 
 **ADF Coverage**: 15 structural modification tools covering 16/19 ADF node types (84% coverage, ~98% practical coverage)
+
 - ✅ All common block elements (table, list, code, panel, heading, quote, rule, images)
 - ✅ All common inline elements (status, mention, date, emoji, card)
 - ❌ Only missing: multiBodiedExtension (tabs macro), mediaInline (rare)
@@ -342,11 +362,13 @@ Search, read pages, create/update (⚠️ size limited), delete, labels, comment
 ## Prerequisites
 
 **Required:**
+
 - **`uv` package manager** - All scripts use PEP 723 inline metadata, must run with `uv run --managed-python`
 - Atlassian MCP Server (`mcp__atlassian`) with Confluence credentials (for MCP tools)
 - Environment variables: `CONFLUENCE_URL`, `CONFLUENCE_USER`, `CONFLUENCE_API_TOKEN` (for REST API scripts)
 
 **Optional:**
+
 - `mark` CLI: Git-to-Confluence sync (`brew install kovetskiy/mark/mark`)
 - Mermaid CLI: Diagram rendering (`npm install -g @mermaid-js/mermaid-cli`)
 

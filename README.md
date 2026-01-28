@@ -1,21 +1,34 @@
 # pigfoot's Claude Code Hubs
 
-A curated collection of plugins, skills, and configuration templates for [Claude Code](https://docs.claude.com/en/docs/claude-code), plus integration with recommended third-party marketplaces.
+A curated collection of plugins, skills, and configuration templates for
+[Claude Code](https://docs.claude.com/en/docs/claude-code), plus integration with recommended third-party
+marketplaces.
 
 ## What's Inside
 
 ### 🔌 Plugins
 
 **From this marketplace (pigfoot):**
-- **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and GPG signing support
-- **[confluence](./plugins/confluence/)** - Professional Confluence document management with **intelligent roundtrip editing** (preserves macros while Claude edits content), **smart routing** (auto-selects between MCP and REST API for 25x faster writes), short URL resolution, search quality detection, markdown-first workflows, unlimited file sizes, and complete image support
-- **[nano-banana](./plugins/nano-banana/)** - AI image generation with Gemini models. Direct generation or interactive prompting with brand style support
-- **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime, non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang, and Rust
-- **[github-actions-container-build](./plugins/github-actions-container-build/)** - Build multi-architecture container images in GitHub Actions. Matrix builds (public repos), QEMU (private repos), Podman rootless builds
+
+- **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and
+  GPG signing support
+- **[confluence](./plugins/confluence/)** - Professional Confluence document management with **intelligent roundtrip
+  editing** (preserves macros while Claude edits content), **smart routing** (auto-selects between MCP and REST API
+  for 25x faster writes), short URL resolution, search quality detection, markdown-first workflows, unlimited file
+  sizes, and complete image support
+- **[nano-banana](./plugins/nano-banana/)** - AI image generation with Gemini models. Direct generation or interactive
+  prompting with brand style support
+- **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime,
+  non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang, and Rust
+- **[github-actions-container-build](./plugins/github-actions-container-build/)** - Build multi-architecture container
+  images in GitHub Actions. Matrix builds (public repos), QEMU (private repos), Podman rootless builds
 
 **Recommended third-party plugins:**
-- **[context7](https://github.com/upstash/context7)** - Access up-to-date documentation and code examples for any library or framework (official from @claude-plugins-official)
-- **[superpowers](https://github.com/obra/superpowers)** - Comprehensive skills library with proven development workflows (TDD, debugging, code review)
+
+- **[context7](https://github.com/upstash/context7)** - Access up-to-date documentation and code examples for any
+  library or framework (official from @claude-plugins-official)
+- **[superpowers](https://github.com/obra/superpowers)** - Comprehensive skills library with proven development
+  workflows (TDD, debugging, code review)
 
 ### 🎯 Skills
 
@@ -23,8 +36,8 @@ Reusable workflow patterns included in plugins - automatically available after p
 
 ### ⚙️ Configuration Templates
 
-- **[.CLAUDE.md](./.CLAUDE.md)** - Comprehensive development guidelines template with language detection, workflow patterns, and best practices
-
+- **[.CLAUDE.md](./.CLAUDE.md)** - Comprehensive development guidelines template with language detection, workflow
+  patterns, and best practices
 
 ## Prerequisites
 
@@ -51,6 +64,7 @@ brew install uv
 Use `apt`, `apt-get`, `yum`, `pacman`, `apk` or any native package manager tool.
 
 **Example (Debian/Ubuntu):**
+
 ```bash
 sudo apt-get update && sudo apt-get install -y jq
 
@@ -67,6 +81,7 @@ For the best experience, we recommend using [Windows Terminal](https://aka.ms/te
 
 - **Windows 11:** Windows Terminal is pre-installed. Just open it and run `claude`.
 - **Windows 10:** Install Windows Terminal first:
+
   ```powershell
   # Using winget
   winget install Microsoft.WindowsTerminal
@@ -93,7 +108,8 @@ scoop install bun
 scoop install uv
 ```
 
-> **Note:** Windows built-in `winget` is also possible, however Scoop is recommended for better compatibility with command line tools.
+> **Note:** Windows built-in `winget` is also possible, however Scoop is recommended for better compatibility with
+> command line tools.
 
 </details>
 
@@ -102,11 +118,13 @@ scoop install uv
 Follow the [official installation guide](https://code.claude.com/docs/en/setup) or use one of the methods below:
 
 **Homebrew (macOS, Linux):**
+
 ```bash
 brew install --cask claude-code
 ```
 
 **macOS, Linux, WSL, Git Bash:**
+
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash
 ```
@@ -134,6 +152,7 @@ This one-time setup grants Claude Code necessary permissions and configures `CLA
 ### Step 1: Configure Allow Permissions
 
 **What this does:**
+
 - Grants permissions for common commands (git, file operations, package managers)
 - Enables skills and MCP tools
 - Optimizes Claude Code settings
@@ -222,7 +241,7 @@ Write-Host "✅ Permissions configured successfully!"
 
 </details>
 
-**Optional: Configure Language (Non-English Users)**
+#### Optional: Configure Language (Non-English Users)
 
 If you want Claude Code to respond in a specific language, add the `language` field to your settings:
 
@@ -282,12 +301,14 @@ claude plugin install --scope user superpowers@pigfoot-marketplace
 ```
 
 **Update marketplace (fetch latest plugin list):**
+
 ```bash
 # Update pigfoot marketplace to get latest plugin versions
 claude plugin marketplace update pigfoot-marketplace
 ```
 
 **Update plugins:**
+
 ```bash
 # Update specific plugin
 claude plugin update commit@pigfoot-marketplace
@@ -306,11 +327,13 @@ claude plugin update superpowers@pigfoot-marketplace
 
 ### Step 3: Setup CLAUDE.md Template (Optional but Recommended)
 
-The [CLAUDE.md](https://github.com/pigfoot/claude-code-hubs/blob/main/.CLAUDE.md) template provides comprehensive development guidelines that work with installed plugins.
+The [CLAUDE.md](https://github.com/pigfoot/claude-code-hubs/blob/main/.CLAUDE.md) template provides comprehensive
+development guidelines that work with installed plugins.
 
 **For global configuration (applies to all projects):**
 
 **macOS, Linux, WSL, Git Bash:**
+
 ```bash
 claudeDir="${HOME}/.claude"
 curl -fsSL https://raw.githubusercontent.com/pigfoot/claude-code-hubs/main/.CLAUDE.md -o "${claudeDir}/CLAUDE.md"
@@ -343,6 +366,7 @@ claude plugin install --scope user commit@pigfoot-marketplace
 Automates the tedious parts of creating well-formatted commits.
 
 **Benefits:**
+
 - ✅ **No more commit message writer's block** - Analyzes your changes and suggests appropriate messages
 - ✅ **Consistent format** - Automatic conventional commits with emoji (`✨ feat:`, `🐛 fix:`, etc.)
 - ✅ **Multi-concern detection** - Suggests splitting commits when you've mixed different types of changes
@@ -353,6 +377,7 @@ Automates the tedious parts of creating well-formatted commits.
 Just say "commit changes" and Claude will handle the rest.
 
 **Example:**
+
 ```bash
 User: "commit changes"
 → Claude analyzes: auth changes + UI updates + docs
@@ -374,6 +399,7 @@ claude plugin install --scope user context7@claude-plugins-official
 Fetches current documentation and code examples from any library or framework via official Context7 MCP server.
 
 **Benefits:**
+
 - ✅ **Always current** - Gets latest docs, not outdated LLM training data
 - ✅ **Better suggestions** - Claude works with actual API docs and best practices
 - ✅ **Faster learning** - No need to manually browse documentation sites
@@ -384,6 +410,7 @@ Fetches current documentation and code examples from any library or framework vi
 Ask Claude about any library naturally.
 
 **Examples:**
+
 - "Show me the latest Next.js routing docs"
 - "How do I use MongoDB aggregation pipeline?"
 - "What are the best practices for React hooks?"
@@ -394,11 +421,12 @@ Claude automatically fetches documentation from Context7's curated database.
 
 **Note:** This is the official plugin from @claude-plugins-official, maintained by Upstash.
 
-**Optional: Configure package runner (bunx recommended)**
+#### Optional: Configure package runner (bunx recommended)
 
 By default, context7 uses `npx` (Node.js package runner). This script configures bunx (recommended) or npx:
 
 **macOS, Linux, WSL, Git Bash:**
+
 ```bash
 # Configure context7 to use bunx (recommended) or npx
 config_file="$HOME/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/context7/.mcp.json"
@@ -482,16 +510,19 @@ claude plugin install --scope user nano-banana@pigfoot-marketplace
 Generates and edits images using Google's Gemini or Imagen models with Python scripting powered by uv.
 
 **Recent Improvements (v0.0.8):**
+
 - ✅ **uv compatibility enhancement** - PEP 723 inline metadata for library modules (logo_overlay.py)
 - ✅ **Fixed intermittent failures** - Logo overlay works when Claude creates temporary scripts
 - ✅ **Automatic dependency resolution** - uv correctly installs Pillow even when importing modules
 
 **Previous Improvements (v0.0.7):**
+
 - ✅ **Zero hallucination rate** - Fixed Python script approach eliminates AI code generation errors
 - ✅ **Unified workflow** - Same process for 1-100 images (no more dual paths)
 - ✅ **Cross-platform support** - Windows UTF-8 encoding fix, system temp directory handling
 
 **Benefits:**
+
 - ✅ **Dual API support** - Gemini (quality, slides) or Imagen (multiple images, negative prompts)
 - ✅ **TrendLife brand support** - Automatic logo overlay with precise positioning matching PowerPoint template
 - ✅ **Batch generation** - Generate 5+ slides efficiently in background with progress tracking (since v0.0.4)
@@ -503,11 +534,13 @@ Generates and edits images using Google's Gemini or Imagen models with Python sc
 - ✅ **Format flexibility** - Output WebP (default), JPEG, or PNG with quality control
 
 **Prerequisites:**
+
 - [uv](https://docs.astral.sh/uv/) installed
 - `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) environment variable set with a valid Gemini API key
 
 **📖 Complete Documentation:**
 See [plugins/nano-banana/README.md](./plugins/nano-banana/README.md) for:
+
 - Detailed API selection logic (Gemini vs Imagen)
 - Configuration examples (official API, custom endpoints)
 - Brand style support (Trend Micro, NotebookLM)
@@ -523,6 +556,7 @@ See [plugins/nano-banana/README.md](./plugins/nano-banana/README.md) for:
 | `NANO_BANANA_QUALITY` | `90` | Image quality (1-100) for webp/jpg |
 
 **Quick Start:**
+
 ```bash
 # Official Google API
 export GEMINI_API_KEY="your-api-key"
@@ -550,6 +584,7 @@ claude plugin install --scope user secure-container-build@pigfoot-marketplace
 Provides Containerfile templates and best practices for building secure container images.
 
 **Benefits:**
+
 - ✅ **Security-first runtime** - Wolfi distroless images with minimal attack surface and no CVEs
 - ✅ **Non-root containers** - Run as UID 65532 by default
 - ✅ **Multi-stage builds** - Minimal runtime images with only necessary artifacts
@@ -557,6 +592,7 @@ Provides Containerfile templates and best practices for building secure containe
 - ✅ **Allocator optimization** - mimalloc support for Rust builds
 
 **Supported Stacks:**
+
 - **Python + uv** - Fast, reproducible Python builds
 - **Bun** - All-in-one JavaScript runtime
 - **Node.js + pnpm** - Efficient workspace-friendly builds
@@ -567,6 +603,7 @@ Provides Containerfile templates and best practices for building secure containe
 Ask Claude to create secure Containerfiles for your project.
 
 **Examples:**
+
 - "Create a secure Containerfile for my Python app"
 - "Set up a multi-stage build for my Rust project"
 - "Help me optimize my container image size"
@@ -583,6 +620,7 @@ claude plugin install --scope user github-actions-container-build@pigfoot-market
 Provides GitHub Actions workflows for building multi-architecture container images.
 
 **Benefits:**
+
 - ✅ **Matrix builds** - Native ARM64 runners for public repos (10-50x faster)
 - ✅ **QEMU fallback** - Free emulation for private repos
 - ✅ **Podman rootless** - Secure, daemonless container builds
@@ -593,6 +631,7 @@ Provides GitHub Actions workflows for building multi-architecture container imag
 Ask Claude to set up CI/CD for your container builds.
 
 **Examples:**
+
 - "Set up GitHub Actions for multi-arch container builds"
 - "I need a workflow to build ARM64 images for my public repo"
 - "Create a container build pipeline for my private repository"
@@ -608,12 +647,14 @@ Ask Claude to set up CI/CD for your container builds.
 claude plugin install --scope user superpowers@pigfoot-marketplace
 ```
 
-> **Note:** This is a third-party plugin originally from [obra/superpowers](https://github.com/obra/superpowers), available in this marketplace for convenient installation
+> **Note:** This is a third-party plugin originally from [obra/superpowers](https://github.com/obra/superpowers),
+> available in this marketplace for convenient installation
 
 **What it does:**
 Provides a comprehensive library of battle-tested skills that enforce systematic development practices.
 
 **Benefits:**
+
 - ✅ **TDD enforcement** - Test-Driven Development skill ensures you write tests first
 - ✅ **Systematic debugging** - Four-phase framework (investigate → analyze → test → implement) instead of guess-and-fix
 - ✅ **Code review automation** - Built-in review checkpoints before completing major tasks
@@ -625,17 +666,20 @@ Provides a comprehensive library of battle-tested skills that enforce systematic
 **Key Skills Included:**
 
 **Testing:**
+
 - `test-driven-development` - Write test first, watch it fail, make it pass
 - `condition-based-waiting` - Replace flaky timeouts with condition polling
 - `testing-anti-patterns` - Prevents testing mock behavior and test-only methods
 
 **Debugging:**
+
 - `systematic-debugging` - Root cause first, then fix (no more guess-and-patch)
 - `root-cause-tracing` - Trace bugs backward through call stack
 - `verification-before-completion` - Must run verification before claiming "done"
 - `defense-in-depth` - Validate at every layer to make bugs structurally impossible
 
 **Collaboration:**
+
 - `brainstorming` - Refines rough ideas into solid designs via Socratic method
 - `writing-plans` - Creates detailed implementation plans for engineers
 - `executing-plans` - Executes plans in batches with review checkpoints
@@ -643,6 +687,7 @@ Provides a comprehensive library of battle-tested skills that enforce systematic
 - `dispatching-parallel-agents` - Handle multiple independent failures concurrently
 
 **Development:**
+
 - `using-git-worktrees` - Isolated workspaces for parallel feature work
 - `finishing-a-development-branch` - Structured options for merge/PR/cleanup
 
@@ -650,6 +695,7 @@ Provides a comprehensive library of battle-tested skills that enforce systematic
 Skills activate automatically when relevant, or you can invoke directly.
 
 **Examples:**
+
 ```bash
 # Automatic activation
 User: "Add user authentication"
@@ -662,13 +708,15 @@ User: "/brainstorm how to architect this feature"
 ```
 
 **Why it matters:**
-Without superpowers, you might get working code. With superpowers, you get **tested, verified, systematically-designed code** that follows proven patterns.
+Without superpowers, you might get working code. With superpowers, you get **tested, verified,
+systematically-designed code** that follows proven patterns.
 
 ---
 
 ### ⚙️ .CLAUDE.md Configuration
 
 Once configured, Claude will:
+
 - **Verify before act** - When uncertain, Claude checks docs/files first instead of guessing and proceeding
 - Auto-detect your communication language (supports Traditional Chinese, Japanese, etc.)
 - Write all code and documentation in English
@@ -712,6 +760,7 @@ claude-code-hubs/
 ### Permission Issues
 
 If Claude asks for permissions repeatedly:
+
 ```bash
 # Verify settings were applied
 cat ~/.claude/settings.json | jq '.permissions.allow'
@@ -733,6 +782,7 @@ claude plugin marketplace add pigfoot/claude-code-hubs
 ### Tools Not Found
 
 Ensure tools are in your PATH:
+
 ```bash
 # Check installations
 which jq bun uv
@@ -747,6 +797,7 @@ which jq bun uv
 ### Customizing .CLAUDE.md
 
 The template includes:
+
 - **Language Detection**: Auto-detects your primary language
 - **Git Workflow**: Smart commit patterns with the commit plugin
 - **Testing**: TDD workflow activation
@@ -757,11 +808,12 @@ Edit `~/.claude/CLAUDE.md` or `./CLAUDE.md` to customize for your needs.
 ### Adding More Plugins
 
 Browse available plugins in `plugins/` directory, then:
+
 ```bash
 claude plugin install --scope user <plugin-name>@pigfoot-marketplace
 ```
 
-## Available Plugins
+## Plugin Directory
 
 | Plugin | Origin | Description | Skills Included |
 |--------|--------|-------------|-----------------|
@@ -774,12 +826,15 @@ claude plugin install --scope user <plugin-name>@pigfoot-marketplace
 | [superpowers](https://github.com/obra/superpowers) | 3rd-party (obra) | Proven development workflows (TDD, debugging, review) | 17+ skills (brainstorming, TDD, systematic-debugging, etc.) |
 
 **Installation:**
+
 - pigfoot plugins: `claude plugin install --scope user <name>@pigfoot-marketplace`
-- Official/3rd-party: `claude plugin install --scope user context7@claude-plugins-official` or `claude plugin install --scope user superpowers@pigfoot-marketplace`
+- Official/3rd-party: `claude plugin install --scope user context7@claude-plugins-official` or
+  `claude plugin install --scope user superpowers@pigfoot-marketplace`
 
 ## Contributing
 
 Contributions are welcome! If you'd like to add a plugin or improve existing ones:
+
 - Read [.specify/memory/constitution.md](./.specify/memory/constitution.md) for project principles
 - Include complete documentation and tests
 - Use semantic versioning
@@ -787,6 +842,7 @@ Contributions are welcome! If you'd like to add a plugin or improve existing one
 ## For Plugin Developers
 
 Interested in creating your own plugins? See our [Developer Guide](./docs/DEVELOPMENT.md) for:
+
 - Plugin structure and standards
 - Skill development best practices
 - Testing and quality requirements

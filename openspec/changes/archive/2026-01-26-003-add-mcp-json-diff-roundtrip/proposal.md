@@ -2,9 +2,13 @@
 
 ## Why
 
-Existing roundtrip methods for editing Confluence pages face a fundamental trade-off: Methods 1-3 allow Claude to edit content but **lose all macros** (expand, status, page properties, etc.) during Markdown conversion. Method 4 preserves macros but **cannot use Claude's intelligent editing**. Method 5 attempts auto-detection but adds complexity and still loses macros for complex edits.
+Existing roundtrip methods for editing Confluence pages face a fundamental trade-off: Methods 1-3 allow Claude to edit
+content but **lose all macros** (expand, status, page properties, etc.) during Markdown conversion. Method 4 preserves
+macros but **cannot use Claude's intelligent editing**. Method 5 attempts auto-detection but adds complexity and still
+loses macros for complex edits.
 
-**Method 6 solves this** by preserving macros while enabling Claude to edit all non-macro text content, using a JSON diff/patch approach.
+**Method 6 solves this** by preserving macros while enabling Claude to edit all non-macro text content, using a JSON
+diff/patch approach.
 
 ## What Changes
 
@@ -50,6 +54,7 @@ Original ADF (with macros)
 ## Scope
 
 This proposal covers:
+
 - Spec for roundtrip editing requirements
 - Design for Method 6 implementation
 - Implementation tasks
@@ -57,6 +62,7 @@ This proposal covers:
 - Backup and rollback mechanisms
 
 This proposal does NOT cover:
+
 - Changes to existing Methods 1-5 (they remain available)
 - CI/CD integration (future enhancement)
 - Multi-page batch operations (use Method 1 for that)

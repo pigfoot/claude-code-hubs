@@ -1,6 +1,7 @@
 # Confluence Macro Preservation Guide
 
-Complete documentation on which macros are preserved or lost during Markdown ↔ Confluence conversion, and how to preserve specific macros.
+Complete documentation on which macros are preserved or lost during Markdown ↔ Confluence conversion, and how to
+preserve specific macros.
 
 ---
 
@@ -27,15 +28,21 @@ These macros can be automatically converted through standard Markdown syntax, **
 
 ### 1.1 Code Block Macro
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 ````markdown
 ```python
 def hello():
-    print("Hello, World!")
 ```
 ````
 
-**Converts to Confluence:**
+```
+print("Hello, World!")
+
+```
+
+#### Converts to Confluence
+
 ```xml
 <ac:structured-macro ac:name="code">
   <ac:parameter ac:name="language">python</ac:parameter>
@@ -48,10 +55,12 @@ def hello():
 </ac:structured-macro>
 ```
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 Correctly converts back to fence code block.
 
 **Preservation Level:** ✅ Fully preserved
+
 - ✅ Syntax highlighting
 - ✅ Code content
 - ⚠️ Theme settings may be lost (defaults to Midnight)
@@ -61,18 +70,21 @@ Correctly converts back to fence code block.
 
 ### 1.2 Table of Contents (TOC) Macro
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 ```markdown
 [TOC]
 ```
 
 Or using doctoc comments:
+
 ```markdown
 <!-- START doctoc -->
 <!-- END doctoc -->
 ```
 
-**Converts to Confluence:**
+#### Converts to Confluence
+
 ```xml
 <ac:structured-macro ac:name="toc">
   <ac:parameter ac:name="printable">true</ac:parameter>
@@ -82,10 +94,12 @@ Or using doctoc comments:
 </ac:structured-macro>
 ```
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 Usually converts to `[TOC]` or removed (as Markdown doesn't need TOC macro).
 
 **Preservation Level:** ⚠️ Partially preserved
+
 - ✅ TOC functionality preserved
 - ❌ Custom parameters (min/max level) lost
 - ❌ Style settings lost
@@ -94,9 +108,10 @@ Usually converts to `[TOC]` or removed (as Markdown doesn't need TOC macro).
 
 ### 1.3 Info/Warning/Error/Note Panels
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
 
 Using blockquote + keywords:
+
 ```markdown
 > **Warning**: This is a warning message.
 
@@ -108,6 +123,7 @@ Using blockquote + keywords:
 ```
 
 Or using GitHub-flavored alerts:
+
 ```markdown
 > [!NOTE]
 > This is a note
@@ -119,7 +135,8 @@ Or using GitHub-flavored alerts:
 > Critical information
 ```
 
-**Converts to Confluence:**
+#### Converts to Confluence
+
 ```xml
 <ac:structured-macro ac:name="info">
   <ac:rich-text-body>
@@ -134,15 +151,18 @@ Or using GitHub-flavored alerts:
 </ac:structured-macro>
 ```
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 Usually converts back to blockquote, but may lose color information.
 
 **Preservation Level:** ⚠️ Partially preserved
+
 - ✅ Content preserved
 - ⚠️ Panel type may be lost (becomes regular blockquote)
 - ❌ Icons lost
 
-**Mapping:**
+#### Mapping
+
 | Markdown | Confluence Panel |
 |----------|-----------------|
 | `> **Note**:` | Info panel (blue) |
@@ -154,26 +174,31 @@ Usually converts back to blockquote, but may lose color information.
 
 ### 1.4 Images & Attachments
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 ```markdown
 ![Alt text](image.png)
 ```
 
-**Converts to Confluence:**
+#### Converts to Confluence
+
 - Images automatically uploaded as page attachments
 - URL converted to Confluence format:
+
 ```xml
 <ac:image>
   <ri:attachment ri:filename="image.png" />
 </ac:image>
 ```
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 ```markdown
 ![](attachments/image.png)
 ```
 
 **Preservation Level:** ✅ Fully preserved
+
 - ✅ Image content
 - ✅ Alt text
 - ⚠️ Size settings may be lost
@@ -183,17 +208,20 @@ Usually converts back to blockquote, but may lose color information.
 
 ### 1.5 HTML Comments (Placeholder)
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 ```markdown
 <!-- This is a hidden comment -->
 ```
 
-**Converts to Confluence:**
+#### Converts to Confluence
+
 ```xml
 <ac:placeholder>This is a hidden comment</ac:placeholder>
 ```
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 Converts back to HTML comment.
 
 **Preservation Level:** ✅ Fully preserved
@@ -206,7 +234,8 @@ These macros **cannot** be converted through standard Markdown, roundtrip will l
 
 ### 2.1 Page Properties Macro
 
-**Confluence Storage Format:**
+#### Confluence Storage Format
+
 ```xml
 <ac:structured-macro ac:name="details">
   <ac:rich-text-body>
@@ -224,16 +253,19 @@ These macros **cannot** be converted through standard Markdown, roundtrip will l
 </ac:structured-macro>
 ```
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 Becomes a regular table, loses page properties functionality.
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 ```markdown
 | Owner | John Doe |
 | Status | In Progress |
 ```
 
 **Preservation Level:** ❌ Lost
+
 - ❌ Page properties functionality lost
 - ✅ Content preserved (becomes regular table)
 - ❌ Cannot be used in page properties report
@@ -242,7 +274,8 @@ Becomes a regular table, loses page properties functionality.
 
 ### 2.2 Expand Macro
 
-**Confluence Storage Format:**
+#### Confluence Storage Format
+
 ```xml
 <ac:structured-macro ac:name="expand">
   <ac:parameter ac:name="title">Click to expand</ac:parameter>
@@ -252,23 +285,29 @@ Becomes a regular table, loses page properties functionality.
 </ac:structured-macro>
 ```
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 No equivalent syntax, becomes:
+
 ```markdown
 **Click to expand**
 
 Hidden content here...
 ```
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 Expanded content displayed directly, loses collapse functionality.
 
 **Preservation Level:** ❌ Lost
+
 - ✅ Content preserved
 - ❌ Collapse/expand functionality lost
 
-**Alternative:**
+#### Alternative
+
 Use HTML `<details>` tag (some tools support):
+
 ```markdown
 <details>
 <summary>Click to expand</summary>
@@ -281,23 +320,28 @@ Hidden content here...
 
 ### 2.3 Jira Issue Macro
 
-**Confluence Storage Format:**
+#### Confluence Storage Format
+
 ```xml
 <ac:structured-macro ac:name="jira">
   <ac:parameter ac:name="key">PROJ-123</ac:parameter>
 </ac:structured-macro>
 ```
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 Cannot create (requires dynamic Jira connection).
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 Usually converts to plain text or link:
+
 ```markdown
 [PROJ-123](https://jira.example.com/browse/PROJ-123)
 ```
 
 **Preservation Level:** ❌ Completely lost
+
 - ❌ Dynamic content lost
 - ❌ Status display lost
 - ⚠️ May convert to static link
@@ -306,7 +350,8 @@ Usually converts to plain text or link:
 
 ### 2.4 Custom Layouts (Sections/Columns)
 
-**Confluence Storage Format:**
+#### Confluence Storage Format
+
 ```xml
 <ac:layout>
   <ac:layout-section ac:type="two_equal">
@@ -320,11 +365,14 @@ Usually converts to plain text or link:
 </ac:layout>
 ```
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 No equivalent syntax.
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 Becomes linear content:
+
 ```markdown
 Left column
 
@@ -332,6 +380,7 @@ Right column
 ```
 
 **Preservation Level:** ❌ Completely lost
+
 - ✅ Content preserved
 - ❌ Layout lost
 
@@ -339,7 +388,8 @@ Right column
 
 ### 2.5 Status Macro (Label/Badge)
 
-**Confluence Storage Format:**
+#### Confluence Storage Format
+
 ```xml
 <ac:structured-macro ac:name="status">
   <ac:parameter ac:name="colour">Green</ac:parameter>
@@ -347,16 +397,20 @@ Right column
 </ac:structured-macro>
 ```
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 No equivalent syntax, may become:
+
 ```markdown
 **Complete**
 ```
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 Becomes bold text, loses color and style.
 
 **Preservation Level:** ❌ Lost
+
 - ✅ Text content preserved
 - ❌ Color lost
 - ❌ Badge style lost
@@ -365,25 +419,30 @@ Becomes bold text, loses color and style.
 
 ### 2.6 Drawio/Gliffy Diagrams
 
-**Confluence Storage Format:**
+#### Confluence Storage Format
+
 ```xml
 <ac:structured-macro ac:name="drawio">
   <ac:parameter ac:name="diagramName">architecture.drawio</ac:parameter>
 </ac:structured-macro>
 ```
 
-**Markdown → Confluence:**
+#### Markdown → Confluence
+
 Cannot create (requires Drawio data).
 
-**Confluence → Markdown:**
+#### Confluence → Markdown
+
 - If Drawio has PNG export, may convert to image
 - Otherwise completely lost
 
 **Preservation Level:** ❌ Lost
+
 - ⚠️ May preserve PNG (but not editable)
 - ❌ Editable XML metadata lost
 
-**Exception:**
+#### Exception
+
 Draw.io diagrams can roundtrip if PNG contains editable XML metadata (mentioned in official docs).
 
 ---
@@ -394,63 +453,74 @@ Draw.io diagrams can roundtrip if PNG contains editable XML metadata (mentioned 
 
 Embed native ADF JSON in Markdown.
 
-**Syntax:**
+#### Syntax
+
 ````markdown
 ```adf
 {
   "type": "expand",
   "attrs": {"title": "Click to expand"},
   "content": [
-    {
-      "type": "paragraph",
-      "content": [
-        {"type": "text", "text": "Hidden content"}
-      ]
-    }
+```
+{
+  "type": "paragraph",
+  "content": [
+    {"type": "text", "text": "Hidden content"}
+  ]
+}
+```
   ]
 }
 ```
 ````
 
-**Example: Expand Macro**
+#### Example: Expand Macro
+
 ````markdown
 ```adf
 {
   "type": "expand",
   "attrs": {"title": "Advanced Options"},
   "content": [
-    {
-      "type": "paragraph",
-      "content": [
-        {"type": "text", "text": "Advanced configuration settings..."}
-      ]
-    }
+```
+{
+  "type": "paragraph",
+  "content": [
+    {"type": "text", "text": "Advanced configuration settings..."}
+  ]
+}
+```
   ]
 }
 ```
 ````
 
-**Example: Decision List**
+#### Example: Decision List
+
 ````markdown
 ```adf
 {
   "type": "decisionList",
   "attrs": {"localId": "unique-id-here"},
   "content": [
-    {
-      "type": "decisionItem",
-      "attrs": {"state": "DECIDED", "localId": "item-id"},
-      "content": [{"type": "text", "text": "Decision to track"}]
-    }
+```
+{
+  "type": "decisionItem",
+  "attrs": {"state": "DECIDED", "localId": "item-id"},
+  "content": [{"type": "text", "text": "Decision to track"}]
+}
+```
   ]
 }
 ```
 ````
 
-**How to Find ADF Structure:**
+#### How to Find ADF Structure
+
 1. Check [Atlassian ADF Documentation](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/)
 2. Browse [@atlaskit/adf-schema](https://unpkg.com/browse/@atlaskit/adf-schema@25.6.0/dist/types/schema/nodes/)
 3. Extract ADF from existing page:
+
    ```
    GET https://your-site.atlassian.net/wiki/rest/api/content/{page-id}?expand=body.atlas_doc_format
    ```
@@ -461,39 +531,46 @@ Embed native ADF JSON in Markdown.
 
 Embed native Storage Format XML in Markdown.
 
-**Syntax:**
+#### Syntax
+
 ````markdown
 ```csf
 <ac:structured-macro ac:name="expand">
   <ac:parameter ac:name="title">Click to expand</ac:parameter>
   <ac:rich-text-body>
-    <p>Hidden content</p>
+```
+<p>Hidden content</p>
+```
   </ac:rich-text-body>
 </ac:structured-macro>
 ```
 ````
 
-**Example: Page Properties**
+#### Example: Page Properties
+
 ````markdown
 ```csf
 <ac:structured-macro ac:name="details">
   <ac:rich-text-body>
-    <table>
-      <tr>
-        <th>Owner</th>
-        <td>John Doe</td>
-      </tr>
-      <tr>
-        <th>Due Date</th>
-        <td>2025-12-31</td>
-      </tr>
-    </table>
+```
+<table>
+  <tr>
+    <th>Owner</th>
+    <td>John Doe</td>
+  </tr>
+  <tr>
+    <th>Due Date</th>
+    <td>2025-12-31</td>
+  </tr>
+</table>
+```
   </ac:rich-text-body>
 </ac:structured-macro>
 ```
 ````
 
-**Example: Status Macro**
+#### Example: Status Macro
+
 ````markdown
 ```csf
 <ac:structured-macro ac:name="status">
@@ -507,26 +584,32 @@ Embed native Storage Format XML in Markdown.
 
 ### Method 3: Hybrid Approach (Recommended for Roundtrip)
 
-**Strategy:**
+#### Strategy
+
 1. Use Markdown for simple content
 2. Use raw ADF/CSF blocks for complex macros
 3. Identify and protect raw blocks during editing
 
-**Example Document:**
+#### Example Document
+
 ````markdown
 ## API Documentation
 
 This is a regular paragraph in Markdown.
 
 ```python
+
 # Regular code block (converts to code macro)
+
 def example():
-    pass
 ```
 
 > **Note**: This becomes an info panel.
 
 ```adf
+```
+pass
+```
 {
   "type": "expand",
   "attrs": {"title": "Advanced Configuration"},
@@ -537,13 +620,16 @@ def example():
 ```csf
 <ac:structured-macro ac:name="details">
   <ac:rich-text-body>
-    <table>...</table>
+```
+<table>...</table>
+```
   </ac:rich-text-body>
 </ac:structured-macro>
 ```
 ````
 
-**Roundtrip Editing Logic:**
+#### Roundtrip Editing Logic
+
 ```python
 def safe_roundtrip_edit(markdown: str, edit_fn) -> str:
     # 1. Extract and protect raw blocks
@@ -712,14 +798,14 @@ def warn_user_before_edit(page_id: str):
 
 ```python
 def test_code_block_roundtrip():
-    markdown = '''
+    markdown = """
 ## Example
 
-```python
+\u0060\u0060\u0060python
 def hello():
-    print("World")
-```
-'''
+\u0060\u0060\u0060
+
+"""
 
     # Markdown → Confluence
     storage = markdown_to_storage(markdown)
@@ -777,16 +863,19 @@ def test_expand_macro_loss():
 ## 7. Reference Resources
 
 ### Official Documentation
+
 - [Atlassian Document Format (ADF) Structure](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/)
 - [@atlaskit/adf-schema](https://unpkg.com/browse/@atlaskit/adf-schema@25.6.0/dist/types/schema/nodes/)
 - [Confluence Storage Format](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html)
 
 ### Tool Documentation
+
 - [Markdown Confluence Tools - Raw ADF](https://markdown-confluence.com/features/raw-adf.html)
 - [md_to_conf - Markdown Syntax](https://spydersoft-consulting.github.io/md_to_conf/markdown-syntax/)
 - [md2cf Documentation](https://pypi.org/project/md2cf/)
 
 ### Community Resources
+
 - [Converting Markdown to ADF: Complete Guide](https://adfapi.dev/blog/2025/11/converting-markdown-to-adf-complete-guide/)
 - [Confluence Community - Macro Discussions](https://community.atlassian.com/forums/Confluence-questions/)
 
@@ -795,17 +884,20 @@ def test_expand_macro_loss():
 ## Summary
 
 ### Reliably Preserved (Roundtrip OK)
+
 ✅ Code blocks
 ✅ Images
 ✅ HTML comments
 ✅ Basic formatting (bold, italic, lists)
 
 ### Partially Preserved (May Lose Details)
+
 ⚠️ Table of Contents
 ⚠️ Info/Warning panels
 ⚠️ Links (anchors may change)
 
 ### Will Be Lost (Requires Manual Handling)
+
 ❌ Page properties
 ❌ Expand macro
 ❌ Status macro
@@ -814,6 +906,7 @@ def test_expand_macro_loss():
 ❌ Third-party macros
 
 ### Preservation Strategies
+
 1. **Simple edits**: Use standard Markdown (accept macro loss)
 2. **Full preservation**: Use raw ADF/CSF blocks
 3. **Hybrid approach**: Use raw blocks for important macros, Markdown for rest

@@ -2,7 +2,7 @@
 
 ## Python + uv
 
-### Why uv?
+### Why uv
 
 - **10-100x faster**: Rust-based package installer
 - **Reproducible builds**: Lock file ensures consistent dependencies
@@ -40,7 +40,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 ## Bun
 
-### Why Bun?
+### Why Bun
 
 - **Fast package installation**: Built-in package manager
 - **All-in-one**: Runtime + package manager + bundler
@@ -69,7 +69,7 @@ RUN bun install --frozen-lockfile
 
 ## Node.js + pnpm
 
-### Why pnpm?
+### Why pnpm
 
 - **Disk efficient**: Content-addressable storage
 - **Fast**: Symlink-based approach
@@ -100,7 +100,7 @@ RUN pnpm prune --production
 
 ## Golang + Go Modules
 
-### Why Go Modules?
+### Why Go Modules
 
 - **Built-in dependency management**: No external tools needed (since Go 1.11)
 - **Reproducible builds**: go.sum ensures version integrity
@@ -128,7 +128,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 ### CGO vs Static Builds
 
-**CGO_ENABLED=0 (Static Binary):**
+#### CGO_ENABLED=0 (Static Binary)
+
 ```dockerfile
 # Build static binary (no runtime dependencies)
 RUN CGO_ENABLED=0 GOOS=linux \
@@ -138,13 +139,15 @@ RUN CGO_ENABLED=0 GOOS=linux \
 FROM cgr.dev/chainguard/static:latest
 ```
 
-**Benefits:**
+#### CGO_ENABLED=0 Benefits
+
 - Single standalone binary (no glibc needed)
 - Smallest possible image (~10-20MB)
 - Most portable and secure
 - Cannot use packages with C bindings
 
-**CGO_ENABLED=1 (Dynamic Binary):**
+#### CGO_ENABLED=1 (Dynamic Binary)
+
 ```dockerfile
 # Build with CGO enabled (can use C libraries)
 RUN CGO_ENABLED=1 GOOS=linux \
@@ -154,22 +157,26 @@ RUN CGO_ENABLED=1 GOOS=linux \
 FROM cgr.dev/chainguard/glibc-dynamic:latest
 ```
 
-**Benefits:**
+#### CGO_ENABLED=1 Benefits
+
 - Can use packages with C bindings (SQLite, libgit2, etc.)
 - Requires glibc at runtime
 - Slightly larger image (~30-50MB)
 
-**Build flags:**
+#### Build flags
+
 - `-ldflags="-w -s"` - Strip debug info and symbol table (smaller binary)
 - `-trimpath` - Remove file system paths from binary (reproducibility)
 
 ### When to Use CGO
 
 ✅ **Use static (CGO_ENABLED=0) if:**
+
 - Pure Go code and dependencies
 - Most web services, APIs, CLI tools
 
 ❌ **Use CGO (CGO_ENABLED=1) if:**
+
 - Using `mattn/go-sqlite3` or other C library bindings
 - Build fails with `CGO_ENABLED=0`
 
@@ -258,7 +265,7 @@ npm ci  # Clean install from lock file
 
 ## Rust + Cargo
 
-### Why Cargo?
+### Why Cargo
 
 - **Built-in dependency management**: No external tools needed
 - **Reproducible builds**: Cargo.lock ensures version integrity
@@ -315,13 +322,15 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 
 ### Allocator Options
 
-**Why allocator choice matters:**
+#### Why allocator choice matters
 
-glibc's default malloc can use **2x+ memory** under load due to fragmentation. Modern allocators like mimalloc reduce memory footprint by ~50% and improve latency.
+glibc's default malloc can use **2x+ memory** under load due to fragmentation. Modern allocators like mimalloc reduce
+memory footprint by ~50% and improve latency.
 
-**For detailed comparison** of mimalloc vs jemalloc vs tcmalloc vs glibc malloc, see [allocator-comparison.md](./allocator-comparison.md).
+**For detailed comparison** of mimalloc vs jemalloc vs tcmalloc vs glibc malloc, see
+[allocator-comparison.md](./allocator-comparison.md).
 
-**glibc version - three choices:**
+#### glibc version - three choices
 
 | Option | Method | Code Changes? | Performance | Memory |
 |--------|--------|---------------|-------------|--------|
@@ -329,7 +338,7 @@ glibc's default malloc can use **2x+ memory** under load due to fragmentation. M
 | (b) LD_PRELOAD | Uncomment ENV | No | Good | 50% less |
 | (c) Default malloc | Nothing | No | OK | Baseline |
 
-**Example: Option (a) - Cargo + mimalloc**
+#### Example: Option (a) - Cargo + mimalloc
 
 ```toml
 # Cargo.toml
@@ -343,7 +352,7 @@ mimalloc = { version = "0.1", default-features = false }
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 ```
 
-**musl version - only one viable option:**
+#### musl version - only one viable option
 
 musl's allocator is 7-10x slower in multi-threaded workloads. You MUST add mimalloc:
 

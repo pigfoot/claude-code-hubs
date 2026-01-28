@@ -1,11 +1,15 @@
 # unified-generation Specification
 
 ## Purpose
+
 TBD - created by archiving change eliminate-heredoc-hallucinations. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Single Workflow for All Image Counts
 
-The system SHALL use the same fixed Python script (`generate_images.py`) for all image generation tasks, regardless of the number of images (1-100).
+The system SHALL use the same fixed Python script (`generate_images.py`) for all image generation tasks, regardless of
+the number of images (1-100).
 
 **ID:** `unified-generation-001`
 **Priority:** High
@@ -15,6 +19,7 @@ The system SHALL use the same fixed Python script (`generate_images.py`) for all
 **Given:** User requests 1 image
 **When:** Claude prepares generation
 **Then:**
+
 - Claude creates JSON config with 1 slide
 - Calls `uv run generate_images.py --config <path>`
 - Same script as batch mode
@@ -25,6 +30,7 @@ The system SHALL use the same fixed Python script (`generate_images.py`) for all
 **Given:** User requests 3 images
 **When:** Claude prepares generation
 **Then:**
+
 - Claude creates JSON config with 3 slides
 - Calls `uv run generate_images.py --config <path>`
 - Same script as single/large batch
@@ -35,12 +41,14 @@ The system SHALL use the same fixed Python script (`generate_images.py`) for all
 **Given:** User requests 50 images
 **When:** Claude prepares generation
 **Then:**
+
 - Claude creates JSON config with 50 slides
 - Calls `uv run generate_images.py --config <path>`
 - Same script behavior, scales naturally
 - Progress tracking handles large counts
 
-**Rationale:** Eliminates complexity of mode switching and ensures consistent, hallucination-free behavior across all use cases.
+**Rationale:** Eliminates complexity of mode switching and ensures consistent, hallucination-free behavior across all
+use cases.
 
 ---
 
@@ -56,6 +64,7 @@ The image generation script SHALL be named `generate_images.py` to reflect its u
 **Given:** Script handles all image generation tasks
 **When:** User or documentation references the script
 **Then:**
+
 - Script is named `generate_images.py`
 - Name reflects general-purpose usage
 - Not limited to "batch" semantics
@@ -76,6 +85,7 @@ Claude SHALL NOT generate Python code via heredocs for image generation tasks.
 **Given:** User requests any number of images
 **When:** Claude prepares generation workflow
 **Then:**
+
 - Claude creates JSON config data only
 - No Python code generation
 - No `uv run - << 'EOF'` patterns
@@ -86,6 +96,7 @@ Claude SHALL NOT generate Python code via heredocs for image generation tasks.
 **Given:** Documentation contains heredoc examples
 **When:** Documentation is updated
 **Then:**
+
 - All heredoc examples are removed
 - Only config-based examples remain
 - No code generation patterns documented
@@ -106,11 +117,13 @@ All image generation SHALL use JSON configuration files with minimal required fi
 **Given:** User requests images with basic requirements
 **When:** Claude creates config file
 **Then:**
+
 - Config contains only `slides` and `output_dir`
 - No optional fields included unless needed
 - JSON is valid and minimal
 
 Example:
+
 ```json
 {
   "slides": [
@@ -125,22 +138,26 @@ Example:
 **Given:** Claude needs to create config file
 **When:** Determining config file path
 **Then:**
+
 - Uses `Path(tempfile.gettempdir())` for path
 - Path works on Windows/Linux/macOS
 - No hardcoded `/tmp/` paths
 
 Example (Python):
+
 ```python
 config_path = Path(tempfile.gettempdir()) / "nano-banana-config.json"
 ```
 
-**Rationale:** Minimal config reduces what Claude needs to generate, lowering hallucination risk. Cross-platform paths avoid Windows errors.
+**Rationale:** Minimal config reduces what Claude needs to generate, lowering hallucination risk. Cross-platform paths
+avoid Windows errors.
 
 ---
 
 ### Requirement: Consistent Execution Pattern
 
-Image generation SHALL always follow the same execution pattern: config creation → script execution → progress monitoring → result collection.
+Image generation SHALL always follow the same execution pattern: config creation → script execution → progress
+monitoring → result collection.
 
 **ID:** `unified-generation-005`
 **Priority:** Medium
@@ -150,6 +167,7 @@ Image generation SHALL always follow the same execution pattern: config creation
 **Given:** Any image generation request (1-100 images)
 **When:** Claude executes the workflow
 **Then:**
+
 - Step 1: Create JSON config file
 - Step 2: Execute `uv run generate_images.py --config <path>`
 - Step 3: Monitor progress file (if background)
@@ -172,6 +190,7 @@ The unified generation workflow SHALL achieve zero AI-caused hallucinations in i
 **Given:** Claude generates config for image generation
 **When:** Config is executed by fixed script
 **Then:**
+
 - No non-existent API parameters (e.g., `api_version`)
 - No incorrect model names
 - No mixed API patterns
@@ -182,9 +201,9 @@ The unified generation workflow SHALL achieve zero AI-caused hallucinations in i
 **Given:** 100 image generation requests
 **When:** Using unified generation workflow
 **Then:**
+
 - 0 failures due to AI hallucinations
 - Any failures are user error (invalid config) or system error (API down)
 - Success rate for AI-generated parts: 100%
 
 **Rationale:** This is the primary goal - eliminate the 30-40% hallucination rate of heredoc approach.
-

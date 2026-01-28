@@ -7,6 +7,7 @@
 **Cause:** Required credentials not set.
 
 **Fix:** Create `.env` file or export variables:
+
 ```bash
 export CONFLUENCE_URL="https://company.atlassian.net/wiki"
 export CONFLUENCE_USER="your-email@company.com"
@@ -15,24 +16,28 @@ export CONFLUENCE_API_TOKEN="your-api-token"
 
 ### "401 Unauthorized"
 
-**Cause 1: REST API - Invalid credentials or expired token**
+#### Cause 1: REST API - Invalid credentials or expired token
 
-**Fix:**
+#### Fix
+
 1. Verify email address is correct
-2. Generate new API token at https://id.atlassian.com/manage-profile/security/api-tokens
+2. Generate new API token at <https://id.atlassian.com/manage-profile/security/api-tokens>
 3. Ensure token has Confluence access
 
-**Cause 2: MCP Tools - Expired OAuth token**
+#### Cause 2: MCP Tools - Expired OAuth token
 
 When MCP tools (e.g., `searchConfluenceUsingCql`, `getConfluencePage`) return:
+
 ```
 Authentication failed: {"code":401,"message":"Unauthorized"}
 ```
 
 **Fix:** Re-authenticate using Claude Code command:
+
 ```bash
 /mcp
 ```
+
 Then follow the OAuth flow to reconnect to `plugin:confluence:atlassian`.
 
 **Note:** This is normal after extended periods of inactivity. OAuth tokens expire and need periodic renewal.
@@ -41,7 +46,8 @@ Then follow the OAuth flow to reconnect to `plugin:confluence:atlassian`.
 
 **Cause:** User lacks permission for the page/space.
 
-**Fix:**
+#### Fix
+
 1. Check space permissions in Confluence
 2. Request access from space admin
 3. Verify page isn't restricted
@@ -53,6 +59,7 @@ Then follow the OAuth flow to reconnect to `plugin:confluence:atlassian`.
 **Cause:** Using MCP for large uploads (>10-20KB).
 
 **Fix:** Use the upload script instead:
+
 ```bash
 uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 ```
@@ -61,7 +68,8 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 
 **Cause:** Invalid page ID or page was deleted.
 
-**Fix:**
+#### Fix
+
 1. Verify page ID from URL: `.../pages/123456789/...`
 2. Check page exists in Confluence
 3. Ensure you have view permission
@@ -70,7 +78,8 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 
 **Cause:** Page was modified by someone else.
 
-**Fix:**
+#### Fix
+
 1. Re-fetch current version
 2. Merge changes manually
 3. Re-upload with updated version
@@ -79,7 +88,8 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 
 **Cause:** Attachments not uploaded or wrong path.
 
-**Fix:**
+#### Fix
+
 1. Ensure image files exist locally
 2. Use relative paths: `![alt](./images/diagram.png)`
 3. Verify attachments uploaded: check page attachments in Confluence
@@ -91,7 +101,8 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 
 **Cause:** Page uses unsupported macros.
 
-**Fix:**
+#### Fix
+
 1. Check page in Confluence for custom macros
 2. Manually extract content if needed
 3. Some macros (like JIRA) won't convert
@@ -100,7 +111,8 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 
 **Cause:** Network issue or permission problem.
 
-**Fix:**
+#### Fix
+
 1. Check network connectivity
 2. Verify you can download attachments manually
 3. Check attachment permissions
@@ -111,7 +123,8 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 
 **Cause:** Unsupported or nested formatting.
 
-**Fix:**
+#### Fix
+
 1. Simplify complex nested structures
 2. Use code blocks for preformatted text
 3. Check for unescaped special characters
@@ -120,7 +133,8 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 
 **Cause:** Invalid table structure.
 
-**Fix:**
+#### Fix
+
 1. Ensure header row has `||` separators
 2. Data rows use `|` separators
 3. No empty cells at row start/end

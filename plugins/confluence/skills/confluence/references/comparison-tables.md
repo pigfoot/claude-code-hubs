@@ -53,6 +53,7 @@ Editing existing document?
 ### Tool Type Explanation
 
 **High-level tools (semantic)**:
+
 ```javascript
 // Example: Search pages
 searchConfluence({query: "API documentation"})
@@ -60,6 +61,7 @@ getPage({pageId: "123456"})
 ```
 
 **Low-level tools (HTTP methods)**:
+
 ```javascript
 // Example: Manually build API request
 conf_get({
@@ -119,6 +121,7 @@ Just simple edit testing?
 ### Setup Guide
 
 **OAuth 2.1 Setup**:
+
 ```bash
 # One-time setup
 claude mcp add atlassian \
@@ -132,6 +135,7 @@ claude mcp add atlassian \
 ```
 
 **API Token Setup**:
+
 ```bash
 # 1. Generate token
 # https://id.atlassian.com/manage-profile/security/api-tokens
@@ -196,6 +200,7 @@ export CONFLUENCE_API_TOKEN="your_api_token_here"
 ### Format Examples
 
 **Markdown**:
+
 ```markdown
 ## Heading
 
@@ -206,6 +211,7 @@ This is a paragraph with **bold** text.
 ```
 
 **ADF (JSON)**:
+
 ```json
 {
   "type": "doc",
@@ -228,6 +234,7 @@ This is a paragraph with **bold** text.
 ```
 
 **Storage Format (XHTML)**:
+
 ```xml
 <h2>Heading</h2>
 <p>This is a paragraph with <strong>bold</strong> text.</p>
@@ -327,7 +334,8 @@ Authentication:
 
 #### ❌ The Real Bottleneck: AI Tool Invocation Delays
 
-When using MCP through Claude Code, the bottleneck is **NOT** the MCP server itself, but the **AI processing between tool calls**:
+When using MCP through Claude Code, the bottleneck is **NOT** the MCP server itself, but the **AI processing between
+tool calls**:
 
 ```
 Timeline of MCP Roundtrip Operation:
@@ -372,6 +380,7 @@ AI processing delays: ~712 seconds (91%)
    - Each tool call requires full context processing
 
 2. **Multiple Tool Invocations**
+
    ```
    MCP Read (77KB output)
      → Claude processes
@@ -430,9 +439,10 @@ requests.put(f"{api_url}/rest/api/v2/pages/{page_id}", json=page_data)
 
 ### Optimization Strategies
 
-#### For MCP Roundtrip (if you must use it):
+#### For MCP Roundtrip (if you must use it)
 
 1. **Use pipe instead of intermediate files**
+
    ```bash
    # BAD (requires AI to generate large heredoc):
    cat > file.json << 'EOF'
@@ -451,9 +461,10 @@ requests.put(f"{api_url}/rest/api/v2/pages/{page_id}", json=page_data)
    - Large JSON = longer AI processing
    - Consider filtering data before passing between tools
 
-#### For Python REST API (recommended):
+#### For Python REST API (recommended)
 
 1. **Use environment variables** (already configured):
+
    ```python
    CONFLUENCE_URL = os.environ.get('CONFLUENCE_URL')
    CONFLUENCE_USER = os.environ.get('CONFLUENCE_USER')
@@ -461,6 +472,7 @@ requests.put(f"{api_url}/rest/api/v2/pages/{page_id}", json=page_data)
    ```
 
 2. **Add error handling and retry logic**
+
    ```python
    from requests.adapters import HTTPAdapter
    from urllib3.util.retry import Retry
@@ -477,13 +489,16 @@ requests.put(f"{api_url}/rest/api/v2/pages/{page_id}", json=page_data)
 ### Conclusion
 
 **For structural modifications** (adding table rows, modifying layouts):
+
 - MCP Roundtrip: **13 minutes** (due to AI tool delays)
 - Python REST API: **10-20 seconds** (network only)
 - **Speedup: 40-80x faster**
 
-**Key Insight**: The bottleneck is not MCP itself (network operations are only ~60 seconds), but the AI tool invocation intervals (~12 minutes). For any operation requiring precise structural modifications, use Python REST API directly.
+**Key Insight**: The bottleneck is not MCP itself (network operations are only ~60 seconds), but the AI tool invocation
+intervals (~12 minutes). For any operation requiring precise structural modifications, use Python REST API directly.
 
 **Recommendation**:
+
 - Use MCP for interactive exploration and simple edits
 - Use Python REST API for structural modifications and automation
 - Keep credentials in environment variables (they can coexist)

@@ -7,7 +7,8 @@
 
 ## Why
 
-Generating multiple images (e.g., 10 slides) consumes 1,500-2,000 tokens in conversation context, reducing available space for conversation and limiting usability for long presentations.
+Generating multiple images (e.g., 10 slides) consumes 1,500-2,000 tokens in conversation context, reducing available
+space for conversation and limiting usability for long presentations.
 
 ## What Changes
 
@@ -30,7 +31,8 @@ Generating multiple images (e.g., 10 slides) consumes 1,500-2,000 tokens in conv
 
 ## Problem Statement
 
-When generating multiple images (e.g., 10 slides for a presentation) with nano-banana, each image's output accumulates in the conversation context:
+When generating multiple images (e.g., 10 slides for a presentation) with nano-banana, each image's output accumulates
+in the conversation context:
 
 - **Current behavior:** Execute Python script 10 times → 1,500-2,000 tokens in context
 - **Impact:** Context window fills quickly, reducing available space for conversation
@@ -47,6 +49,7 @@ Implement **Background Bash + Progress File** approach for generating 5+ images:
 5. **Result Summary:** Read final results from `/tmp/nano-banana-results.json`
 
 **Context Savings:**
+
 - Current: 1,500-2,000 tokens for 10 slides
 - Proposed: ~390 tokens for 10 slides (**80% reduction**)
 
@@ -73,11 +76,13 @@ Implement **Background Bash + Progress File** approach for generating 5+ images:
 ## Risk Assessment
 
 **Low Risk:**
+
 - Additive change (doesn't modify existing 1-4 slide behavior)
 - Well-defined interface (JSON config + JSON results)
 - Proven pattern (background tasks with progress files)
 
 **Mitigation:**
+
 - Comprehensive error handling in Python script
 - Fallback to direct execution if background task fails
 - Clear user communication about batch mode activation

@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document specifies the complete design for eliminating AI hallucinations in nano-banana plugin by replacing dynamic heredoc code generation with a fixed Python script approach.
+This document specifies the complete design for eliminating AI hallucinations in nano-banana plugin by replacing dynamic
+heredoc code generation with a fixed Python script approach.
 
 **Core Principle:** Claude generates data (JSON config), not code (Python scripts).
 
@@ -34,6 +35,7 @@ Slide Count Detection
 ```
 
 **Problems:**
+
 - ❌ Two different code paths (complexity)
 - ❌ Heredoc generation prone to API hallucinations
 - ❌ Model names often incorrect
@@ -54,6 +56,7 @@ User Request
 ```
 
 **Benefits:**
+
 - ✅ Single code path (simplicity)
 - ✅ No code generation (only data)
 - ✅ Fixed script = predictable behavior
@@ -66,11 +69,13 @@ User Request
 ### 1. File Renaming
 
 **Change:**
+
 ```bash
 generate_batch.py → generate_images.py
 ```
 
 **Rationale:**
+
 - More semantic (not just for batches)
 - Reflects new unified purpose
 - Clear intent in all contexts
@@ -78,6 +83,7 @@ generate_batch.py → generate_images.py
 ### 2. Config Format Simplification
 
 **Old Config (with hallucination risks):**
+
 ```json
 {
   "slides": [...],
@@ -89,6 +95,7 @@ generate_batch.py → generate_images.py
 ```
 
 **New Config (minimal, hallucination-free):**
+
 ```json
 {
   "slides": [
@@ -103,6 +110,7 @@ generate_batch.py → generate_images.py
 ```
 
 **Optional Fields (still supported but rarely used):**
+
 ```json
 {
   "slides": [...],
@@ -113,6 +121,7 @@ generate_batch.py → generate_images.py
 ```
 
 **Removed Fields:**
+
 - ❌ `model` - Now controlled solely by `NANO_BANANA_MODEL` environment variable
 
 **Field Specifications:**
@@ -141,10 +150,12 @@ model = os.environ.get("NANO_BANANA_MODEL") or "gemini-3-pro-image-preview"
 ```
 
 **Priority Chain:**
+
 1. `NANO_BANANA_MODEL` environment variable (user control)
 2. Default: `"gemini-3-pro-image-preview"`
 
 **API Detection (unchanged):**
+
 ```python
 def detect_api_type(model: str) -> str:
     """Detect which API to use based on model name."""
@@ -156,12 +167,14 @@ def detect_api_type(model: str) -> str:
 **Problem: Hard-coded `/tmp/` paths fail on Windows**
 
 **Current Code (Linux-only):**
+
 ```python
 PROGRESS_FILE = Path("/tmp/nano-banana-progress.json")
 RESULTS_FILE = Path("/tmp/nano-banana-results.json")
 ```
 
 **New Code (cross-platform):**
+
 ```python
 import tempfile
 
@@ -171,6 +184,7 @@ RESULTS_FILE = TEMP_DIR / "nano-banana-results.json"
 ```
 
 **Behavior:**
+
 - Linux/macOS: `/tmp/nano-banana-progress.json`
 - Windows: `C:\Users\<user>\AppData\Local\Temp\nano-banana-progress.json`
 
@@ -193,6 +207,7 @@ def validate_output_dir(path_str: str) -> Path:
 ```
 
 **Examples:**
+
 - ✅ `"./001-slides/"` - Valid
 - ✅ `"../output/slides/"` - Valid
 - ✅ `"slides/"` - Valid
@@ -254,18 +269,21 @@ These contain only heredoc examples and are now obsolete:
 1. **`references/gemini-api.md`** - Complete heredoc templates for Gemini API
 2. **`references/imagen-api.md`** - Complete heredoc templates for Imagen API
 
-**Rationale:** These files exist solely to document heredoc patterns. Since we're eliminating heredocs, they become misleading and should be removed entirely.
+**Rationale:** These files exist solely to document heredoc patterns. Since we're eliminating heredocs, they become
+misleading and should be removed entirely.
 
 ### Files to Rewrite
 
 #### 1. `SKILL.md` (Major Rewrite)
 
 **Current Structure:**
+
 - Section on heredoc scripts
 - Examples using `uv run - << 'EOF'`
 - Direct generation mode with inline code
 
 **New Structure:**
+
 - Remove all heredoc sections
 - Add "Unified Generation Mode" section
 - Single workflow for all slide counts
@@ -274,6 +292,7 @@ These contain only heredoc examples and are now obsolete:
 **Key Changes:**
 
 **Remove This Section:**
+
 ```markdown
 ## Direct Generation Mode
 
@@ -285,6 +304,7 @@ EOF
 ```
 
 **Replace With:**
+
 ```markdown
 ## Image Generation Workflow
 
@@ -306,6 +326,7 @@ All image generation uses the same fixed Python script with JSON config:
 ```
 
 **Full Config (optional fields):**
+
 ```json
 {
   "slides": [{"number": 1, "prompt": "...", "style": "trendlife"}],
@@ -316,9 +337,11 @@ All image generation uses the same fixed Python script with JSON config:
 ```
 
 **Field Rules:**
+
 - ✅ `output_dir` MUST be relative path
 - ❌ NO absolute paths (breaks cross-platform)
 - ❌ NO `model` field (use NANO_BANANA_MODEL env var)
+
 ```
 
 **Update API Selection Section:**
@@ -339,6 +362,7 @@ API is automatically detected from model name:
 #### 2. `references/batch-generation.md`
 
 **Changes:**
+
 - Update all references: `generate_batch.py` → `generate_images.py`
 - Update file paths: `/tmp/` → `tempfile.gettempdir()` in examples
 - Update config examples: remove `model` field
@@ -347,11 +371,13 @@ API is automatically detected from model name:
 **Key Section Update:**
 
 **Old:**
+
 ```bash
 uv run /path/to/generate_batch.py --config /tmp/slides_config.json
 ```
 
 **New:**
+
 ```bash
 uv run /path/to/generate_images.py --config /tmp/slides_config.json
 # On Windows: path will be C:\Users\...\AppData\Local\Temp\nano-banana-config.json
@@ -360,6 +386,7 @@ uv run /path/to/generate_images.py --config /tmp/slides_config.json
 #### 3. `references/guide.md`
 
 **Changes:**
+
 - Search for any heredoc examples
 - Replace with config-based approach
 - Verify no code generation patterns remain
@@ -367,6 +394,7 @@ uv run /path/to/generate_images.py --config /tmp/slides_config.json
 #### 4. `README.md`
 
 **Changes:**
+
 - Update "Usage" section with new workflow
 - Update script filename in examples
 - Add cross-platform notes
@@ -374,6 +402,7 @@ uv run /path/to/generate_images.py --config /tmp/slides_config.json
 **Example Update:**
 
 **Old:**
+
 ```markdown
 ### Quick Start
 
@@ -388,6 +417,7 @@ EOF
 ```
 
 **New:**
+
 ```markdown
 ### Quick Start
 
@@ -398,13 +428,15 @@ Generate images (single or multiple):
 export NANO_BANANA_MODEL="gemini-3-pro-image-preview"
 ```
 
-2. Create config and run:
+1. Create config and run:
+
 ```bash
 # Claude will create config and execute:
 uv run generate_images.py --config <config-path>
 ```
 
 All generation uses the same unified workflow.
+
 ```
 
 ---
@@ -418,7 +450,8 @@ All generation uses the same unified workflow.
    git mv generate_batch.py generate_images.py
    ```
 
-2. **Update imports in generate_images.py:**
+1. **Update imports in generate_images.py:**
+
    ```python
    import tempfile
 
@@ -427,12 +460,14 @@ All generation uses the same unified workflow.
    RESULTS_FILE = TEMP_DIR / "nano-banana-results.json"
    ```
 
-3. **Remove model from config (line ~413-414):**
+2. **Remove model from config (line ~413-414):**
+
    ```python
    model = os.environ.get("NANO_BANANA_MODEL") or "gemini-3-pro-image-preview"
    ```
 
-4. **Add output_dir validation:**
+3. **Add output_dir validation:**
+
    ```python
    def load_config(config_path: str) -> Dict:
        """Load and validate configuration file."""
@@ -454,6 +489,7 @@ All generation uses the same unified workflow.
 ### Phase 2: Documentation Updates
 
 1. **Remove files:**
+
    ```bash
    git rm references/gemini-api.md
    git rm references/imagen-api.md
@@ -511,6 +547,7 @@ uv run generate_images.py --config test-batch-trendlife.json
 
 **Before (heredoc pattern):**
 Claude would generate heredoc scripts like:
+
 ```bash
 uv run - << 'EOF'
 # Python code here
@@ -519,6 +556,7 @@ EOF
 
 **After (config pattern):**
 Claude generates JSON config and runs fixed script:
+
 ```bash
 # Config created automatically
 uv run generate_images.py --config /tmp/nano-banana-config.json
@@ -529,11 +567,13 @@ uv run generate_images.py --config /tmp/nano-banana-config.json
 ### For Developers
 
 **Breaking Changes:**
+
 1. `generate_batch.py` renamed to `generate_images.py`
 2. Config `model` field no longer supported
 3. Absolute paths in `output_dir` now rejected
 
 **Migration Steps:**
+
 1. Update any scripts calling `generate_batch.py`
 2. Remove `model` from config files
 3. Convert absolute paths to relative paths
@@ -591,6 +631,7 @@ uv run generate_images.py --config /tmp/nano-banana-config.json
 ### Long-Term Vision
 
 This change lays foundation for:
+
 - More complex generation workflows (multi-stage, conditional)
 - Plugin system for custom styles
 - API agnostic architecture (easy to add new providers)

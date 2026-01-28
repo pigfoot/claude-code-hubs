@@ -12,12 +12,14 @@ Build secure, minimal container images using security-hardened runtime images an
 ### 1. Security-First Runtime Images
 
 Use **Wolfi glibc-dynamic** as the runtime base image:
+
 - Minimal attack surface (no unnecessary packages)
 - Built-in CVE-free by design
 - Non-root user by default (UID 65532)
 - Regular security updates by Chainguard
 
-**Production vs Development:**
+#### Production vs Development
+
 ```dockerfile
 # ARG for choosing runtime image tag
 ARG RUNTIME_TAG=latest
@@ -27,7 +29,8 @@ FROM cgr.dev/chainguard/glibc-dynamic:${RUNTIME_TAG}
 - **`latest`** (default): Production - no shell, most secure
 - **`latest-dev`**: Development - includes shell for debugging
 
-**Build for debugging:**
+#### Build for debugging
+
 ```bash
 podman build --build-arg RUNTIME_TAG=latest-dev -t myapp:debug .
 podman run -it myapp:debug sh  # Can exec with shell
@@ -36,6 +39,7 @@ podman run -it myapp:debug sh  # Can exec with shell
 ### 2. Multi-stage Builds
 
 Always use multi-stage builds to minimize runtime image size:
+
 - **Builder stage**: Full build environment (Python/Node.js official images)
 - **Runtime stage**: Minimal Wolfi image with only runtime artifacts
 
@@ -69,11 +73,13 @@ CMD ["your-app"]
 ### Python + uv Project
 
 1. **Copy Containerfile template**:
+
    ```bash
    cp assets/Containerfile.python-uv ./Containerfile
    ```
 
 2. **Update application command**:
+
    ```dockerfile
    CMD ["python", "your_app.py"]  # Change to your entry point
    ```
@@ -81,11 +87,13 @@ CMD ["your-app"]
 ### Bun Project
 
 1. **Copy Containerfile template**:
+
    ```bash
    cp assets/Containerfile.bun ./Containerfile
    ```
 
 2. **Update runtime command**:
+
    ```dockerfile
    CMD ["bun", "run", "start"]  # Change to your script
    ```
@@ -93,11 +101,13 @@ CMD ["your-app"]
 ### Node.js + pnpm Project
 
 1. **Copy Containerfile template**:
+
    ```bash
    cp assets/Containerfile.nodejs ./Containerfile
    ```
 
 2. **Update entry point**:
+
    ```dockerfile
    CMD ["node", "./dist/index.js"]  # Change to your compiled output
    ```
@@ -107,6 +117,7 @@ CMD ["your-app"]
 **First: Do you need CGO?** (packages with C bindings)
 
 Most Go projects don't need CGO. Quick test:
+
 ```bash
 CGO_ENABLED=0 go build .
 # Success → Use Containerfile.golang (static, recommended)
@@ -115,21 +126,24 @@ CGO_ENABLED=0 go build .
 
 **Common CGO packages:** `mattn/go-sqlite3`, `git2go/git2go`, `h2non/bimg`
 
-**Option A: Pure Go (no CGO) - Recommended**
+#### Option A: Pure Go (no CGO) - Recommended
 
 1. **Copy Containerfile template**:
+
    ```bash
    cp assets/Containerfile.golang ./Containerfile
    ```
 
 2. **Update binary name**:
+
    ```dockerfile
    CMD ["/app/server"]  # Change to your binary name
    ```
 
-**Option B: Requires CGO (SQLite, C libraries)**
+#### Option B: Requires CGO (SQLite, C libraries)
 
 1. **Copy CGO template**:
+
    ```bash
    cp assets/Containerfile.golang-cgo ./Containerfile
    ```
@@ -139,11 +153,13 @@ CGO_ENABLED=0 go build .
 **Default: Use glibc template** (best compatibility)
 
 1. **Copy template**:
+
    ```bash
    cp assets/Containerfile.rust ./Containerfile
    ```
 
 2. **Update binary name**:
+
    ```dockerfile
    CMD ["/app/server"]  # Change to your binary name
    ```
@@ -155,18 +171,21 @@ CGO_ENABLED=0 go build .
    - **(b) LD_PRELOAD** - Uncomment lines in Containerfile (no code changes, 50% less memory)
    - **(c) Default malloc** - No changes needed (good for most apps)
 
-   **Why mimalloc?** Reduces memory usage by ~50% vs glibc malloc under load. See [allocator comparison](references/allocator-comparison.md) for details vs jemalloc/tcmalloc.
+**Why mimalloc?** Reduces memory usage by ~50% vs glibc malloc under load. See [allocator
+comparison](references/allocator-comparison.md) for details vs jemalloc/tcmalloc.
 
-**Advanced: Smallest image with musl**
+#### Advanced: Smallest image with musl
 
 If you need the smallest possible image and have no C dependencies:
 
 1. **Copy musl template**:
+
    ```bash
    cp assets/Containerfile.rust-musl ./Containerfile
    ```
 
-**Warning:** musl's allocator is 7-10x slower in multi-threaded workloads. You MUST add mimalloc to Cargo.toml (see Containerfile comments).
+**Warning:** musl's allocator is 7-10x slower in multi-threaded workloads. You MUST add mimalloc to Cargo.toml (see
+Containerfile comments).
 
 ## Builder Image Selection
 
@@ -252,22 +271,26 @@ FROM cgr.dev/chainguard/static:${RUNTIME_TAG}
 All Containerfile templates support both production and debug builds:
 
 ### Production Build (Default)
+
 ```bash
 podman build -t myapp:latest .
 ```
+
 - Uses `cgr.dev/chainguard/glibc-dynamic:latest`
 - No shell (most secure)
 - Minimal attack surface
 
 ### Debug Build
+
 ```bash
 podman build --build-arg RUNTIME_TAG=latest-dev -t myapp:debug .
 ```
+
 - Uses `cgr.dev/chainguard/glibc-dynamic:latest-dev`
 - Includes shell and basic tools
 - For development/troubleshooting only
 
-**Never use debug images in production!**
+#### Never use debug images in production
 
 For detailed debugging techniques, see `references/debugging-containers.md`.
 
@@ -282,7 +305,9 @@ For detailed information, consult these reference files:
 
 ## CI/CD Integration
 
-For GitHub Actions workflows to build multi-arch images, see the **github-actions-container-build** plugin which provides:
+For GitHub Actions workflows to build multi-arch images, see the **github-actions-container-build** plugin which
+provides:
+
 - Matrix build workflow (native ARM64 runners for public repos)
 - QEMU workflow (for private repos)
 - Podman-based rootless builds with manifest support
@@ -292,16 +317,19 @@ For GitHub Actions workflows to build multi-arch images, see the **github-action
 ### Common Issues
 
 **Build timeout**:
+
 - Review Containerfile for inefficient layers
 - Enable BuildKit cache mounts
 - Consider splitting large builds
 
 **Binary not found**:
+
 - Verify the COPY command copies the correct path
 - Check binary permissions (should be executable)
 - For static builds, ensure correct target triple
 
 **Container starts but exits immediately**:
+
 - Check if tini is properly configured as entrypoint
 - Verify the CMD points to the correct binary
 - Use debug build to inspect: `podman run -it myapp:debug sh`
@@ -309,16 +337,19 @@ For GitHub Actions workflows to build multi-arch images, see the **github-action
 ### Local Testing
 
 **Test image locally**:
+
 ```bash
 podman run --rm -it "$IMAGE:$TAG"
 ```
 
 **Inspect built image**:
+
 ```bash
 podman inspect "$IMAGE:$TAG"
 ```
 
 **Check image size**:
+
 ```bash
 podman images "$IMAGE:$TAG"
 ```

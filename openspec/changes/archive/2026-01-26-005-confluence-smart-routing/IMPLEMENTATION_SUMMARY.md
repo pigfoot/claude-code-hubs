@@ -7,12 +7,14 @@ All tasks completed successfully on 2026-01-26.
 ## What Was Implemented
 
 ### Phase 1: Environment Variable Standardization ✅
+
 - **Breaking Change:** Renamed `CONFLUENCE_USERNAME` → `CONFLUENCE_USER`
 - Updated 10 files across plugin codebase
 - Added migration guide in README.md
 - Validated: Zero references to old variable name
 
 ### Phase 2: Core Smart Routing ✅
+
 - **New Module:** `confluence_router.py` (257 lines)
 - Credential detection from environment variables
 - Intelligent API selection based on operation type
@@ -20,6 +22,7 @@ All tasks completed successfully on 2026-01-26.
 - Integrated into `upload_confluence.py` and `download_confluence.py`
 
 ### Phase 3: URL Resolution ✅
+
 - **New Module:** `url_resolver.py` (179 lines)
 - Short URL decoding via Base64 (`/wiki/x/ZQGBfg` → page ID)
 - Full URL parsing (`/pages/123456/Title` → page ID)
@@ -27,6 +30,7 @@ All tasks completed successfully on 2026-01-26.
 - CLI interface for testing
 
 ### Phase 4: Smart Search ✅
+
 - **New Module:** `smart_search.py` (233 lines)
 - Confidence scoring algorithm (0.0 to 1.0)
 - Precision warning when confidence < 0.6
@@ -34,6 +38,7 @@ All tasks completed successfully on 2026-01-26.
 - Bilingual suggestions (EN + ZH-TW)
 
 ### Phase 5: Fallback and Warnings ✅
+
 - MCP write speed warning (displays when no API token)
 - Session expiry detection and handling
 - Silent fallback to REST API when token available
@@ -41,6 +46,7 @@ All tasks completed successfully on 2026-01-26.
 - Fallback event logging
 
 ### Phase 6: Documentation and Testing ✅
+
 - Updated README.md with breaking changes section
 - Updated all environment variable references
 - Executed 9 test cases (T-001 to T-009)
@@ -50,11 +56,13 @@ All tasks completed successfully on 2026-01-26.
 ## Files Changed
 
 ### New Files (3)
+
 - `plugins/confluence/skills/confluence/scripts/confluence_router.py` (257 lines)
 - `plugins/confluence/skills/confluence/scripts/url_resolver.py` (179 lines)
 - `plugins/confluence/skills/confluence/scripts/smart_search.py` (233 lines)
 
 ### Modified Files (10)
+
 - `openspec/changes/005-confluence-smart-routing/tasks.md` (all checkboxes marked)
 - `plugins/confluence/README.md` (+breaking changes section)
 - `plugins/confluence/skills/confluence/SKILL.md` (env var updates)
@@ -71,6 +79,7 @@ All tasks completed successfully on 2026-01-26.
 ## Test Results
 
 ### Automated Tests
+
 | Test ID | Description | Status |
 |---------|-------------|--------|
 | T-001 | Credential detection | ✅ PASS |
@@ -84,6 +93,7 @@ All tasks completed successfully on 2026-01-26.
 | T-009 | Low confidence search (< 0.6) | ✅ PASS |
 
 ### Module Import Tests
+
 - ✅ `confluence_router` imports successfully
 - ✅ `url_resolver` imports successfully
 - ✅ `smart_search` imports successfully
@@ -91,6 +101,7 @@ All tasks completed successfully on 2026-01-26.
 - ✅ No syntax errors
 
 ### Platform Compatibility
+
 - ✅ macOS (tested)
 - ✅ Linux (compatible - pure Python)
 - ✅ Windows (compatible - pure Python)
@@ -98,12 +109,14 @@ All tasks completed successfully on 2026-01-26.
 ## Performance Validation
 
 ### Routing Performance
+
 - Credential detection: < 1ms (environment variable reads)
 - Routing decision: < 1ms (simple logic)
 - URL resolution: < 10ms (local Base64 decoding)
 - Confidence scoring: < 50ms (list operations)
 
 ### API Performance (from research.md)
+
 | Operation | REST API | MCP | Speedup |
 |-----------|----------|-----|---------|
 | Write | ~1.02s | ~25.96s | **25.5x faster** |
@@ -114,56 +127,69 @@ All tasks completed successfully on 2026-01-26.
 ### ⚠️ CONFLUENCE_USERNAME Deprecated
 
 **Impact:**
+
 - Users with `CONFLUENCE_USERNAME` in their environment will experience auth failures
 - Scripts will display: "Missing environment variables: CONFLUENCE_USER"
 
 **Mitigation:**
+
 - Clear error messages guide users to rename the variable
 - Migration guide in README.md
 - No backward compatibility (clean break)
 
 **Rationale:**
+
 - Follows industry convention (`DB_USER`, `MYSQL_USER`, `POSTGRES_USER`)
 - Simpler codebase (no compatibility shims)
 
 ## Key Design Decisions
 
 ### 1. REST API as Primary When Available
+
 **Decision:** Prefer REST API when token is configured (25x faster writes)
 
 **Rationale:**
+
 - Performance: 1.02s vs 25.96s for writes
 - Reliability: Permanent token (no 55-min expiry)
 - User experience: Speed matters for interactive workflows
 
 ### 2. MCP as Fallback and for Rovo
+
 **Decision:** Use MCP when no REST API token, or for Rovo-exclusive features
 
 **Rationale:**
+
 - Zero-config experience (OAuth via `/mcp`)
 - Rovo AI semantic search only available via MCP
 - Graceful degradation (slower but functional)
 
 ### 3. Local URL Resolution
+
 **Decision:** Decode short URLs locally via Base64 (no network calls)
 
 **Rationale:**
+
 - Performance: < 10ms vs network round-trip
 - Reliability: No dependency on external services
 - Privacy: No URL sent to third parties
 
 ### 4. Confidence Threshold 0.6
+
 **Decision:** Suggest CQL when confidence < 0.6
 
 **Rationale:**
+
 - Balances precision vs false positives
 - Based on real-world testing with "Descartes WRS" queries
 - User can always ignore suggestion
 
 ### 5. No Backward Compatibility for Env Vars
+
 **Decision:** Clean break, no support for old `CONFLUENCE_USERNAME`
 
 **Rationale:**
+
 - Simpler code (no fallback logic)
 - Clear migration path
 - Industry standard naming
@@ -171,18 +197,24 @@ All tasks completed successfully on 2026-01-26.
 ## Integration Points
 
 ### 1. Router Integration
+
 Both upload and download scripts now:
+
 - Import `ConfluenceRouter` at startup
 - Display routing decision before operations
 - Show warnings when using slow MCP mode
 
 ### 2. URL Resolution Integration
+
 URL resolver is ready for integration but not yet wired into scripts. Future enhancement:
+
 - Accept URLs directly in `--id` parameter
 - Auto-resolve to page ID before API calls
 
 ### 3. Smart Search Integration
+
 Smart search module is ready for integration with Rovo search workflows. Future enhancement:
+
 - Wrap Rovo search calls with confidence analysis
 - Display CQL suggestion when precision is low
 
@@ -224,6 +256,7 @@ These are potential future enhancements not included in this proposal:
 All implementation work is complete and validated. Ready to commit changes.
 
 **Suggested commit message:**
+
 ```
 ✨ feat(confluence): implement smart routing with MCP/REST API auto-selection
 

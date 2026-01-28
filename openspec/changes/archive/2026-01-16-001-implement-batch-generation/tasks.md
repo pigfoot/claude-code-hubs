@@ -5,6 +5,7 @@
 ## Task Breakdown
 
 ### Phase 1: Python Script Foundation
+
 **Goal:** Create batch generation script with progress tracking
 
 - [ ] **Task 1.1:** Create `generate_batch.py` script
@@ -36,6 +37,7 @@
   - **Estimated effort:** 1 hour
 
 ### Phase 2: SKILL.md Integration (Progressive Disclosure)
+
 **Goal:** Add minimal batch mode trigger logic to SKILL.md, keep it under 20 new lines
 
 - [ ] **Task 2.1:** Add batch mode trigger to SKILL.md (15-20 lines max)
@@ -55,6 +57,7 @@
   - **Estimated effort:** 5 minutes
 
 ### Phase 3: Reference Documentation (All Details Here)
+
 **Goal:** Create comprehensive batch generation reference (200-300 lines)
 
 - [ ] **Task 3.1:** Create `references/batch-generation.md` (detailed guide)
@@ -76,6 +79,7 @@
   - **Estimated effort:** 15 minutes
 
 ### Phase 4: Testing & Validation
+
 **Goal:** Verify batch mode works correctly
 
 - [ ] **Task 4.1:** Manual test: 5-slide generation
@@ -108,6 +112,7 @@
   - **Estimated effort:** 30 minutes
 
 ### Phase 5: Documentation Updates
+
 **Goal:** Update all user-facing documentation
 
 - [ ] **Task 5.1:** Update main README.md

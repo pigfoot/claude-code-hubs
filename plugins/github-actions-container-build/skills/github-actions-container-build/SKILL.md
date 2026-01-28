@@ -14,16 +14,19 @@ Build multi-architecture container images in GitHub Actions using Podman and nat
 **CRITICAL: Ask these questions before generating any workflow.**
 
 **Question 1: Is your GitHub repository public?**
+
 - **Yes** → Use `github-actions-workflow-matrix-build.yml` (free standard ARM64 runners, 10-50x faster)
 - **No** → Go to Question 2
 
 **Question 2: Do you have GitHub Team/Enterprise + willing to pay for ARM64 builds?**
+
 - **Yes** → Use ARM64 larger runners (custom setup required, paid per minute)
 - **No** → Use `github-actions-workflow-qemu.yml` (free QEMU emulation, slower but works on free tier)
 
 ### 1. Push-by-Digest (2025 Best Practice - Default)
 
 Matrix builds use **push-by-digest** pattern:
+
 - Images pushed by digest without intermediate `:amd64/:arm64` tags
 - Only tiny digest files (~70 bytes) transfer as artifacts
 - Registry stays clean (no tag clutter)
@@ -48,6 +51,7 @@ Matrix builds use **push-by-digest** pattern:
 ```
 
 **Debug specific architecture:**
+
 ```bash
 podman pull --platform linux/arm64 ghcr.io/OWNER/REPO:latest
 ```
@@ -55,6 +59,7 @@ podman pull --platform linux/arm64 ghcr.io/OWNER/REPO:latest
 ### 2. Matrix Builds (Public Repos)
 
 **For public repositories** - use GitHub-hosted standard ARM64 runners:
+
 - 10-50x faster builds (native vs. emulation)
 - Better reliability and accuracy
 - Lower CI costs
@@ -74,6 +79,7 @@ strategy:
 ### 3. QEMU Builds (Private Repos - Free Tier)
 
 **For private repositories on free tier** - use QEMU emulation:
+
 - Works on GitHub Free plan
 - Slower (10-50x) than native ARM64 runners
 - Uses `docker/setup-qemu-action` for ARM64 emulation
@@ -89,17 +95,21 @@ steps:
 ### 4. Podman Over Docker
 
 Use Podman for container builds:
+
 - Rootless by default (better security)
 - No daemon required
 - Native multi-arch manifest support
 - OCI compliant
 - **Must use `podman manifest push --all`** (not `podman push`)
-- **Format**: Use OCI (default) for modern registries; use `--format v2s2` only for Quay.io or cross-registry (see references for details)
-- **Network**: Use `--network=host` flag for builds to avoid container networking SSL issues on GitHub Actions ubuntu-24.04 (see Troubleshooting section)
+- **Format**: Use OCI (default) for modern registries; use `--format v2s2` only for Quay.io or cross-registry (see
+  references for details)
+- **Network**: Use `--network=host` flag for builds to avoid container networking SSL issues on GitHub Actions
+  ubuntu-24.04 (see Troubleshooting section)
 
 ### 5. podman-static for Heredoc Support
 
-Ubuntu 24.04's bundled podman (4.9.3) uses buildah 1.33.7 which doesn't support heredoc syntax. Install podman-static for full BuildKit compatibility:
+Ubuntu 24.04's bundled podman (4.9.3) uses buildah 1.33.7 which doesn't support heredoc syntax. Install podman-static
+for full BuildKit compatibility:
 
 ```yaml
 - name: Install podman-static
@@ -124,11 +134,13 @@ Ubuntu 24.04's bundled podman (4.9.3) uses buildah 1.33.7 which doesn't support 
 ### For Public Repos (Matrix Build)
 
 1. **Copy workflow template**:
+
    ```bash
    cp assets/github-actions-workflow-matrix-build.yml .github/workflows/build.yml
    ```
 
 2. **Customize Containerfile path**:
+
    ```yaml
    -f ./Containerfile.python-uv  # or your Containerfile
    ```
@@ -138,6 +150,7 @@ Ubuntu 24.04's bundled podman (4.9.3) uses buildah 1.33.7 which doesn't support 
 ### For Private Repos (QEMU)
 
 1. **Copy workflow template**:
+
    ```bash
    cp assets/github-actions-workflow-qemu.yml .github/workflows/build.yml
    ```
@@ -172,6 +185,7 @@ See `references/github-actions-best-practices.md` for detailed comparison.
 Standard ARM64 runners (`ubuntu-24.04-arm`) don't work in private repos. Instead, create **ARM64 larger runners**:
 
 **Setup steps:**
+
 1. Go to **Organization Settings → Actions → Runners → New runner**
 2. Select **"Larger runners"**
 3. Choose **"Ubuntu 24.04 by Arm Limited"** partner image
@@ -179,6 +193,7 @@ Standard ARM64 runners (`ubuntu-24.04-arm`) don't work in private repos. Instead
 5. Configure size (e.g., 4-core, 16GB RAM)
 
 **Update workflow to use custom runner:**
+
 ```yaml
 strategy:
   matrix:
@@ -190,6 +205,7 @@ strategy:
 ```
 
 **Cost:**
+
 - Billed per minute (not included in free minutes)
 - ~37% cheaper than x64 larger runners
 - Ref: [Actions runner pricing](https://docs.github.com/en/billing/reference/actions-runner-pricing)
@@ -244,6 +260,7 @@ For detailed information, see `references/github-actions-best-practices.md`.
 ## Containerfile Templates
 
 For Containerfile templates and security best practices, see the **secure-container-build** plugin which provides:
+
 - Production-ready templates for Python/uv, Bun, Node.js/pnpm, Golang, and Rust
 - Wolfi runtime images with non-root users
 - Multi-stage build patterns
@@ -254,9 +271,13 @@ For Containerfile templates and security best practices, see the **secure-contai
 ### Common Issues
 
 **Container networking SSL errors (ubuntu-24.04 runners)**:
-- **Symptom**: `UNKNOWN_CERTIFICATE_VERIFICATION_ERROR` or SSL certificate verification failures during `bun install`, `npm install`, `pip install`, etc. inside containers
-- **Cause**: GitHub Actions ubuntu-24.04 runner image 20251208.163.1+ has container networking configuration changes that break SSL/TLS connections from inside containers
+
+- **Symptom**: `UNKNOWN_CERTIFICATE_VERIFICATION_ERROR` or SSL certificate verification failures during `bun install`,
+  `npm install`, `pip install`, etc. inside containers
+- **Cause**: GitHub Actions ubuntu-24.04 runner image 20251208.163.1+ has container networking configuration changes
+  that break SSL/TLS connections from inside containers
 - **Solution**: Add `--network=host` flag to `podman build`:
+
   ```yaml
   podman build \
     --network=host \
@@ -265,30 +286,38 @@ For Containerfile templates and security best practices, see the **secure-contai
     -f ./Containerfile \
     .
   ```
-- **Verification**: Test repository at https://github.com/pigfoot/test-bun-ssl-issue
-- **GitHub Issue**: https://github.com/actions/runner-images/issues/13422
-- **Note**: This is a known issue with ubuntu-24.04 runners. The `--network=host` workaround reduces network isolation during build but is acceptable for CI/CD use cases.
+
+- **Verification**: Test repository at <https://github.com/pigfoot/test-bun-ssl-issue>
+- **GitHub Issue**: <https://github.com/actions/runner-images/issues/13422>
+- **Note**: This is a known issue with ubuntu-24.04 runners. The `--network=host` workaround reduces network isolation
+  during build but is acceptable for CI/CD use cases.
 
 **Authentication failed**:
+
 - Ensure GITHUB_TOKEN has package write permission
 - Check registry URL and credentials
 
 **Manifest add failed**:
+
 - Verify architecture-specific images exist in registry
 - Check digest format is correct (`sha256:...`)
 
 **ARM64 runner not available**:
+
 - Standard ARM64 runners only work for public repos
 - For private repos, use QEMU or larger runners
 
 **podman-static installation fails**:
+
 - Verify correct architecture detection
 - Check GitHub releases for podman-static availability
 
 **AppArmor issues**:
+
 - Install binaries to `/usr/bin/` not `/usr/local/bin/`
 - Run `podman system migrate` after installation
 
 **Wrong architecture pulled**:
+
 - Always use `--platform` flag when pulling
 - Use `--format docker` when building for compatibility

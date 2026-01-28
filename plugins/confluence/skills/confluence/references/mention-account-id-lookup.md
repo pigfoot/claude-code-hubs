@@ -6,6 +6,7 @@
 ## Overview
 
 To add @mentions in Confluence using `add_mention.py`, you need the user's Confluence account ID in the format:
+
 ```
 557058:179bd844-7511-4c2d-8766-5896d380072b
 ```
@@ -30,6 +31,7 @@ This reference documents tested methods for obtaining account IDs.
 **When to use**: When you know the user's name or email
 
 **Requirements**:
+
 - Jira access (via MCP OAuth)
 - User must exist in Jira
 
@@ -42,6 +44,7 @@ This reference documents tested methods for obtaining account IDs.
 1. Ensure Jira MCP access (run `/mcp` if needed)
 
 2. Use `lookupJiraAccountId`:
+
    ```python
    # Via MCP tool
    mcp__plugin_confluence_atlassian__lookupJiraAccountId(
@@ -51,6 +54,7 @@ This reference documents tested methods for obtaining account IDs.
    ```
 
 3. Result:
+
    ```json
    {
      "accountId": "557058:179bd844-7511-4c2d-8766-5896d380072b",
@@ -60,10 +64,12 @@ This reference documents tested methods for obtaining account IDs.
    ```
 
 **Limitations**:
+
 - Requires valid Jira OAuth token
 - User must have Jira access
 
 **Note**: May return different account ID formats depending on when the account was created:
+
 - Old accounts: `622a2d144160640069caec19` (hex string only)
 - New accounts: `557058:179bd844-7511-4c2d-8766-5896d380072b` (number:UUID)
 - **Both formats work correctly in Confluence @mentions**
@@ -77,6 +83,7 @@ This reference documents tested methods for obtaining account IDs.
 **Key difference**: Gets account ID from **pages the user created/owns**, not pages where they're mentioned.
 
 **Requirements**:
+
 - Know at least one page ID created by the user
 - Confluence MCP access
 
@@ -91,6 +98,7 @@ This reference documents tested methods for obtaining account IDs.
    - Or if you already know a specific page ID they created
 
 2. Get page metadata (no need to read full body):
+
    ```python
    mcp__plugin_confluence_atlassian__getConfluencePage(
        cloudId="79a3ee80-0d14-4a82-9335-03f989902e7a",
@@ -100,6 +108,7 @@ This reference documents tested methods for obtaining account IDs.
    ```
 
 3. Extract from response:
+
    ```json
    {
      "authorId": "622a2d144160640069caec19",
@@ -118,6 +127,7 @@ This reference documents tested methods for obtaining account IDs.
 **When to use**: When you can guess the user's personal space URL
 
 **Requirements**:
+
 - User has a personal Confluence space
 - Confluence MCP access
 
@@ -133,6 +143,7 @@ This reference documents tested methods for obtaining account IDs.
    - Example: `~557058179bd84475114c2d87665896d380072b`
 
 2. Get space metadata:
+
    ```python
    mcp__plugin_confluence_atlassian__getConfluenceSpaces(
        cloudId="79a3ee80-0d14-4a82-9335-03f989902e7a",
@@ -141,6 +152,7 @@ This reference documents tested methods for obtaining account IDs.
    ```
 
 3. Extract from response:
+
    ```json
    {
      "spaceOwnerId": "557058:179bd844-7511-4c2d-8766-5896d380072b",
@@ -156,9 +168,11 @@ This reference documents tested methods for obtaining account IDs.
 
 **When to use**: When you need to find account ID from **pages where the user is @mentioned**
 
-**Key difference**: Gets account ID from **pages mentioning the user**, not necessarily pages they created. This is the GOLD STANDARD - the format is guaranteed to work in Confluence.
+**Key difference**: Gets account ID from **pages mentioning the user**, not necessarily pages they created. This is the
+GOLD STANDARD - the format is guaranteed to work in Confluence.
 
 **Requirements**:
+
 - Know a page with existing @mention of the user
 - Confluence MCP access
 
@@ -167,6 +181,7 @@ This reference documents tested methods for obtaining account IDs.
 **Tested with**: User A ✅, User B ✅
 
 **Use cases**:
+
 - User doesn't create many pages (harder to use Method 2)
 - You want to verify the exact format used in Confluence
 - User is frequently mentioned by others
@@ -174,6 +189,7 @@ This reference documents tested methods for obtaining account IDs.
 ### Steps
 
 1. Search for pages containing the user's name:
+
    ```python
    mcp__plugin_confluence_atlassian__search(
        query="User A @mention"
@@ -181,6 +197,7 @@ This reference documents tested methods for obtaining account IDs.
    ```
 
 2. Read page in ADF format:
+
    ```python
    mcp__plugin_confluence_atlassian__getConfluencePage(
        cloudId="79a3ee80-0d14-4a82-9335-03f989902e7a",
@@ -190,6 +207,7 @@ This reference documents tested methods for obtaining account IDs.
    ```
 
 3. Find mention node in ADF:
+
    ```json
    {
      "type": "mention",
@@ -218,6 +236,7 @@ This reference documents tested methods for obtaining account IDs.
 | **Format guarantee** | ✅ Correct | ✅ GOLD STANDARD (definitely correct) |
 
 **Quick decision**:
+
 - Know a page they **created**? → Use Method 2
 - Know a page they're **mentioned in**? → Use Method 4
 - Both work? → Use Method 2 (faster)
@@ -239,6 +258,7 @@ searchConfluenceUsingCql(cql='contributor = "User A"')
 ```
 
 **Why it fails**:
+
 - CQL user fields may require account ID instead of display name
 - Inconsistent behavior
 - Not worth debugging
@@ -254,8 +274,11 @@ searchConfluenceUsingCql(cql='contributor = "User A"')
 Atlassian removed email-to-account-ID lookup from both Confluence and Jira APIs.
 
 **Documentation**:
-- [How can we get the user Account Id in confluence cloud via email id?](https://community.atlassian.com/forums/Confluence-questions/How-can-we-get-the-user-Account-Id-in-confluence-cloud-via-email/qaq-p/2911212)
-- [REST API migration guide - removal of username and userkey](https://developer.atlassian.com/cloud/confluence/deprecation-notice-user-privacy-api-migration-guide/)
+
+- [How can we get the user Account Id in confluence cloud via email
+  id?](https://community.atlassian.com/forums/Confluence-questions/How-can-we-get-the-user-Account-Id-in-confluence-cloud-via-email/qaq-p/2911212)
+- [REST API migration guide - removal of username and
+  userkey](https://developer.atlassian.com/cloud/confluence/deprecation-notice-user-privacy-api-migration-guide/)
 
 ---
 
@@ -283,17 +306,21 @@ Atlassian removed email-to-account-ID lookup from both Confluence and Jira APIs.
 ## Account ID Format Reference
 
 ### New Format (Post-2020 accounts)
+
 ```
 557058:179bd844-7511-4c2d-8766-5896d380072b
 ```
+
 - Structure: `{number}:{UUID}`
 - Format: `\d+:[a-f0-9-]{36}`
 - Used for accounts created after Atlassian ID system update
 
 ### Old Format (Pre-2020 accounts)
+
 ```
 622a2d144160640069caec19
 ```
+
 - Structure: Hex string only
 - Format: `[a-f0-9]+`
 - Used for accounts created before Atlassian ID system update
@@ -325,6 +352,7 @@ See [troubleshooting.md](troubleshooting.md) for details.
 **Problem**: `lookupJiraAccountId` returns no results
 
 **Reasons**:
+
 - User doesn't have Jira access
 - User only has Confluence access
 - Name spelling is different
@@ -336,6 +364,7 @@ See [troubleshooting.md](troubleshooting.md) for details.
 ## Test Results Summary
 
 ### Test Subject 1: User A (New Format Account)
+
 **Correct Account ID**: `557058:179bd844-7511-4c2d-8766-5896d380072b`
 
 | Method | Result | Account ID Found |
@@ -349,6 +378,7 @@ See [troubleshooting.md](troubleshooting.md) for details.
 | CQL contributor | ❌ Failed | 0 results |
 
 ### Test Subject 2: User B (Old Format Account)
+
 **Correct Account ID**: `622a2d144160640069caec19`
 
 | Method | Result | Account ID Found |

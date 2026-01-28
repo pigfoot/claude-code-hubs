@@ -9,11 +9,13 @@ Complete workflow and reference for generating 5+ slides efficiently with minima
 ### When to Use
 
 **Automatic activation:** 5+ slides detected
+
 - **Benefits:** 80% context reduction (1,800 → 390 tokens for 10 slides)
 - **Trade-off:** Less immediate feedback (progress shown periodically)
 - **Best for:** Large slide decks, long presentations
 
-**Use direct execution for 1-4 slides:**
+#### Use direct execution for 1-4 slides
+
 - Immediate feedback per slide
 - Simpler workflow
 - Better for small sets
@@ -60,7 +62,7 @@ with open(config_path, 'w') as f:
 print(f"Configuration saved to: {config_path}")
 ```
 
-**Configuration Fields:**
+#### Configuration Fields
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -95,7 +97,7 @@ print("🚀 Started batch generation for 10 slides...")
 print("Progress updates will appear every 10-15 seconds.")
 ```
 
-**IMPORTANT - Common Mistakes:**
+#### IMPORTANT - Common Mistakes
 
 ❌ **WRONG - Will fail with import errors:**
 
@@ -135,7 +137,8 @@ Bash(
 )
 ```
 
-**Key Points:**
+#### Key Points
+
 - `{base_dir}` is the skill base directory provided by Claude Code when loading the skill
 - Use absolute path to script WITHOUT `cd` command
 - This keeps execution cwd in user's project directory, so relative paths in config work correctly
@@ -182,7 +185,7 @@ while True:
         continue
 ```
 
-**Progress File Schema:**
+#### Progress File Schema
 
 ```json
 {
@@ -200,7 +203,7 @@ while True:
 }
 ```
 
-**Fields:**
+#### Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -251,7 +254,7 @@ for output in results['outputs']:
     print(f"  slide-{output['slide']:02d}.webp ({size} KB)")
 ```
 
-**Results File Schema:**
+#### Results File Schema
 
 ```json
 {
@@ -282,7 +285,7 @@ for output in results['outputs']:
 }
 ```
 
-**Fields:**
+#### Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -309,7 +312,8 @@ for output in results['outputs']:
 
 The batch script continues processing remaining slides when individual slides fail:
 
-**Scenario: Slide 3 fails with API error**
+#### Scenario: Slide 3 fails with API error
+
 - Slides 1-2: ✓ Completed
 - Slide 3: ✗ Failed (logged in errors array)
 - Slides 4-10: ✓ Continue processing
@@ -323,7 +327,7 @@ The batch script continues processing remaining slides when individual slides fa
 
 ### Common Errors
 
-**1. API Rate Limit**
+#### 1. API Rate Limit
 
 ```json
 {
@@ -334,7 +338,7 @@ The batch script continues processing remaining slides when individual slides fa
 
 **Solution:** Wait for rate limit reset, retry failed slides
 
-**2. Invalid Configuration**
+#### 2. Invalid Configuration
 
 ```json
 {
@@ -344,7 +348,7 @@ The batch script continues processing remaining slides when individual slides fa
 
 **Solution:** Fix configuration JSON format, retry entire batch
 
-**3. File I/O Error**
+#### 3. File I/O Error
 
 ```json
 {
@@ -354,7 +358,7 @@ The batch script continues processing remaining slides when individual slides fa
 
 **Solution:** Check directory permissions, use writable path
 
-**4. Missing API Key**
+#### 4. Missing API Key
 
 ```
 Error: GEMINI_API_KEY or GOOGLE_API_KEY environment variable not set
@@ -416,7 +420,8 @@ The `style` field in slide configuration applies prompt enhancements:
 | 10 slides | ~1,800 tokens | ~390 tokens | 78% |
 | 20 slides | ~3,600 tokens | ~520 tokens | 86% |
 
-**Batch mode breakdown (10 slides):**
+#### Batch mode breakdown (10 slides)
+
 - Config creation: ~50 tokens
 - Start background task: ~20 tokens
 - Progress polls (3-6x): ~120-240 tokens
@@ -435,16 +440,18 @@ The `style` field in slide configuration applies prompt enhancements:
 
 ### Problem: Progress file not updating
 
-**Symptoms:**
+#### Symptoms
+
 - Progress file created but not changing
 - `current` value stuck
 
-**Possible causes:**
+#### Possible causes
+
 1. Script crashed (check background task)
 2. API errors (check results file)
 3. Long generation time (wait longer)
 
-**Solution:**
+#### Solution
 
 ```python
 # Check if background task is still running
@@ -453,7 +460,7 @@ The `style` field in slide configuration applies prompt enhancements:
 
 ### Problem: "Module not found" error
 
-**Symptoms:**
+#### Symptoms
 
 ```
 ModuleNotFoundError: No module named 'google.genai'
@@ -465,7 +472,7 @@ ModuleNotFoundError: No module named 'google.genai'
 
 ### Problem: Permission denied on progress/results file
 
-**Symptoms:**
+#### Symptoms
 
 ```
 PermissionError: [Errno 13] Permission denied: '<temp_dir>/nano-banana-progress.json'
@@ -516,7 +523,7 @@ print("🚀 Starting batch generation for 5 slides...")
 # Report completion status to user
 ```
 
-**Expected output:**
+### Expected output
 
 ```
 🚀 Starting batch generation for 5 slides...

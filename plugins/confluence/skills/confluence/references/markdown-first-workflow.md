@@ -2,14 +2,18 @@
 
 ## Overview
 
-The **Markdown-first workflow** is the official recommended approach for creating and publishing Confluence documentation using AI tools like Claude Code. This workflow emphasizes local Markdown generation, human review, and one-way publication to Confluence.
+The **Markdown-first workflow** is the official recommended approach for creating and publishing Confluence
+documentation using AI tools like Claude Code. This workflow emphasizes local Markdown generation, human review, and
+one-way publication to Confluence.
 
 ## Why Markdown-First?
 
 **Official Recommendation:**
-> "Always request Markdown generation first" - [Ivan Dachev's Claude Code MCP Guide](https://ivandachev.com/blog/claude-code-mcp-atlassian-integration)
+> "Always request Markdown generation first" - [Ivan Dachev's Claude Code MCP
+> Guide](https://ivandachev.com/blog/claude-code-mcp-atlassian-integration)
 
 **Key Benefits:**
+
 - ✅ **Human-readable review**: Markdown is easier to read and edit than ADF JSON
 - ✅ **Version control friendly**: Markdown files work well with Git
 - ✅ **No macro loss**: One-way conversion avoids Confluence macro preservation issues
@@ -45,10 +49,13 @@ The **Markdown-first workflow** is the official recommended approach for creatin
 ### Option A: Official Atlassian MCP + External Converter
 
 **Tools:**
+
 - **MCP**: [Official Atlassian Remote MCP Server](https://github.com/atlassian/atlassian-mcp-server)
-- **Converter**: [marklassian](https://marklassian.netlify.app/) (JavaScript) or [md2cf](https://pypi.org/project/md2cf/) (Python)
+- **Converter**: [marklassian](https://marklassian.netlify.app/) (JavaScript) or
+  [md2cf](https://pypi.org/project/md2cf/) (Python)
 
 **Workflow:**
+
 ```bash
 # 1. Generate Markdown locally with Claude
 # 2. Review and edit the Markdown file
@@ -64,9 +71,11 @@ npx marklassian input.md | \
 ### Option B: Third-Party MCP (aashari)
 
 **Tools:**
+
 - **MCP**: [@aashari/mcp-server-atlassian-confluence](https://github.com/aashari/mcp-server-atlassian-confluence)
 
 **Workflow:**
+
 ```javascript
 // Use generic conf_post tool
 conf_post({
@@ -87,10 +96,12 @@ conf_post({
 ### Option C: Python Scripts (Recommended for this plugin)
 
 **Tools:**
+
 - [md2cf](https://pypi.org/project/md2cf/) - Markdown to Confluence converter
 - REST API v2
 
 **Workflow:**
+
 ```python
 # scripts/md2cf.py
 from md2cf import md2cf
@@ -118,18 +129,22 @@ requests.post(
 ## Best Practices
 
 ### 1. Always Review Before Publishing
+
 - Verify technical accuracy
 - Test all code examples
 - Check for exposed secrets/credentials
 - Add team-specific context AI might miss
 
 ### 2. Use Strict Markdown Syntax
+
 When using md2cf or similar tools:
+
 - **Lists and tables** must be delimited by blank lines before AND after
 - **Nested lists** require proper indentation (2 or 4 spaces)
 - **Code blocks** should specify language for syntax highlighting
 
 Example:
+
 ```markdown
 This is a paragraph.
 
@@ -140,7 +155,9 @@ This is another paragraph.
 ```
 
 ### 3. Version Control Integration
+
 Store Markdown files in Git:
+
 ```
 docs/
   confluence/
@@ -150,6 +167,7 @@ docs/
 ```
 
 Use GitHub Actions for automated sync:
+
 ```yaml
 - uses: Telefonica/markdown-confluence-sync-action@v2
   with:
@@ -159,7 +177,9 @@ Use GitHub Actions for automated sync:
 ```
 
 ### 4. Handle Automation Notices
+
 Add notices to Confluence pages managed by automation:
+
 ```markdown
 > ⚠️ **Note**: This page is automatically generated from source code documentation.
 > Manual edits will be overwritten on the next sync.
@@ -171,6 +191,7 @@ Add notices to Confluence pages managed by automation:
 ### What Gets Lost in One-Way Conversion
 
 When converting Markdown → Confluence:
+
 - ❌ Confluence-specific macros (unless using raw ADF blocks)
 - ❌ Page properties
 - ❌ Custom layouts
@@ -185,9 +206,11 @@ When converting Markdown → Confluence:
 ## Common Issues
 
 ### Issue: Markdown Syntax Not Rendering
+
 **Problem**: Lists, tables, or code blocks not rendering correctly
 
 **Solution**: Ensure blank lines surround block elements
+
 ```markdown
 # Correct
 Paragraph text.
@@ -203,9 +226,11 @@ Another paragraph.
 ```
 
 ### Issue: Code Blocks Without Syntax Highlighting
+
 **Problem**: Code appears as plain text
 
 **Solution**: Specify language in fence blocks
+
 ````markdown
 ```python
 def hello():
@@ -214,9 +239,11 @@ def hello():
 ````
 
 ### Issue: Confluence API v1 Deprecation
+
 **Problem**: Tools using deprecated API endpoints fail after March 31, 2025
 
 **Solution**: Migrate to REST API v2
+
 - Replace `body.view` with `body.storage`
 - Update endpoint URLs from `/rest/api/` to `/wiki/api/v2/`
 

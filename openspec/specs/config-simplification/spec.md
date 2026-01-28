@@ -1,11 +1,15 @@
 # config-simplification Specification
 
 ## Purpose
+
 TBD - created by archiving change eliminate-heredoc-hallucinations. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Remove Model Field from Config
 
-The configuration file SHALL NOT include a `model` field. Model selection SHALL be controlled exclusively by the `NANO_BANANA_MODEL` environment variable.
+The configuration file SHALL NOT include a `model` field. Model selection SHALL be controlled exclusively by the
+`NANO_BANANA_MODEL` environment variable.
 
 **ID:** `config-simplification-001`
 **Priority:** High
@@ -15,11 +19,13 @@ The configuration file SHALL NOT include a `model` field. Model selection SHALL 
 **Given:** Claude creates config for image generation
 **When:** Building the JSON config
 **Then:**
+
 - Config does NOT contain `"model"` field
 - Model is determined by environment variable only
 - Claude never specifies model in config
 
 Example config:
+
 ```json
 {
   "slides": [...],
@@ -33,17 +39,20 @@ Example config:
 **Given:** Script executes with config
 **When:** Determining which model to use
 **Then:**
+
 - Priority 1: `NANO_BANANA_MODEL` environment variable
 - Priority 2: Default (`"gemini-3-pro-image-preview"`)
 - Config file is never checked for model
 
 Script logic:
+
 ```python
 model = os.environ.get("NANO_BANANA_MODEL") or "gemini-3-pro-image-preview"
 # Note: config.get('model') is NOT used
 ```
 
-**Rationale:** Prevents Claude from hallucinating incorrect model names (e.g., missing `-preview` suffix). User environment variable takes precedence.
+**Rationale:** Prevents Claude from hallucinating incorrect model names (e.g., missing `-preview` suffix). User
+environment variable takes precedence.
 
 ---
 
@@ -59,12 +68,14 @@ The configuration file SHALL require only two fields: `slides` and `output_dir`.
 **Given:** Claude needs to generate config
 **When:** Creating the most basic valid config
 **Then:**
+
 - Config contains `slides` array (required)
 - Config contains `output_dir` string (required)
 - No other fields are required
 - Config is valid and accepted by script
 
 Minimal example:
+
 ```json
 {
   "slides": [
@@ -79,11 +90,13 @@ Minimal example:
 **Given:** User needs customization
 **When:** Advanced config is needed
 **Then:**
+
 - Optional fields may be added: `format`, `quality`
 - Claude should NOT add these unless user explicitly requests
 - Defaults are used when optional fields absent
 
 Example with optional fields:
+
 ```json
 {
   "slides": [...],
@@ -109,10 +122,12 @@ The `output_dir` field SHALL only accept relative paths. Absolute paths SHALL be
 **Given:** Config with relative `output_dir`
 **When:** Script validates config
 **Then:**
+
 - Path is accepted
 - Script creates directory relative to execution location
 
 Valid examples:
+
 - `"./001-slides/"`
 - `"../output/slides/"`
 - `"slides/"`
@@ -122,12 +137,14 @@ Valid examples:
 **Given:** Config with absolute Unix path
 **When:** Script validates config
 **Then:**
+
 - Validation fails with error
 - Error message: "output_dir must be relative path, got: /home/user/slides/"
 - Suggests: "Use './dirname/' instead for cross-platform compatibility"
 - Script exits with code 1
 
 Rejected example:
+
 ```json
 {
   "output_dir": "/home/user/slides/"  // ❌ Absolute path
@@ -139,11 +156,13 @@ Rejected example:
 **Given:** Config with Windows absolute path
 **When:** Script validates config
 **Then:**
+
 - Validation fails with error
 - Error message includes the rejected path
 - Same clear guidance as Unix case
 
 Rejected examples:
+
 - `"C:\\Users\\slides\\"`
 - `"/c/Users/slides/"` (Git Bash style)
 
@@ -152,12 +171,14 @@ Rejected examples:
 **Given:** User receives absolute path error
 **When:** Reading error message
 **Then:**
+
 - Message clearly states the problem
 - Message shows the rejected path
 - Message suggests correct format
 - User can fix without further research
 
 Error format:
+
 ```
 Error: output_dir must be relative path, got: /home/user/slides/
 Use './dirname/' instead for cross-platform compatibility.
@@ -179,6 +200,7 @@ Progress and results files SHALL use platform-appropriate temporary directories 
 **Given:** Script runs on Linux or macOS
 **When:** Creating progress/results files
 **Then:**
+
 - Files created in `/tmp/`
 - Paths: `/tmp/nano-banana-progress.json`, `/tmp/nano-banana-results.json`
 
@@ -187,6 +209,7 @@ Progress and results files SHALL use platform-appropriate temporary directories 
 **Given:** Script runs on Windows
 **When:** Creating progress/results files
 **Then:**
+
 - Files created in Windows temp directory
 - Path: `C:\Users\<user>\AppData\Local\Temp\nano-banana-progress.json`
 - No `/tmp/` errors
@@ -196,11 +219,13 @@ Progress and results files SHALL use platform-appropriate temporary directories 
 **Given:** Script source code
 **When:** Reviewing temp file path logic
 **Then:**
+
 - No hardcoded `/tmp/` strings
 - Uses `Path(tempfile.gettempdir())`
 - Works on all platforms automatically
 
 Implementation:
+
 ```python
 import tempfile
 from pathlib import Path
@@ -210,7 +235,8 @@ PROGRESS_FILE = TEMP_DIR / "nano-banana-progress.json"
 RESULTS_FILE = TEMP_DIR / "nano-banana-results.json"
 ```
 
-**Rationale:** Hardcoded `/tmp/` causes `FileNotFoundError` on Windows. `tempfile.gettempdir()` is cross-platform standard.
+**Rationale:** Hardcoded `/tmp/` causes `FileNotFoundError` on Windows. `tempfile.gettempdir()` is cross-platform
+standard.
 
 ---
 
@@ -226,6 +252,7 @@ Configuration field requirements and examples SHALL be clearly documented in SKI
 **Given:** Claude needs to know config format
 **When:** Reading SKILL.md
 **Then:**
+
 - Required fields clearly marked
 - Optional fields clearly marked
 - Examples show minimal config
@@ -233,6 +260,7 @@ Configuration field requirements and examples SHALL be clearly documented in SKI
 - Model field explicitly noted as removed
 
 Documentation includes:
+
 ```markdown
 ### Config Requirements
 
@@ -245,10 +273,11 @@ Documentation includes:
 ```
 
 **Field Rules:**
+
 - ✅ `output_dir` MUST be relative path
 - ❌ NO absolute paths (breaks cross-platform)
 - ❌ NO `model` field (use NANO_BANANA_MODEL env var)
+
 ```
 
 **Rationale:** Clear documentation prevents Claude from adding unnecessary or incorrect fields.
-

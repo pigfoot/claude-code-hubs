@@ -17,6 +17,7 @@ The Confluence plugin currently has two separate access methods with no intellig
    - Requires manual environment variable configuration
 
 **Problems:**
+
 - Users must manually choose which method to use
 - No automatic fallback when one API fails
 - Inconsistent experience between API and MCP modes
@@ -80,11 +81,13 @@ The Confluence plugin currently has two separate access methods with no intellig
 ### Affected Files
 
 **New Files:**
+
 - `plugins/confluence/skills/confluence/scripts/confluence_router.py`
 - `plugins/confluence/skills/confluence/scripts/url_resolver.py`
 - `plugins/confluence/skills/confluence/scripts/smart_search.py`
 
 **Modified Files:**
+
 - `plugins/confluence/skills/confluence/scripts/upload_confluence.py`
 - `plugins/confluence/skills/confluence/scripts/download_confluence.py`
 - `plugins/confluence/skills/confluence/scripts/confluence_adf_utils.py`
@@ -111,10 +114,12 @@ The Confluence plugin currently has two separate access methods with no intellig
 ## Design Reference
 
 Complete technical design and implementation details are documented in:
+
 - [docs/plans/005-confluence-smart-routing/design.md](../../docs/plans/005-confluence-smart-routing/design.md)
 - [docs/plans/005-confluence-smart-routing/research.md](../../docs/plans/005-confluence-smart-routing/research.md)
 
 Key decisions:
+
 - REST API is primary when credentials available (25x faster writes)
 - MCP provides zero-config fallback experience
 - Local Base64 decoding for URL resolution (no network calls)

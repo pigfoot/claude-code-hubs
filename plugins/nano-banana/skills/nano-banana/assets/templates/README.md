@@ -9,18 +9,21 @@ Brand templates for reference and testing.
 **Source:** Official TrendLife product line presentation template
 
 **Contents:**
+
 - 29 sample slides
 - 20 slide layouts (title, divider, content, end slides)
 - TrendLife color scheme and typography
 - Brand assets (logos, images)
 
 **Usage:**
+
 - Reference for brand colors and styling
 - Logo asset extraction source
 - Layout structure reference
 - Testing compatibility
 
 **Key Information:**
+
 - **Aspect Ratio:** 16:9 (1920×1080 equivalent)
 - **Theme:** "TrendMicro-LightTheme"
 - **Primary Colors:** Trend Red (#D71920), Guardian Red (#6F0000)

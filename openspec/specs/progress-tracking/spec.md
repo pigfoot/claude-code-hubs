@@ -1,8 +1,11 @@
 # progress-tracking Specification
 
 ## Purpose
+
 TBD - created by archiving change 001-implement-batch-generation. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Progress File Updates
 
 The batch generation script SHALL write progress to `/tmp/nano-banana-progress.json` after completing each slide.
@@ -15,12 +18,14 @@ The batch generation script SHALL write progress to `/tmp/nano-banana-progress.j
 **Given:** generate_batch.py is processing 10 slides
 **When:** Each slide completes successfully
 **Then:**
+
 - Progress file is updated immediately
 - File contains current count, total count, status message
 - File includes array of completed slide paths
 - Timestamp is updated
 
 **Progress File Schema:**
+
 ```json
 {
   "current": 3,
@@ -53,6 +58,7 @@ Claude SHALL poll the progress file every 10-15 seconds to provide user updates.
 **Given:** Batch generation is running
 **When:** Claude checks progress
 **Then:**
+
 - `Read("/tmp/nano-banana-progress.json")` is called every 10-15 seconds
 - Progress JSON is parsed
 - User sees update: "Progress: 3/10 slides completed (30%)"
@@ -63,6 +69,7 @@ Claude SHALL poll the progress file every 10-15 seconds to provide user updates.
 **Given:** Background task just started
 **When:** Claude attempts first poll
 **Then:**
+
 - If file doesn't exist yet, wait and retry
 - No error shown to user
 - Continue polling normally
@@ -83,6 +90,7 @@ User SHALL see periodic progress updates showing completion percentage and slide
 **Given:** 10-slide batch generation is running
 **When:** Progress polls occur
 **Then:**
+
 - User sees updates like:
   - "Progress: 3/10 slides completed (30%)"
   - "Progress: 7/10 slides completed (70%)"
@@ -105,6 +113,7 @@ Claude SHALL detect when batch generation completes by checking progress file.
 **Given:** Progress file shows current == total
 **When:** Claude reads progress file
 **Then:**
+
 - Polling stops
 - Final results file is read
 - User is notified of completion
@@ -114,6 +123,7 @@ Claude SHALL detect when batch generation completes by checking progress file.
 **Given:** Background task terminates abnormally
 **When:** Progress file stops updating for 60+ seconds
 **Then:**
+
 - Claude detects stalled progress
 - User is notified: "Generation may have failed, checking results..."
 - Results file is read for error details
@@ -121,4 +131,3 @@ Claude SHALL detect when batch generation completes by checking progress file.
 **Rationale:** Reliable completion detection ensures user always gets outcome.
 
 ---
-

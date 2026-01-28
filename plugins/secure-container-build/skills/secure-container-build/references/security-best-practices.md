@@ -21,22 +21,26 @@ FROM cgr.dev/chainguard/glibc-dynamic:${RUNTIME_TAG}
 ```
 
 **Available tags:**
+
 - `latest` - **Production** (no shell, minimal, most secure) ⭐ **Recommended for production**
 - `latest-dev` - **Development/debugging** (includes shell, apk, busybox tools)
 
 **When to use each:**
 
 ✅ **Use `latest` (default) for:**
+
 - Production deployments
 - CI/CD pipelines
 - Maximum security (no shell = smaller attack surface)
 
 ✅ **Use `latest-dev` for:**
+
 - Local debugging
 - Troubleshooting container issues
 - Need to exec into container for investigation
 
 **Build-time selection:**
+
 ```bash
 # Production build (no shell)
 podman build -t myapp:prod .
@@ -46,6 +50,7 @@ podman build --build-arg RUNTIME_TAG=latest-dev -t myapp:debug .
 ```
 
 **Debugging with latest-dev:**
+
 ```bash
 # Exec into container with shell
 podman run -it myapp:debug sh
@@ -85,6 +90,7 @@ CMD ["your-app"]
 ```
 
 **Why tini?**
+
 - Handles zombie processes correctly
 - Forwards signals properly (SIGTERM for graceful shutdown)
 - Essential for production containers
@@ -100,6 +106,7 @@ FROM docker.io/python:3-slim AS builder
 ```
 
 Benefits:
+
 - Official Python runtime with all necessary libraries
 - Includes pip, setuptools by default
 - Compatible with most Python packages
@@ -114,6 +121,7 @@ FROM docker.io/node:lts-slim AS builder
 ```
 
 Benefits:
+
 - Official Node.js LTS with npm/corepack
 - Compatible with Bun installation
 - Includes build tools for native modules

@@ -2,11 +2,14 @@
 
 ## Summary
 
-Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc code generation with a fixed Python script approach for all image generation tasks.
+Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc code generation with a fixed Python
+script approach for all image generation tasks.
 
 ## Problem
 
-**Current Issue:** When generating 1-4 images, Claude dynamically writes heredoc Python code, which frequently produces hallucinations (30-40% failure rate):
+**Current Issue:** When generating 1-4 images, Claude dynamically writes heredoc Python code, which frequently produces
+hallucinations (30-40% failure rate):
+
 - Non-existent parameters like `api_version`
 - Incorrect model names (e.g., `gemini-3-pro-image` missing `-preview` suffix)
 - Wrong API method signatures
@@ -14,22 +17,26 @@ Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc c
 - Windows encoding issues with Unicode characters
 
 **Why Heredocs Fail:**
+
 - Claude must recall exact API method names, parameter names, model names
 - Training data may contain outdated or incorrect examples
 - Similar APIs get conflated (Gemini vs Imagen)
 - Parameter names sound plausible but don't exist
 
 **Success Rate:**
+
 - Heredocs (1-4 images): 60-70% success
 - Batch mode (5+ images): 99% success (only user error, no AI error)
 
-**Root Cause:** Code generation requires precise recall of technical details, while data generation (JSON config) has no such requirement.
+**Root Cause:** Code generation requires precise recall of technical details, while data generation (JSON config) has no
+such requirement.
 
 ## Solution
 
 **Core Principle:** Claude generates data (JSON config), not code (Python scripts).
 
 **Key Changes:**
+
 1. **Rename Script:** `generate_batch.py` → `generate_images.py` (semantic clarity)
 2. **Unified Workflow:** All image generation (1-100 images) uses the same fixed script
 3. **Simplify Config:** Remove `model` field; Claude only generates `slides` and `output_dir`
@@ -40,6 +47,7 @@ Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc c
 ## Impact
 
 **Benefits:**
+
 - ✅ Zero AI hallucinations (99% → 100% success rate for AI-generated parts)
 - ✅ Consistent behavior across all slide counts
 - ✅ Cross-platform compatibility (Windows/Linux/macOS)
@@ -47,6 +55,7 @@ Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc c
 - ✅ Easier maintenance (one script to update)
 
 **Trade-offs:**
+
 - Single-image generation now requires JSON config step (slight overhead)
 - Config-based approach less "magical" than inline heredocs
 - Breaking change: users/docs referencing old script name
@@ -56,12 +65,14 @@ Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc c
 ### In Scope
 
 **Code Changes:**
+
 1. Rename `generate_batch.py` to `generate_images.py`
 2. Remove `config.get('model')` from model selection logic
 3. Replace `/tmp/` hardcoded paths with `tempfile.gettempdir()`
 4. Add `output_dir` validation to reject absolute paths
 
 **Documentation Changes:**
+
 1. Delete `references/gemini-api.md` (heredoc examples only)
 2. Delete `references/imagen-api.md` (heredoc examples only)
 3. Rewrite `SKILL.md` (remove all heredoc sections, add unified workflow)
@@ -82,6 +93,7 @@ Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc c
 ### Modified Specs
 
 **batch-generation:**
+
 - Remove "5+ slides" threshold requirement
 - Update to reflect unified workflow for all slide counts
 - Update script name references
@@ -89,11 +101,13 @@ Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc c
 ### New Specs
 
 **unified-generation:**
+
 - Single workflow for all image generation tasks
 - JSON config + fixed script pattern
 - Cross-platform path handling
 
 **config-simplification:**
+
 - Minimal required fields (slides, output_dir)
 - Model selection via environment variable only
 - Relative path enforcement
@@ -143,6 +157,7 @@ Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc c
 See [tasks.md](./tasks.md) for detailed task breakdown.
 
 **High-Level Phases:**
+
 1. **Phase 1:** Script updates (rename, model logic, path handling)
 2. **Phase 2:** Documentation updates (remove heredocs, rewrite SKILL.md)
 3. **Phase 3:** Testing (cross-platform validation)

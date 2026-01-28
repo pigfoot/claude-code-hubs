@@ -2,7 +2,8 @@
 
 ## Why
 
-The nano-banana plugin currently has a "Trend Micro" style that provides generic Trend Micro branding. However, this style:
+The nano-banana plugin currently has a "Trend Micro" style that provides generic Trend Micro branding. However, this
+style:
 
 1. **Lacks logo overlay** - No brand logo appears on generated slides
 2. **Lacks specificity** - Named after corporate brand rather than product line (TrendLife)
@@ -14,7 +15,9 @@ TrendLife is the primary product line requiring branded presentations with:
 2. **TrendLife logo** that must appear correctly positioned on all slides
 3. **Layout-specific logo positioning** (title, content, divider, and end slides require different placements)
 
-Current AI image generation models cannot reliably render brand logos with sufficient quality and accuracy. Industry best practice (Google's approach) recommends generating slide backgrounds with AI, then overlaying logos using precise image compositing tools like Pillow.
+Current AI image generation models cannot reliably render brand logos with sufficient quality and accuracy. Industry
+best practice (Google's approach) recommends generating slide backgrounds with AI, then overlaying logos using precise
+image compositing tools like Pillow.
 
 ## What Changes
 
@@ -68,6 +71,7 @@ This change **renames** the existing "Trend Micro" style to **"TrendLife"** and 
 ### Affected Files
 
 **New Files:**
+
 - `plugins/nano-banana/skills/nano-banana/logo_overlay.py` - Logo overlay module
 - `plugins/nano-banana/skills/nano-banana/assets/logos/trendlife-logo.png` - TrendLife logo asset
 - `plugins/nano-banana/skills/nano-banana/assets/logos/README.md` - Logo usage guidelines
@@ -76,6 +80,7 @@ This change **renames** the existing "Trend Micro" style to **"TrendLife"** and 
 - `plugins/nano-banana/skills/nano-banana/assets/README.md` - Assets directory overview
 
 **Modified Files:**
+
 - `plugins/nano-banana/skills/nano-banana/SKILL.md` - Add TrendLife style documentation
 - `plugins/nano-banana/skills/nano-banana/references/brand-styles.md` - Add TrendLife section
 - `plugins/nano-banana/skills/nano-banana/generate_batch.py` - Integrate logo overlay
@@ -97,9 +102,11 @@ This change **renames** the existing "Trend Micro" style to **"TrendLife"** and 
 ## Design Reference
 
 Complete technical design and implementation details are documented in:
+
 - [docs/plans/002-trendlife-style-improvement/design.md](/home/pigfoot/proj/claude-code-hubs/docs/plans/002-trendlife-style-improvement/design.md)
 
 Key decisions:
+
 - **Google hybrid approach** (AI generation + Pillow overlay) chosen over prompt-based logo generation for reliability
 - **Layout detection** uses keyword matching + slide number heuristics
 - **Lossless WebP** format for final output to preserve quality

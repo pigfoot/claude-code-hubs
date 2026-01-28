@@ -5,11 +5,13 @@
 Wolfi provides two variants for debugging purposes:
 
 ### Production Image (Default)
+
 ```dockerfile
 FROM cgr.dev/chainguard/glibc-dynamic:latest
 ```
 
 **Characteristics:**
+
 - ❌ No shell (sh, bash)
 - ❌ No debugging tools
 - ✅ Minimal attack surface
@@ -19,11 +21,13 @@ FROM cgr.dev/chainguard/glibc-dynamic:latest
 **Use for:** Production deployments
 
 ### Debug Image
+
 ```dockerfile
 FROM cgr.dev/chainguard/glibc-dynamic:latest-dev
 ```
 
 **Characteristics:**
+
 - ✅ Includes shell (sh)
 - ✅ Basic debugging tools
 - ⚠️ Larger image size
@@ -41,6 +45,7 @@ FROM cgr.dev/chainguard/glibc-dynamic:${RUNTIME_TAG} AS runtime
 ```
 
 ### Build for Production
+
 ```bash
 podman build -t myapp:latest .
 # or explicitly
@@ -48,6 +53,7 @@ podman build --build-arg RUNTIME_TAG=latest -t myapp:prod .
 ```
 
 ### Build for Debugging
+
 ```bash
 podman build --build-arg RUNTIME_TAG=latest-dev -t myapp:debug .
 ```
@@ -141,6 +147,7 @@ Trigger debug build manually via GitHub UI when needed.
 ### Local vs CI Debugging
 
 **Local Development:**
+
 ```bash
 # Build with debug image
 podman build --build-arg RUNTIME_TAG=latest-dev -t myapp:debug .
@@ -155,6 +162,7 @@ podman run -it --rm \
 ```
 
 **CI Environment:**
+
 ```bash
 # Use workflow_dispatch for on-demand debug builds
 # Add manual steps to dump environment
@@ -170,28 +178,32 @@ podman run -it --rm \
 ### Application Won't Start
 
 1. **Build debug image:**
+
    ```bash
    podman build --build-arg RUNTIME_TAG=latest-dev -t myapp:debug .
    ```
 
 2. **Check file permissions:**
+
    ```bash
    podman run -it myapp:debug sh -c 'ls -la /app'
    ```
 
 3. **Verify dependencies:**
+
    ```bash
    # Python
    podman run -it myapp:debug sh -c 'pip list'
-   
+
    # Node.js
    podman run -it myapp:debug sh -c 'ls -la /app/node_modules'
-   
+
    # Bun
    podman run -it myapp:debug sh -c 'bun pm ls'
    ```
 
 4. **Test command manually:**
+
    ```bash
    podman run -it myapp:debug sh
    # Then run commands interactively

@@ -29,7 +29,8 @@ Every contribution to this marketplace MUST be a standalone, reusable resource:
 - Clear purpose required - no organizational-only resources
 - Each resource must be independently installable and testable
 
-**Rationale**: A plugin-first architecture ensures users can pick and choose only the functionality they need, reducing bloat and maintaining clarity of purpose. Self-contained resources are easier to maintain, test, and distribute.
+**Rationale**: A plugin-first architecture ensures users can pick and choose only the functionality they need, reducing
+bloat and maintaining clarity of purpose. Self-contained resources are easier to maintain, test, and distribute.
 
 ### II. Standards-Based Resources
 
@@ -42,7 +43,8 @@ All marketplace resources MUST follow established standards:
 - **Documentation**: English for all docs, code, comments, README files
 - **Licensing**: Clear license declaration in each plugin
 
-**Rationale**: Standards ensure interoperability across different Claude Code installations and make it easy for users to understand and integrate resources. Consistent naming and documentation patterns reduce cognitive load.
+**Rationale**: Standards ensure interoperability across different Claude Code installations and make it easy for users
+to understand and integrate resources. Consistent naming and documentation patterns reduce cognitive load.
 
 ### III. Documentation-Driven Development
 
@@ -54,7 +56,8 @@ Documentation is first-class and MUST precede implementation:
 - Breaking changes require migration guides
 - All documentation in English regardless of author's language
 
-**Rationale**: Users discover and evaluate resources through documentation first. Poor documentation means the resource won't be adopted, regardless of technical quality. Documentation-first forces clarity of thought before implementation.
+**Rationale**: Users discover and evaluate resources through documentation first. Poor documentation means the resource
+won't be adopted, regardless of technical quality. Documentation-first forces clarity of thought before implementation.
 
 ### IV. Test-First (NON-NEGOTIABLE)
 
@@ -66,7 +69,8 @@ All executable code MUST follow Test-Driven Development:
 - Skills must include example sessions demonstrating usage
 - No commits with failing tests
 
-**Rationale**: Marketplace resources are used by many users in diverse environments. Bugs affect everyone. TDD ensures code actually works before distribution and prevents regressions.
+**Rationale**: Marketplace resources are used by many users in diverse environments. Bugs affect everyone. TDD ensures
+code actually works before distribution and prevents regressions.
 
 ### V. Quality & Simplicity
 
@@ -79,7 +83,8 @@ Resources MUST be simple, focused, and high-quality:
 - Config templates should be <300 lines with clear sections
 - Code must be readable without deep domain knowledge
 
-**Rationale**: Marketplace resources are maintained by contributors and used by diverse users. Simplicity ensures long-term maintainability. Focused scope prevents feature creep and keeps resources understandable.
+**Rationale**: Marketplace resources are maintained by contributors and used by diverse users. Simplicity ensures
+long-term maintainability. Focused scope prevents feature creep and keeps resources understandable.
 
 ## Distribution & Marketplace Standards
 
@@ -169,7 +174,8 @@ Before merging any resource:
 
 ### Constitutional Authority
 
-This constitution supersedes all other project practices. All contributions, reviews, and marketplace additions must verify compliance with these principles.
+This constitution supersedes all other project practices. All contributions, reviews, and marketplace additions must
+verify compliance with these principles.
 
 ### Amendment Process
 
@@ -182,7 +188,8 @@ Constitution changes require:
 
 ### Complexity Justification
 
-Any deviation from simplicity principles (new dependencies, complex architectures, multi-purpose plugins) MUST be justified:
+Any deviation from simplicity principles (new dependencies, complex architectures, multi-purpose plugins) MUST be
+justified:
 
 - Document the specific problem requiring complexity
 - Explain why simpler alternatives were rejected

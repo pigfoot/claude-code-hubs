@@ -2,7 +2,8 @@
 
 ## Project Overview
 
-Improve nano-banana plugin's TrendLife brand style support by implementing high-quality PowerPoint slide generation with perfect logo preservation.
+Improve nano-banana plugin's TrendLife brand style support by implementing high-quality PowerPoint slide generation with
+perfect logo preservation.
 
 ## Goals
 

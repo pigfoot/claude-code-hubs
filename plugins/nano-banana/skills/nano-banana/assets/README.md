@@ -18,25 +18,31 @@ assets/
 ## Asset Types
 
 ### Logos
+
 Processed brand logos ready for overlay on generated slides.
 
 **Current:**
+
 - `logos/trendlife-logo.png` - TrendLife product logo (icon + text)
 
 **Future:**
+
 - TrendAI logo
 - Alternative logo versions (white, icon-only)
 
 ### Templates
+
 Original PowerPoint templates for reference.
 
 **Purpose:**
+
 - Color palette extraction
 - Layout structure reference
 - Brand asset source
 - Compatibility testing
 
 **Current:**
+
 - `templates/1201_TrendLife PowerPoint Deck.pptx` - TrendLife official template
 
 ## Usage
@@ -63,6 +69,7 @@ overlay_logo(
 ```
 
 **Template Reference:**
+
 - Extract colors from theme XML
 - Analyze slide master layouts
 - Reference logo placement positions
@@ -71,11 +78,13 @@ overlay_logo(
 ## File Size Guidelines
 
 **Logos:**
+
 - PNG with transparency (RGBA)
 - Optimized for web (typically 100-300 KB)
 - High resolution (support 4K slides)
 
 **Templates:**
+
 - Keep original files unmodified
 - Store compressed if possible
 - Document source and version

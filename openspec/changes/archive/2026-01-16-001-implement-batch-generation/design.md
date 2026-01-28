@@ -5,7 +5,8 @@
 
 ## Overview
 
-This design introduces a batch generation mode for nano-banana that reduces conversation context consumption by 80% when generating 5+ images. The solution uses background Bash tasks with progress file polling.
+This design introduces a batch generation mode for nano-banana that reduces conversation context consumption by 80% when
+generating 5+ images. The solution uses background Bash tasks with progress file polling.
 
 ## Architecture
 
@@ -90,11 +91,13 @@ Report to user
 **Decision:** Keep SKILL.md minimal (~20 new lines), put details in references/
 
 **Context:**
+
 - nano-banana recently optimized: 795 → 387 lines (-51%)
 - Adopted progressive disclosure: main skill → references/
 - Must not regress token consumption
 
 **Implementation:**
+
 - **SKILL.md** (~387 + 20 = 407 lines total):
   - Batch mode trigger rule (5+ slides)
   - 4-step workflow summary (no code)
@@ -108,6 +111,7 @@ Report to user
   - Troubleshooting guide
 
 **Rationale:**
+
 - Maintains token efficiency achieved in v0.0.4
 - Claude loads SKILL.md first, references/ only when needed
 - Consistent with existing gemini-api.md, imagen-api.md pattern
@@ -122,6 +126,7 @@ Report to user
 **Decision:** Use `Bash(run_in_background=True)`
 
 **Rationale:**
+
 - **Cost:** Zero additional API tokens (vs +1,500% with subagents)
 - **Speed:** Python runs at native speed, no startup overhead
 - **Simplicity:** Single Python process, no coordination complexity
@@ -149,11 +154,13 @@ Report to user
 ```
 
 **Rationale:**
+
 - Easy to parse with `jq` or Python json module
 - Self-documenting structure
 - Extensible for future fields
 
 **Alternative considered:** Plain text log
+
 - Rejected: Harder to parse, error-prone
 
 ### 3. When to Use Batch Mode?
@@ -161,6 +168,7 @@ Report to user
 **Decision:** Automatic activation at 5+ slides
 
 **Rationale:**
+
 - **1-4 slides:** Direct execution is simpler
   - Immediate feedback
   - Easy debugging
@@ -172,6 +180,7 @@ Report to user
   - Worth the polling overhead
 
 **Threshold analysis:**
+
 | Slides | Direct Context | Batch Context | Savings | Worth It? |
 |--------|----------------|---------------|---------|-----------|
 | 3      | ~600 tokens    | ~390 tokens   | 35%     | No - complexity not justified |
@@ -184,17 +193,20 @@ Report to user
 **Decision:** Continue processing on individual slide failures
 
 **Behavior:**
+
 1. Slide N fails → log error, continue to slide N+1
 2. Update progress with failed count
 3. Report all errors in final results
 4. Exit code 0 if any slides succeeded, 1 if all failed
 
 **Rationale:**
+
 - User gets partial results instead of nothing
 - Failures in one slide don't block the rest
 - All errors reported for debugging
 
 **Example:**
+
 ```json
 {
   "completed": 8,
@@ -212,6 +224,7 @@ Report to user
 **Decision:** 10-15 seconds
 
 **Rationale:**
+
 - **Too fast (<5s):** Excessive API calls, user sees too many updates
 - **Too slow (>20s):** User feels disconnected, poor UX
 - **10-15s sweet spot:**
@@ -220,6 +233,7 @@ Report to user
   - Low overhead
 
 **Dynamic adjustment:**
+
 - Could adapt based on slide complexity (future enhancement)
 
 ### 6. File Paths
@@ -227,12 +241,14 @@ Report to user
 **Decision:** Use `/tmp/nano-banana-{progress,results}.json`
 
 **Rationale:**
+
 - `/tmp` is standard temp location across Unix systems
 - Predictable paths (no need to pass task_id)
 - Auto-cleanup on reboot
 - No permission issues
 
 **Alternative considered:** Task-specific paths like `/tmp/nano-banana-{task_id}.json`
+
 - Rejected: Unnecessary complexity, task_id management overhead
 
 ### 7. Backward Compatibility
@@ -240,11 +256,13 @@ Report to user
 **Decision:** Keep direct execution for 1-4 slides
 
 **Rationale:**
+
 - Don't break existing workflows
 - Simpler code path for simple cases
 - User expectations (immediate feedback for small jobs)
 
 **Implementation:**
+
 ```python
 # In SKILL.md logic
 if slide_count >= 5:
@@ -277,6 +295,7 @@ else:
 ```
 
 **Validation rules:**
+
 - `slides`: array, min length 1, required
 - `slides[].number`: integer, required
 - `slides[].prompt`: string, non-empty, required
@@ -393,6 +412,7 @@ if __name__ == '__main__':
 ### Skill Workflow (Progressive Disclosure Strategy)
 
 **IMPORTANT:** Following nano-banana's token optimization (795→387 lines), we use progressive disclosure:
+
 - **SKILL.md**: Minimal trigger logic (~15-20 lines)
 - **references/batch-generation.md**: Complete workflow with code examples (~200-300 lines)
 
@@ -498,19 +518,25 @@ print(f"\nResults: {data['outputs'][0]['path'].parent}")
 ```
 
 ## Configuration Schema
+
 [... detailed schema documentation ...]
 
 ## Progress File Schema
+
 [... detailed progress JSON schema ...]
 
 ## Results File Schema
+
 [... detailed results JSON schema ...]
 
 ## Error Handling
+
 [... error codes and troubleshooting ...]
 
 ## Examples
+
 [... complete examples for various scenarios ...]
+
 ```
 
 **This keeps SKILL.md lean while providing complete reference when needed.**

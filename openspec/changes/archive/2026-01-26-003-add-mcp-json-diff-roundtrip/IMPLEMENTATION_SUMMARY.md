@@ -6,7 +6,8 @@
 
 ## Overview
 
-Successfully implemented Method 6: MCP + JSON Diff Roundtrip for Confluence plugin, enabling intelligent page editing while preserving macros.
+Successfully implemented Method 6: MCP + JSON Diff Roundtrip for Confluence plugin, enabling intelligent page editing
+while preserving macros.
 
 ## What Was Built
 
@@ -59,6 +60,7 @@ Implemented 7 core classes:
 ### Test Suite (24 tests, 100% passing)
 
 **Unit Tests** (19 tests): `test_mcp_json_diff_roundtrip.py`
+
 - ADFTextExtractor: 4 tests
 - SimpleMarkdownConverter: 4 tests
 - TextDiffer: 3 tests
@@ -66,6 +68,7 @@ Implemented 7 core classes:
 - MacroBodyDetector: 4 tests
 
 **Integration Tests** (5 tests): `test_integration_roundtrip.py`
+
 - Safe Mode: 2 tests
 - Advanced Mode: 3 tests (including rollback scenarios)
 
@@ -74,6 +77,7 @@ All tests run in < 20ms, providing fast feedback loop.
 ### Documentation
 
 **Updated Files**:
+
 1. `SKILL.md` - Comprehensive Chinese documentation:
    - When to use Method 6 (✅ suitable / ❌ not suitable)
    - Natural language usage examples
@@ -96,22 +100,26 @@ All tests run in < 20ms, providing fast feedback loop.
 ## Key Design Decisions
 
 ### 1. Dual-Mode Architecture
+
 - **Safe Mode (default)**: Skip macro bodies, zero risk
 - **Advanced Mode (opt-in)**: Edit macro bodies with explicit confirmation
 - User control through interactive prompts
 
 ### 2. Automatic Backup & Rollback
+
 - Backup created before every edit (microsecond precision timestamps)
 - Auto-rollback on write failure
 - Manual rollback supported with backup listing
 - 10 backups retained per page (configurable)
 
 ### 3. Macro Detection & Confirmation
+
 - Detect macros with extensionKey attribute (not just node type)
 - Show preview and text count before asking user
 - Clear risk warnings for Advanced Mode
 
 ### 4. Error Handling Strategy
+
 - User-friendly messages with actionable tips
 - Auth failures → suggest `/mcp` re-run
 - Page not found → verify page ID
@@ -119,6 +127,7 @@ All tests run in < 20ms, providing fast feedback loop.
 - Validation errors → show detailed path information
 
 ### 5. MCP Integration Design
+
 - Placeholder methods (`_read_page`, `_write_page`) for Claude Code integration
 - Clean separation: core logic testable independently
 - Mock MCP client for integration tests
@@ -152,6 +161,7 @@ All tests passing ✅
 ## Implementation Highlights
 
 ### Robust Text Matching
+
 ```python
 def _compute_word_overlap(self, text1: str, text2: str) -> float:
     words1 = set(text1.lower().split())
@@ -164,6 +174,7 @@ def _compute_word_overlap(self, text1: str, text2: str) -> float:
 30% threshold allows Claude to rephrase while still matching original text nodes.
 
 ### Safe ADF Patching
+
 ```python
 def apply_text_changes(self, adf: dict, changes: list[TextChange]) -> dict:
     import copy
@@ -176,6 +187,7 @@ def apply_text_changes(self, adf: dict, changes: list[TextChange]) -> dict:
 Deep copy ensures original ADF untouched, enabling easy rollback.
 
 ### Timestamp-based Backup
+
 ```python
 timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S-%f")
 backup_file = page_backup_dir / f"{timestamp}.json"
@@ -186,7 +198,9 @@ Microsecond precision prevents collisions when creating multiple backups rapidly
 ## Next Steps for Deployment
 
 ### 1. MCP Integration (required for production)
+
 Connect placeholder methods to actual MCP tools:
+
 ```python
 def _read_page(self, cloud_id: str, page_id: str) -> dict:
     # TODO: Call mcp__plugin_confluence_atlassian__getConfluencePage
@@ -198,23 +212,27 @@ def _read_page(self, cloud_id: str, page_id: str) -> dict:
 ```
 
 ### 2. End-to-End Testing
+
 - Test with real Confluence pages containing various macro types
 - Verify OAuth authentication flow
 - Test rollback with actual page updates
 - Validate performance with large pages (>100KB ADF)
 
 ### 3. User Feedback Iteration
+
 - Collect feedback on interactive prompts UX
 - Refine word overlap threshold if needed
 - Add more macro type detection
 - Enhance error messages based on real usage
 
 ### 4. Performance Optimization (if needed)
+
 - Profile text extraction for large pages
 - Consider caching extracted nodes
 - Optimize diff computation for many text nodes
 
 ### 5. Additional Features (future)
+
 - Dry-run mode (show changes without writing)
 - Diff preview before confirmation
 - Support for nested macros
@@ -230,11 +248,14 @@ def _read_page(self, cloud_id: str, page_id: str) -> dict:
 
 ## Conclusion
 
-Method 6 implementation is **complete and production-ready** pending MCP integration. All core functionality, error handling, and documentation are in place. The architecture is extensible and well-tested.
+Method 6 implementation is **complete and production-ready** pending MCP integration. All core functionality, error
+handling, and documentation are in place. The architecture is extensible and well-tested.
 
-The implementation successfully solves the "macro preservation vs intelligent editing" dilemma by giving users control through Safe and Advanced modes, backed by automatic backup and rollback mechanisms.
+The implementation successfully solves the "macro preservation vs intelligent editing" dilemma by giving users control
+through Safe and Advanced modes, backed by automatic backup and rollback mechanisms.
 
 **Implementation Quality**:
+
 - ✅ All 24 tests passing
 - ✅ Comprehensive error handling
 - ✅ User-friendly Chinese documentation

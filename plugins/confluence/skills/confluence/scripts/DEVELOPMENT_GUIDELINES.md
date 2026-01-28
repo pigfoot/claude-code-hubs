@@ -5,6 +5,7 @@
 ### 1. Always Use PEP 723 Inline Metadata
 
 **✅ Correct**:
+
 ```python
 #!/usr/bin/env python3
 # /// script
@@ -17,6 +18,7 @@
 ```
 
 **❌ Wrong**: Using heredoc or inline Python without metadata
+
 ```bash
 # DON'T DO THIS
 uv run python3 << 'EOF'
@@ -26,6 +28,7 @@ EOF
 ```
 
 **Why?**
+
 - PEP 723 enables `uv run` to auto-manage dependencies
 - Heredoc creates token generation overhead (discovered in performance analysis)
 - Can't reuse scripts without metadata
@@ -34,17 +37,20 @@ EOF
 ### 2. Always Run with `uv run`
 
 **✅ Correct**:
+
 ```bash
 uv run scripts/add_table_row.py PAGE_ID --args...
 ```
 
 **❌ Wrong**:
+
 ```bash
 python3 scripts/add_table_row.py PAGE_ID --args...
 cd scripts && python3 add_table_row.py PAGE_ID --args...
 ```
 
 **Why?**
+
 - `uv run` ensures correct dependency isolation
 - Works consistently across environments
 - Documented in SKILL.md
@@ -56,6 +62,7 @@ cd scripts && python3 add_table_row.py PAGE_ID --args...
 **Solution**: Use recursive search functions from `confluence_adf_utils.py`
 
 **✅ Correct**:
+
 ```python
 from confluence_adf_utils import find_table_recursive, find_list_recursive
 
@@ -67,6 +74,7 @@ list_node = find_list_recursive(adf, heading_text, "bulletList")
 ```
 
 **❌ Wrong**: Only searching top-level content
+
 ```python
 # This misses content inside macros
 content = adf.get("content", [])
@@ -80,6 +88,7 @@ for node in content:
 **Problem Discovered**: MCP roundtrip takes ~13 minutes due to AI processing delays (91% of time)
 
 **Root Cause**:
+
 - AI tool invocation intervals: ~5-6 minutes between calls
 - Token generation for large heredocs: significant overhead
 - Multiple tool boundaries require full context processing
@@ -87,6 +96,7 @@ for node in content:
 **Solution**: Single Python script with REST API
 
 **✅ Correct**:
+
 ```python
 # Single script does: auth → read → modify → write
 # Total time: ~1.2 seconds
@@ -98,6 +108,7 @@ def main():
 ```
 
 **❌ Wrong**: Multiple MCP tool calls through Claude
+
 ```
 MCP Read → AI thinks → Bash heredoc → AI thinks → Python → AI thinks → MCP Write
 Total time: ~13 minutes (782 seconds)
@@ -106,6 +117,7 @@ Total time: ~13 minutes (782 seconds)
 ### 5. Reuse Shared Utilities
 
 **✅ Correct**:
+
 ```python
 import sys
 from pathlib import Path
@@ -120,6 +132,7 @@ from confluence_adf_utils import (
 ```
 
 **❌ Wrong**: Duplicating code in every script
+
 ```python
 # Don't copy-paste get_auth(), get_page_adf(), etc.
 # Use the shared library!
@@ -128,6 +141,7 @@ from confluence_adf_utils import (
 ### 6. Always Provide --dry-run Option
 
 **Template**:
+
 ```python
 parser.add_argument(
     "--dry-run",
@@ -260,6 +274,7 @@ Before committing a new script:
 ## Common Mistakes to Avoid
 
 ### ❌ Using Heredoc for Python
+
 ```bash
 # DON'T
 uv run python3 << 'EOF'
@@ -269,6 +284,7 @@ EOF
 ```
 
 ### ❌ Only Searching Top-Level Content
+
 ```python
 # DON'T - misses content in expand/panel macros
 content = adf.get("content", [])
@@ -278,6 +294,7 @@ for node in content:
 ```
 
 ### ❌ Running Without uv
+
 ```bash
 # DON'T
 python3 scripts/add_table_row.py ...
@@ -287,12 +304,14 @@ uv run scripts/add_table_row.py ...
 ```
 
 ### ❌ Duplicating Core Logic
+
 ```python
 # DON'T - copy-paste get_auth(), get_page_adf(), etc.
 # DO - import from confluence_adf_utils
 ```
 
 ### ❌ Creating Temporary Analysis Scripts
+
 ```bash
 # DON'T - create one-off scripts in /tmp/
 uv run /tmp/analyze_gemini_page.py
@@ -304,6 +323,7 @@ uv run scripts/analyze_page.py PAGE_ID --type codeBlock
 ```
 
 **Why?**
+
 - Temporary scripts are not reusable
 - Each time creates unnecessary overhead
 - `analyze_page.py` is built for this purpose, with proper features:

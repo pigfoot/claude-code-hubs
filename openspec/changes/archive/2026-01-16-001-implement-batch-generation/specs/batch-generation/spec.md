@@ -6,7 +6,8 @@
 
 ## Overview
 
-Batch generation mode for nano-banana skill that processes 5+ image requests in a single background task to reduce conversation context consumption by 80%.
+Batch generation mode for nano-banana skill that processes 5+ image requests in a single background task to reduce
+conversation context consumption by 80%.
 
 ## ADDED Requirements
 
@@ -22,6 +23,7 @@ The system SHALL automatically activate batch generation mode when a user reques
 **Given:** User asks "Generate 10 slides about CI/CD pipeline"
 **When:** Claude detects 10 slides are needed
 **Then:**
+
 - Batch mode is activated automatically
 - User is notified: "Generating 10 slides in batch mode..."
 - Direct execution is NOT used
@@ -31,6 +33,7 @@ The system SHALL automatically activate batch generation mode when a user reques
 **Given:** User asks "Generate 3 slides about Docker basics"
 **When:** Claude detects 3 slides are needed
 **Then:**
+
 - Direct execution is used (existing behavior)
 - Batch mode is NOT activated
 - User sees immediate feedback per slide
@@ -51,12 +54,14 @@ The system SHALL create a JSON configuration file containing all slide specifica
 **Given:** User requests slides with different visual styles
 **When:** Claude prepares batch generation
 **Then:**
+
 - Config JSON is created at `/tmp/slides_config.json`
 - Contains array of slide objects with number, prompt, style
 - Includes output_dir, model, format, quality parameters
 - Uses environment variable values for model/format/quality
 
 **Config Example:**
+
 ```json
 {
   "slides": [
@@ -87,6 +92,7 @@ The system SHALL execute batch generation as a background Bash task using `run_i
 **Given:** Config file is created at `/tmp/slides_config.json`
 **When:** Claude starts batch generation
 **Then:**
+
 - `Bash(command="python generate_batch.py --config /tmp/slides_config.json", run_in_background=True)` is called
 - Task ID is returned (e.g., "task_abc123")
 - Python script runs independently in background
@@ -97,6 +103,7 @@ The system SHALL execute batch generation as a background Bash task using `run_i
 **Given:** Batch generation is running in background
 **When:** Python script generates output/logs
 **Then:**
+
 - Output does NOT appear in main conversation
 - Only progress file updates are visible
 - Context is not polluted with generation details
@@ -117,6 +124,7 @@ Batch generation for 10 slides SHALL consume less than 500 tokens in the main co
 **Given:** User requests 10-slide presentation
 **When:** Batch generation completes successfully
 **Then:**
+
 - Total context consumption ≤ 500 tokens
 - Breakdown approximately:
   - Config creation: ~50 tokens
@@ -140,6 +148,7 @@ The batch generation script SHALL generate slides sequentially (one at a time) r
 **Given:** Config specifies slides 1-10
 **When:** generate_batch.py executes
 **Then:**
+
 - Slides are generated in numeric order: 1, 2, 3, ..., 10
 - Next slide starts only after previous completes
 - No concurrent API requests

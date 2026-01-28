@@ -2,13 +2,15 @@
 
 ## Project Overview
 
-Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc code generation with a fixed Python script approach for all image generation tasks.
+Eliminate AI hallucinations in nano-banana plugin by replacing dynamic heredoc code generation with a fixed Python
+script approach for all image generation tasks.
 
 ## Problem Statement
 
 ### Current Issue
 
 When generating 1-4 images, Claude dynamically writes heredoc Python code, which frequently produces hallucinations:
+
 - Non-existent parameters like `api_version`
 - Incorrect model names (e.g., inventing model variants that don't exist)
 - Wrong API method signatures
@@ -19,6 +21,7 @@ When generating 1-4 images, Claude dynamically writes heredoc Python code, which
 **The Fundamental Problem:**
 
 When Claude generates code (heredoc scripts), it must recall:
+
 1. Exact API method names (`generate_content` vs `generate_images`)
 2. Exact parameter names (`response_modalities` vs `output_mime_type`)
 3. Exact model names (`gemini-3-pro-image-preview` with the `-preview` suffix)
@@ -26,12 +29,14 @@ When Claude generates code (heredoc scripts), it must recall:
 5. API-specific patterns (Gemini uses `contents=[]` array, Imagen uses `prompt=` string)
 
 **Why This Fails:**
+
 - Claude's training data may contain outdated or incorrect API examples
 - Similar-looking APIs get conflated (Gemini vs Imagen confusion)
 - Parameter names are "plausible" but wrong (e.g., `api_version` sounds reasonable but doesn't exist)
 - Long SKILL.md with many examples → Claude mixes patterns from different sections
 
 **Real Examples from User Reports:**
+
 ```python
 # Hallucination 1: Non-existent parameter
 response = client.models.generate_content(
@@ -61,6 +66,7 @@ print(f"  ✓ {output_path.name}")
 ### Why Batch Mode Works
 
 When generating 5+ images, Claude doesn't write code - it writes **data** (JSON config):
+
 ```json
 {
   "slides": [{"number": 1, "prompt": "..."}],
@@ -69,24 +75,28 @@ When generating 5+ images, Claude doesn't write code - it writes **data** (JSON 
 ```
 
 **No hallucinations because:**
+
 - ✅ No API method names to remember
 - ✅ No parameter names to recall
 - ✅ No model names to spell correctly
 - ✅ Fixed `generate_batch.py` handles all technical details
 
 **Success Rate:**
+
 - Heredocs (1-4 images): ~60-70% success (30-40% hallucination rate)
 - Batch mode (5+ images): ~99% success (only user error, no AI error)
 
 ### Impact
 
 **User Experience:**
+
 - 😤 Frustration from cryptic Python errors
 - ⏰ Time wasted debugging AI-generated code
 - 🔄 Multiple retry attempts needed
 - 📉 Loss of trust in the tool
 
 **Technical Debt:**
+
 - Inconsistent behavior between single and batch modes
 - Documentation must track two different workflows
 - Harder to maintain (heredoc examples in docs get outdated)
@@ -101,6 +111,7 @@ When generating 5+ images, Claude doesn't write code - it writes **data** (JSON 
 ## Solution Approach
 
 Replace heredoc pattern with fixed script + minimal JSON config:
+
 - Rename `generate_batch.py` → `generate_images.py` (semantic clarity)
 - Claude only generates minimal JSON config (slides + output_dir)
 - All technical details (model, API selection) handled by fixed script
@@ -132,10 +143,12 @@ Replace heredoc pattern with fixed script + minimal JSON config:
 ## Related Files
 
 **Scripts:**
+
 - `plugins/nano-banana/skills/nano-banana/generate_batch.py` → Will be renamed to `generate_images.py`
 - `plugins/nano-banana/skills/nano-banana/logo_overlay.py` (no changes needed)
 
 **Documentation:**
+
 - `plugins/nano-banana/skills/nano-banana/SKILL.md` (major rewrite needed)
 - `plugins/nano-banana/skills/nano-banana/references/batch-generation.md` (update paths/names)
 - `plugins/nano-banana/skills/nano-banana/references/gemini-api.md` (to be removed)
@@ -146,17 +159,21 @@ Replace heredoc pattern with fixed script + minimal JSON config:
 ## Key Design Decisions
 
 ### 1. Remove `model` from Config
+
 **Decision:** Model selection via environment variable only
 **Rationale:** Prevents Claude from hallucinating model names
 
 ### 2. Force Relative Paths
+
 **Decision:** Config only accepts relative paths (e.g., `./001-slides/`)
 **Rationale:** Avoids Git Bash `/c/Users` vs Windows `C:\Users` path conflicts
 
 ### 3. Single Script for All Cases
+
 **Decision:** No separate logic for 1-4 vs 5+ images
 **Rationale:** Simplifies mental model, eliminates mode-switching complexity
 
 ### 4. Minimal Config
+
 **Decision:** Only `slides` and `output_dir` are required fields
 **Rationale:** Less for Claude to generate = less chance of hallucination

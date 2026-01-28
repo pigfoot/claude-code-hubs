@@ -47,6 +47,7 @@ DO NOT include any logos or brand text - these will be added separately.
 ### Logo Configuration
 
 **Logo Asset:**
+
 - Path: `assets/logos/trendlife-logo.png`
 - Source: Extracted and cropped from TrendLife PowerPoint template (image3.png)
 - Format: PNG with transparency (RGBA)
@@ -66,11 +67,13 @@ DO NOT include any logos or brand text - these will be added separately.
 | Opacity | 100% |
 
 **Position Calculations (16:9, 1920×1080 reference):**
+
 - Logo width: `slide_width × 0.172 = 330px`
 - Logo position: `x = slide_width - logo_width - 14px = 1576px`
 - Logo position: `y = slide_height - logo_height - 1px = 976px`
 
-**Note:** Unlike the original template draft assumptions, all slide layouts (title, content, divider, end) use the **same logo size and position** in the master slide.
+**Note:** Unlike the original template draft assumptions, all slide layouts (title, content, divider, end) use the
+**same logo size and position** in the master slide.
 
 ### Style Guidelines
 
@@ -94,9 +97,11 @@ DO NOT include any logos or brand text - these will be added separately.
 ### Style Trigger Keywords
 
 **Explicit:**
+
 - `style: "trendlife"`
 
 **Natural Language:**
+
 - "trendlife style"
 - "use trendlife"
 - "trendlife brand"

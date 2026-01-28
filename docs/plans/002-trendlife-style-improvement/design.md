@@ -2,9 +2,11 @@
 
 ## Overview
 
-This document specifies the design for implementing TrendLife brand style in the nano-banana plugin using the Google hybrid approach: AI-generated images with precise Pillow-based logo overlay.
+This document specifies the design for implementing TrendLife brand style in the nano-banana plugin using the Google
+hybrid approach: AI-generated images with precise Pillow-based logo overlay.
 
-**Approach:** Generate branded slide backgrounds with Gemini/Imagen, then overlay Trend Micro logo using Pillow for pixel-perfect accuracy.
+**Approach:** Generate branded slide backgrounds with Gemini/Imagen, then overlay Trend Micro logo using Pillow for
+pixel-perfect accuracy.
 
 ---
 
@@ -42,29 +44,34 @@ Style Detection: "trendlife"
 
 ### Component Breakdown
 
-**1. Style Configuration (brand-styles.md)**
+#### 1. Style Configuration (brand-styles.md)
+
 - Define TrendLife color palette
 - Specify prompt template
 - Reference logo asset path
 - Define layout-specific logo positions
 
-**2. Logo Asset Management**
+#### 2. Logo Asset Management
+
 - Store logo files in skill directory
 - Support multiple logo variants (light/dark, different sizes)
 - PNG format with transparency
 
-**3. Image Generation (existing)**
+#### 3. Image Generation (existing)
+
 - Use Gemini/Imagen API
 - Inject TrendLife colors into prompt
 - Generate without logo
 
-**4. Logo Overlay Engine (new)**
+#### 4. Logo Overlay Engine (new)
+
 - Pillow-based composition
 - Position calculation
 - Alpha blending
 - Quality preservation
 
-**5. Batch Generation Support (existing)**
+#### 5. Batch Generation Support (existing)
+
 - Apply logo overlay in batch mode
 - Progress tracking includes overlay step
 
@@ -76,7 +83,7 @@ Style Detection: "trendlife"
 
 **Location:** `plugins/nano-banana/skills/nano-banana/references/brand-styles.md`
 
-**New Section: TrendLife**
+#### New Section: TrendLife
 
 ```markdown
 ## TrendLife
@@ -107,13 +114,16 @@ Corporate brand identity for Trend Micro's "Life" product line.
 When `style: "trendlife"` is detected, append this to the user's prompt:
 
 ```
+
 Use TrendLife brand colors for Trend Micro presentations:
+
 - Primary: Trend Red (#D71920) for key elements and accents
 - Guardian Red (#6F0000) for supporting elements and depth
 - Neutral palette: Dark gray (#57585B), medium gray (#808285), light gray (#E7E6E6)
 - Black (#000000) and white (#FFFFFF) for contrast
 Keep the design clean, professional, and suitable for corporate presentations.
 DO NOT include any logos or brand text - these will be added separately.
+
 ```
 
 ### Logo Configuration
@@ -180,7 +190,8 @@ DO NOT include any logos or brand text - these will be added separately.
 
 ### 2. Logo Asset Directory Structure
 
-**New Directory:**
+#### New Directory
+
 ```
 plugins/nano-banana/skills/nano-banana/assets/
 └── logos/
@@ -189,7 +200,8 @@ plugins/nano-banana/skills/nano-banana/assets/
     └── README.md                    # Logo usage guidelines
 ```
 
-**assets/logos/README.md:**
+#### assets/logos/README.md
+
 ```markdown
 # Brand Logo Assets
 
@@ -462,7 +474,7 @@ def detect_layout_type(prompt: str, slide_number: Optional[int] = None) -> str:
 
 **Modify:** `plugins/nano-banana/skills/nano-banana/SKILL.md`
 
-**Add section after "Style Detection":**
+#### Add section after "Style Detection"
 
 ```markdown
 ## Logo Overlay (TrendLife Style)
@@ -485,7 +497,8 @@ When `style: "trendlife"` is detected:
 
 **Manual Override:**
 ```python
-# In heredoc script, after generation:
+# In heredoc script, after generation
+
 from logo_overlay import overlay_logo
 
 overlay_logo(
@@ -496,9 +509,10 @@ overlay_logo(
     opacity=1.0
 )
 ```
+
 ```
 
-**Update heredoc template in SKILL.md:**
+#### Update heredoc template in SKILL.md
 
 Add after image generation and before final output:
 
@@ -539,7 +553,7 @@ if 'trendlife' in prompt.lower() or config.get('style') == 'trendlife':
 
 **Modify:** `plugins/nano-banana/skills/nano-banana/generate_batch.py`
 
-**Add logo overlay support in `generate_slide_gemini()` and `generate_slide_imagen()`:**
+#### Add logo overlay support in `generate_slide_gemini()` and `generate_slide_imagen()`
 
 ```python
 def generate_slide_gemini(client: genai.Client, slide: Dict,
@@ -594,7 +608,7 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
         return False, None, str(e)
 ```
 
-**Update config schema in batch-generation.md:**
+#### Update config schema in batch-generation.md
 
 ```json
 {
@@ -618,12 +632,14 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
 
 ### Style Trigger
 
-**Keyword Detection:**
+#### Keyword Detection
+
 - `style: "trendlife"` (explicit)
 - `"use trendlife style"` (natural language)
 - `"trendlife brand"` (natural language)
 
-**Configuration:**
+#### Configuration
+
 ```python
 {
     'style': 'trendlife',
@@ -634,7 +650,7 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
 
 ### Function Signatures
 
-**logo_overlay.py:**
+#### logo_overlay.py
 
 ```python
 def overlay_logo(
@@ -822,7 +838,7 @@ def test_overlay_logo_integration(tmp_path):
 
 ### Integration Tests
 
-**Test Scenarios:**
+#### Test Scenarios
 
 1. **Single Slide Generation:**
    - Generate slide with `style: "trendlife"`
@@ -901,19 +917,21 @@ def test_overlay_logo_integration(tmp_path):
 
 **Decision:** Keep both "trend" and "trendlife" styles
 
-**"trend" style:**
+#### "trend" style
+
 - Remains unchanged
 - No logo overlay
 - For general Trend Micro branding
 
-**"trendlife" style:**
+#### "trendlife" style
+
 - New implementation
 - Includes logo overlay
 - Specifically for TrendLife product presentations
 
 ### Migration Path
 
-**For users currently using "trend" style:**
+#### For users currently using "trend" style
 
 ```python
 # Old way (still works)
@@ -923,7 +941,8 @@ style: "trend"  # No logo overlay
 style: "trendlife"  # With logo overlay
 ```
 
-**Documentation update:**
+#### Documentation update
+
 - Add section explaining difference between "trend" and "trendlife"
 - Provide examples of when to use each
 - No breaking changes for existing users
@@ -1032,12 +1051,14 @@ def verify_colors(image_path, expected_colors):
 
 ### C. Reference Implementation Timeline
 
-**Week 1:**
+#### Week 1
+
 - Day 1-2: Research and design (✅ Complete)
 - Day 3-4: Core implementation
 - Day 5: Integration and testing
 
-**Week 2:**
+#### Week 2
+
 - Day 1-2: Bug fixes and refinement
 - Day 3: Documentation
 - Day 4-5: Example creation and deployment

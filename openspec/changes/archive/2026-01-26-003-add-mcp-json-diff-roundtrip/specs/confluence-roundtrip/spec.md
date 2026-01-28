@@ -2,7 +2,8 @@
 
 ### Requirement: Roundtrip Page Editing
 
-The system SHALL support reading a Confluence page, allowing Claude to edit the content, and writing the changes back while preserving macros.
+The system SHALL support reading a Confluence page, allowing Claude to edit the content, and writing the changes back
+while preserving macros.
 
 #### Scenario: Edit text on page with macros
 

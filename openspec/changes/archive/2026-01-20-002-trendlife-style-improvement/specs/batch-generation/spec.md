@@ -4,7 +4,8 @@
 
 ### Requirement: Configuration File Creation
 
-The system SHALL create a JSON configuration file containing all slide specifications before starting batch generation, including optional style parameters for brand styling.
+The system SHALL create a JSON configuration file containing all slide specifications before starting batch generation,
+including optional style parameters for brand styling.
 
 **ID:** `batch-generation-002`
 **Priority:** High
@@ -14,12 +15,14 @@ The system SHALL create a JSON configuration file containing all slide specifica
 **Given:** User requests slides with different visual styles
 **When:** Claude prepares batch generation
 **Then:**
+
 - Config JSON is created at `/tmp/slides_config.json`
 - Contains array of slide objects with number, prompt, style
 - Includes output_dir, model, format, quality parameters
 - Uses environment variable values for model/format/quality
 
 **Config Example:**
+
 ```json
 {
   "slides": [
@@ -39,11 +42,13 @@ The system SHALL create a JSON configuration file containing all slide specifica
 **Given:** User requests "Generate 5 slides for TrendLife presentation"
 **When:** Claude prepares batch generation
 **Then:**
+
 - Config JSON includes `"style": "trendlife"` for each slide
 - Logo overlay will be automatically applied during generation
 - Brand colors are injected into prompts
 
 **TrendLife Config Example:**
+
 ```json
 {
   "slides": [
@@ -76,6 +81,7 @@ The batch generation script SHALL automatically apply logo overlay for slides wi
 **Given:** Config contains slides with `"style": "trendlife"`
 **When:** Batch generation processes each slide
 **Then:**
+
 - Slide image is generated with TrendLife colors
 - Layout type is automatically detected from prompt
 - Logo overlay is applied using `logo_overlay.py` module
@@ -85,6 +91,7 @@ The batch generation script SHALL automatically apply logo overlay for slides wi
 #### Scenario: Mixed styles in single batch
 
 **Given:** Config contains:
+
 ```json
 {
   "slides": [
@@ -94,8 +101,10 @@ The batch generation script SHALL automatically apply logo overlay for slides wi
   ]
 }
 ```
+
 **When:** Batch generation runs
 **Then:**
+
 - Slide 1: TrendLife style + logo overlay applied
 - Slide 2: Professional style, no logo overlay
 - Slide 3: TrendLife style + logo overlay applied
@@ -106,12 +115,14 @@ The batch generation script SHALL automatically apply logo overlay for slides wi
 **Given:** Slide 5 in batch encounters logo overlay error
 **When:** Logo overlay fails for that slide
 **Then:**
+
 - Error is logged: "Slide 5: Logo overlay failed - [reason]"
 - Slide is saved without logo
 - Batch continues with remaining slides
 - Final summary includes warning
 
-**Rationale:** Logo overlay must be seamlessly integrated into batch workflow without disrupting the background execution model.
+**Rationale:** Logo overlay must be seamlessly integrated into batch workflow without disrupting the background
+execution model.
 
 ---
 
@@ -127,6 +138,7 @@ The batch generation progress tracking SHALL include logo overlay status for bra
 **Given:** Batch generation is processing TrendLife slide
 **When:** Progress file is updated
 **Then:**
+
 - Progress includes: "Generated slide 3/10 (logo overlay applied)"
 - Or if overlay fails: "Generated slide 3/10 (WARNING: logo overlay failed)"
 - Users can monitor logo overlay success
@@ -136,11 +148,13 @@ The batch generation progress tracking SHALL include logo overlay status for bra
 **Given:** Batch generation is processing professional style slide
 **When:** Progress file is updated
 **Then:**
+
 - Progress shows: "Generated slide 2/10"
 - No mention of logo overlay (not applicable)
 - Standard progress format maintained
 
 **Progress Format Examples:**
+
 ```
 Generated slide 1/10 (logo overlay applied)
 Generated slide 2/10
@@ -149,7 +163,8 @@ WARNING: Slide 4 logo overlay failed - continuing
 Generated slide 4/10
 ```
 
-**Rationale:** Clear progress tracking helps users understand which slides received logo overlay and identify any issues.
+**Rationale:** Clear progress tracking helps users understand which slides received logo overlay and identify any
+issues.
 
 ---
 
@@ -165,6 +180,7 @@ Logo overlay SHALL NOT significantly impact batch generation performance, mainta
 **Given:** Batch generation of 10 TrendLife slides
 **When:** All slides include logo overlay
 **Then:**
+
 - Logo overlay adds <200ms per slide
 - Total time increase: <2 seconds for 10 slides
 - Context consumption remains ≤ 500 tokens
@@ -175,6 +191,7 @@ Logo overlay SHALL NOT significantly impact batch generation performance, mainta
 **Given:** Logo overlay uses Pillow for image processing
 **When:** Processing multiple slides in batch
 **Then:**
+
 - Memory is released after each logo overlay
 - Peak memory usage <500MB
 - No memory leaks from repeated operations

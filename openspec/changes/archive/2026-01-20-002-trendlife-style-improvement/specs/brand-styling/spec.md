@@ -2,12 +2,14 @@
 
 ## RENAMED Requirements
 
-The "Trend Micro" brand style is renamed to "TrendLife" to better reflect the product line focus and differentiate from generic corporate branding.
+The "Trend Micro" brand style is renamed to "TrendLife" to better reflect the product line focus and differentiate from
+generic corporate branding.
 
 - **FROM:** `## Trend Micro` in `references/brand-styles.md`
 - **TO:** `## TrendLife` in `references/brand-styles.md`
 
 **Migration:**
+
 - Users using `style: "trend"` must update to `style: "trendlife"`
 - Natural language triggers change from "trend style" to "trendlife style"
 
@@ -15,7 +17,8 @@ The "Trend Micro" brand style is renamed to "TrendLife" to better reflect the pr
 
 ### Requirement: TrendLife Brand Style
 
-The system SHALL support TrendLife brand style for AI-generated presentation slides with official brand colors and visual guidelines.
+The system SHALL support TrendLife brand style for AI-generated presentation slides with official brand colors and
+visual guidelines.
 
 **ID:** `brand-styling-001`
 **Priority:** High
@@ -25,6 +28,7 @@ The system SHALL support TrendLife brand style for AI-generated presentation sli
 **Given:** User asks "Generate a title slide using TrendLife style"
 **When:** Style detection processes the request
 **Then:**
+
 - TrendLife style is activated
 - Brand color palette is injected into generation prompt
 - TrendLife logo overlay is triggered
@@ -35,6 +39,7 @@ The system SHALL support TrendLife brand style for AI-generated presentation sli
 **Given:** User provides config with `{"style": "trendlife"}`
 **When:** Batch generation processes the config
 **Then:**
+
 - Each slide with `style: "trendlife"` uses TrendLife brand
 - Logo overlay is automatically applied
 - Colors match TrendLife specification
@@ -44,11 +49,13 @@ The system SHALL support TrendLife brand style for AI-generated presentation sli
 **Given:** User asks "Create slides for TrendLife presentation"
 **When:** Style detection analyzes the prompt
 **Then:**
+
 - TrendLife style is inferred from context
 - Brand styling is automatically applied
 - User is notified: "Using TrendLife brand style"
 
-**Rationale:** TrendLife is a distinct product line requiring specific brand identity separate from generic Trend Micro branding.
+**Rationale:** TrendLife is a distinct product line requiring specific brand identity separate from generic Trend Micro
+branding.
 
 ---
 
@@ -64,7 +71,9 @@ The system SHALL inject TrendLife brand colors into image generation prompts whe
 **Given:** User prompt is "Create a data visualization slide"
 **When:** TrendLife style is active
 **Then:**
+
 - Original prompt is enhanced with color guidance:
+
   ```
   Use TrendLife brand colors for Trend Micro presentations:
   - Primary: Trend Red (#D71920) for key elements and accents
@@ -74,6 +83,7 @@ The system SHALL inject TrendLife brand colors into image generation prompts whe
   Keep the design clean, professional, and suitable for corporate presentations.
   DO NOT include any logos or brand text - these will be added separately.
   ```
+
 - AI model receives enhanced prompt
 - Generated image uses specified colors
 
@@ -107,12 +117,14 @@ The system SHALL recognize multiple trigger patterns for activating TrendLife st
 **Given:** Config contains `"style": "trendlife"`
 **When:** Generation processes the config
 **Then:**
+
 - TrendLife style is activated
 - No ambiguity in style selection
 
 #### Scenario: Natural language triggers
 
 **Given:** User prompt contains any of:
+
 - "trendlife style"
 - "use trendlife"
 - "trendlife brand"
@@ -120,6 +132,7 @@ The system SHALL recognize multiple trigger patterns for activating TrendLife st
 
 **When:** Style detection analyzes the prompt
 **Then:**
+
 - TrendLife style is activated
 - Case-insensitive matching applied
 - User is notified of style selection
@@ -129,6 +142,7 @@ The system SHALL recognize multiple trigger patterns for activating TrendLife st
 **Given:** User prompt contains no style keywords
 **When:** Style detection runs
 **Then:**
+
 - No brand style is applied
 - Generic professional style is used
 - No logo overlay occurs
@@ -149,12 +163,14 @@ The system SHALL maintain TrendLife brand guidelines in `references/brand-styles
 **Given:** Agent needs to apply TrendLife style
 **When:** Agent reads `references/brand-styles.md`
 **Then:**
+
 - Complete color palette is documented
 - Prompt template is available
 - Logo positioning rules are defined
 - Style trigger keywords are listed
 
 **Documentation Structure:**
+
 ```markdown
 ## TrendLife
 

@@ -2,7 +2,8 @@
 
 ## Summary
 
-Intelligent API routing for the Confluence plugin that automatically selects between MCP and REST API based on operation type, available credentials, and performance requirements.
+Intelligent API routing for the Confluence plugin that automatically selects between MCP and REST API based on operation
+type, available credentials, and performance requirements.
 
 ## Problem
 
@@ -14,6 +15,7 @@ Intelligent API routing for the Confluence plugin that automatically selects bet
 ## Solution
 
 Smart router that:
+
 1. Auto-detects available credentials (`CONFLUENCE_API_TOKEN`)
 2. Routes to optimal API per operation type
 3. Falls back gracefully on failures

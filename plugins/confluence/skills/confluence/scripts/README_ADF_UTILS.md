@@ -5,10 +5,12 @@
 ## Why Use This Utility Library?
 
 **Performance Comparison**:
+
 - MCP Roundtrip (via Claude): ~13 minutes
 - Python REST API Direct: **~1.2 seconds** (650x speedup)
 
 **Core Advantages**:
+
 - Avoids AI tool invocation delays between calls (accounts for 91% of total time)
 - Direct ADF JSON manipulation for precise structural control
 - Lightweight dependencies (only `requests` and `python-dotenv`)
@@ -75,44 +77,55 @@ result = quick_update_page("PAGE_ID", add_my_row, "Added new row")
 ### Authentication & I/O
 
 #### `get_auth() -> Tuple[str, Tuple[str, str]]`
+
 Get authentication credentials from environment variables.
 
 **Environment Variables**:
+
 - `CONFLUENCE_URL` - Confluence base URL (e.g., `https://company.atlassian.net/wiki`)
 - `CONFLUENCE_USER` - Email address
-- `CONFLUENCE_API_TOKEN` - API token from https://id.atlassian.com/manage-profile/security/api-tokens
+- `CONFLUENCE_API_TOKEN` - API token from <https://id.atlassian.com/manage-profile/security/api-tokens>
 
 #### `get_page_adf(base_url, auth, page_id) -> Dict`
+
 Read page content in ADF format.
 
 #### `update_page_adf(base_url, auth, page_id, title, body, version, version_message=None) -> Dict`
+
 Update page content in ADF format.
 
 ### Navigation & Finding
 
 #### `find_heading_index(content, heading_text) -> Optional[int]`
+
 Find a heading containing the specified text in the content array.
 
 #### `find_table_after_heading(content, heading_text) -> Optional[Tuple[int, Dict]]`
+
 Find the first table after a specified heading. Returns `(table_index, table_node)` or `None`.
 
 #### `find_row_containing_text(table_node, search_text) -> Optional[int]`
+
 Find the first row in a table whose first cell contains the specified text.
 
 ### Construction & Modification
 
 #### `create_table_row(cells: List[str]) -> Dict`
+
 Create a new ADF table row node.
 
 **Example**:
+
 ```python
 new_row = create_table_row(["Cell 1", "Cell 2", "Cell 3"])
 ```
 
 #### `insert_table_row(adf, table_heading, after_row_containing, new_row_cells) -> bool`
+
 Insert a new row into a specified table.
 
 **Parameters**:
+
 - `adf`: Complete ADF document
 - `table_heading`: Heading text before the table
 - `after_row_containing`: Text in the first cell of the row to insert after
@@ -123,14 +136,17 @@ Insert a new row into a specified table.
 ### Convenience Functions
 
 #### `quick_update_page(page_id, modify_fn, version_message=None) -> Dict`
+
 Automatically handles the read → modify → write workflow.
 
 **Parameters**:
+
 - `page_id`: Confluence page ID
 - `modify_fn`: Function that accepts `(adf, page_data)` and returns `True/False`
 - `version_message`: Version update message (optional)
 
 **Example**:
+
 ```python
 def my_modification(adf, page_data):
     # Your custom logic
@@ -223,6 +239,7 @@ if __name__ == "__main__":
 ```
 
 **Usage**:
+
 ```bash
 uv run scripts/add_list_item.py PAGE_ID \
   --before-heading "Requirements" \
@@ -306,6 +323,7 @@ local_id = f"node-{os.urandom(4).hex()}"  # e.g., "node-a3f2b1c4"
 ## Development Workflow Recommendations
 
 1. **Understand Target Structure**
+
    ```bash
    # Read page and observe ADF structure
    uv run python3 -c "
@@ -323,6 +341,7 @@ local_id = f"node-{os.urandom(4).hex()}"  # e.g., "node-a3f2b1c4"
    - Wrap with `quick_update_page`
 
 3. **Test**
+
    ```bash
    # Test with dry-run first
    uv run scripts/my_new_tool.py PAGE_ID --dry-run
@@ -362,11 +381,13 @@ except ValueError as e:
 Contributions of new structural modification tools are welcome!
 
 **Implemented Tools** ✅:
+
 - [x] `add_list_item.py` - Add bullet/numbered list items
 - [x] `add_panel.py` - Insert info/warning/note/success panels
 - [x] `insert_section.py` - Insert new sections (heading + content)
 
 **Future Tool Ideas** 💡:
+
 - [ ] `duplicate_table.py` - Duplicate entire tables
 - [ ] `reorder_sections.py` - Reorder sections
 - [ ] `add_code_block.py` - Insert code blocks with syntax highlighting
@@ -374,6 +395,7 @@ Contributions of new structural modification tools are welcome!
 - [ ] `create_toc.py` - Generate table of contents
 
 Each new tool should:
+
 1. Use PEP 723 inline metadata (`# /// script`)
 2. Reuse core functions from `confluence_adf_utils.py`
 3. Provide `--dry-run` option

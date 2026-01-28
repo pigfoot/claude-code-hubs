@@ -2,20 +2,25 @@
 
 ## Context
 
-The Confluence plugin needs to support roundtrip editing: reading a page, allowing Claude to edit it, and writing it back. The challenge is that Confluence pages often contain macros (expand, status, page properties, etc.) that have no Markdown equivalent.
+The Confluence plugin needs to support roundtrip editing: reading a page, allowing Claude to edit it, and writing it
+back. The challenge is that Confluence pages often contain macros (expand, status, page properties, etc.) that have no
+Markdown equivalent.
 
 **Current state:**
+
 - Methods 1-3: Use Markdown conversion → Claude edits → lose all macros
 - Method 4: Direct XML manipulation → preserves macros → but no Claude intelligence
 - Method 5: Auto-detect → complex → still loses macros for complex edits
 
 **Stakeholders:**
+
 - Plugin users who want Claude to edit Confluence pages
 - Teams with pages containing important macros (expand panels, status badges, etc.)
 
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Preserve all macros during roundtrip editing
 - Allow Claude to intelligently edit text content (paragraphs, headings, lists, etc.)
 - Use MCP for authentication (OAuth, no API token management)
@@ -23,6 +28,7 @@ The Confluence plugin needs to support roundtrip editing: reading a page, allowi
 - Keep implementation simple (~200 lines Python)
 
 **Non-Goals:**
+
 - Edit text INSIDE macro bodies (e.g., content inside expand panels)
 - Support batch operations (use Method 1 for that)
 - Replace existing methods (Method 6 is an addition)
@@ -32,11 +38,14 @@ The Confluence plugin needs to support roundtrip editing: reading a page, allowi
 
 ### Decision 1: Use JSON Diff/Patch approach
 
-**What:** Extract text nodes with their paths from ADF, let Claude edit Markdown version, compute diff, apply only text changes back to original ADF.
+**What:** Extract text nodes with their paths from ADF, let Claude edit Markdown version, compute diff, apply only text
+changes back to original ADF.
 
-**Why:** This is the only way to modify text while leaving macro nodes completely untouched. The macro nodes are never processed, only text nodes are compared and patched.
+**Why:** This is the only way to modify text while leaving macro nodes completely untouched. The macro nodes are never
+processed, only text nodes are compared and patched.
 
 **Alternatives considered:**
+
 1. **Placeholder syntax in Markdown** - Claude might move/delete/corrupt placeholders; nested macros are complex
 2. **Structural ADF diff** - Complex, may still touch macro-adjacent nodes
 3. **Use Confluence API's inline editing** - No API support for this
@@ -46,12 +55,14 @@ The Confluence plugin needs to support roundtrip editing: reading a page, allowi
 **What:** Use `mcp__plugin_confluence_atlassian__getConfluencePage` and `updateConfluencePage` tools.
 
 **Why:**
+
 - MCP is already configured in the plugin
 - OAuth authentication (no API token management)
 - Official Atlassian support
 - High-level API (handles version numbers, etc.)
 
 **Alternatives considered:**
+
 1. **REST API directly** - Requires API token, more boilerplate
 2. **Third-party MCP** - Less official support
 
@@ -59,31 +70,38 @@ The Confluence plugin needs to support roundtrip editing: reading a page, allowi
 
 **What:** Use line-based comparison with word overlap heuristic (30% threshold) to match original text with edited text.
 
-**Why:** Simple to implement, sufficient for most editing scenarios (typo fixes, sentence rewrites, paragraph additions).
+**Why:** Simple to implement, sufficient for most editing scenarios (typo fixes, sentence rewrites, paragraph
+additions).
 
 **Alternatives considered:**
+
 1. **Structural diff (difflib.SequenceMatcher)** - More complex, needed for edge cases
 2. **LCS-based matching** - Overkill for text-level changes
 3. **AI-based semantic matching** - Too expensive, adds latency
 
-**Trade-off:** May have false positives/negatives for heavily restructured content. Users can fall back to Method 1 or Confluence UI for such cases.
+**Trade-off:** May have false positives/negatives for heavily restructured content. Users can fall back to Method 1 or
+Confluence UI for such cases.
 
 ### Decision 4: Support interactive macro body editing
 
-**What:** Detect when macros contain editable text content, ask user for confirmation, and optionally include macro bodies in editing scope.
+**What:** Detect when macros contain editable text content, ask user for confirmation, and optionally include macro
+bodies in editing scope.
 
 **Why:**
+
 - Method 4 can actually edit macro bodies programmatically
 - We can apply the same JSON diff/patch approach to macro body text nodes
 - User control: let them decide the risk/benefit trade-off
 - Safer than Method 4's direct XML manipulation
 
 **Alternatives considered:**
+
 1. **Always skip macro bodies** - Simpler but limits functionality
 2. **Always include macro bodies** - Riskier, no user control
 3. **Auto-detect complexity and decide** - Too opaque, users prefer explicit control
 
 **Implementation:**
+
 - Default: skip macro bodies (safe mode)
 - When detected: show preview and ask user
 - If confirmed: extract text from macro bodies using same path-based approach
@@ -94,18 +112,21 @@ The Confluence plugin needs to support roundtrip editing: reading a page, allowi
 **What:** Create backup before every edit operation, auto-rollback on failure, support manual rollback.
 
 **Why:**
+
 - Macro body editing adds risk
 - Diff/patch algorithm may have edge cases
 - Users need confidence to try new features
 - Confluence has version history, but manual restoration is tedious
 
 **What to backup:**
+
 - Original ADF JSON
 - Page version number
 - Timestamp
 - Page metadata (title, ID, space)
 
 **Alternatives considered:**
+
 1. **Rely on Confluence version history** - Exists but requires manual restoration
 2. **No backup** - Too risky for macro editing
 3. **Only backup when editing macro bodies** - Inconsistent UX
@@ -126,6 +147,7 @@ The Confluence plugin needs to support roundtrip editing: reading a page, allowi
 No migration needed - this is an additive feature.
 
 **Rollout:**
+
 1. Implement core classes in `scripts/mcp_json_diff_roundtrip.py`
 2. Add integration tests
 3. Update SKILL.md with usage instructions

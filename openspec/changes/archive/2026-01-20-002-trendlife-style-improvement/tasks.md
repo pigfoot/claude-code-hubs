@@ -109,6 +109,7 @@
 ## Validation Checklist
 
 Before marking this change complete:
+
 - [ ] All unit tests pass
 - [x] All integration tests pass (partial - core functionality verified)
 - [x] Visual QA checklist complete

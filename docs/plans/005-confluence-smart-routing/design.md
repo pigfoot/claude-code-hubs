@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document specifies the design for intelligent API routing in the Confluence plugin, automatically selecting between MCP and REST API based on operation type, available credentials, and user preferences.
+This document specifies the design for intelligent API routing in the Confluence plugin, automatically selecting between
+MCP and REST API based on operation type, available credentials, and user preferences.
 
 **Core Principle:** Use the fastest available method, with graceful fallback and user transparency.
 
@@ -42,6 +43,7 @@ User Request
 ```
 
 **Problems:**
+
 - ❌ Manual selection between APIs
 - ❌ No automatic fallback
 - ❌ Inconsistent user experience
@@ -66,6 +68,7 @@ User Request
 ```
 
 **Benefits:**
+
 - ✅ Automatic API selection
 - ✅ Graceful fallback on failure
 - ✅ Optimal performance per operation
@@ -119,17 +122,20 @@ def route_request(operation: str, params: dict) -> Result:
 ### Standardization Task
 
 **Current (inconsistent):**
+
 ```bash
 CONFLUENCE_USERNAME=email@company.com  # Used in scripts
 CONFLUENCE_USER=email@company.com      # Not used
 ```
 
 **New (standardized):**
+
 ```bash
 CONFLUENCE_USER=email@company.com      # Best practice naming
 ```
 
 **Migration:**
+
 - Update all scripts: `CONFLUENCE_USERNAME` → `CONFLUENCE_USER`
 - Files to update:
   - `upload_confluence.py`
@@ -434,6 +440,7 @@ unset CONFLUENCE_API_TOKEN && python confluence_router.py read 123456
 ### Long-Term Vision
 
 This design enables:
+
 - Plugin system for additional Atlassian products (Jira, Bitbucket)
 - Multi-account support (personal + work)
 - Offline mode with sync

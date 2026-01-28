@@ -2,27 +2,35 @@
 
 ## Overview
 
-The **roundtrip workflow** enables reading existing Confluence pages, editing their content (typically with AI assistance), and writing changes back to Confluence. This is more complex than the markdown-first approach due to format conversion challenges.
+The **roundtrip workflow** enables reading existing Confluence pages, editing their content (typically with AI
+assistance), and writing changes back to Confluence. This is more complex than the markdown-first approach due to format
+conversion challenges.
 
 ## Important Limitations
 
 ⚠️ **Critical Warning:**
 > "When the MCP fetches and updates pages, it loses macros (page properties, layouts, table of contents)"
-> - [Confluence Community Discussion](https://community.atlassian.com/forums/Confluence-questions/Confluence-MCP-amp-page-macros/qaq-p/3073340)
+>
+> - [Confluence Community
+>   Discussion](https://community.atlassian.com/forums/Confluence-questions/Confluence-MCP-amp-page-macros/qaq-p/3073340)
 
 **What Gets Lost:**
+
 - ❌ Confluence macros (TOC, page properties, layouts, etc.)
 - ❌ Special formatting (info panels, expand blocks)
 - ❌ Advanced table formatting
 - ❌ Embedded diagrams (except Draw.io with metadata)
 
 **Conversion Quality:**
-> "Two-way conversion challenges: Tools exist for both directions, but the conversion isn't always lossless due to Confluence's custom macro elements"
+> "Two-way conversion challenges: Tools exist for both directions, but the conversion isn't always lossless due to
+> Confluence's custom macro elements"
+>
 > - [Confluence to Markdown Converter](https://github.com/highsource/confluence-to-markdown-converter)
 
 ## When to Use Roundtrip
 
 ✅ **Good Use Cases:**
+
 - Simple text updates (add paragraphs, fix typos)
 - List modifications (add/remove items)
 - Code block updates
@@ -30,6 +38,7 @@ The **roundtrip workflow** enables reading existing Confluence pages, editing th
 - Heading changes
 
 ❌ **Bad Use Cases:**
+
 - Pages with complex macros
 - Pages with custom layouts
 - Status reports with live data
@@ -44,6 +53,7 @@ The **roundtrip workflow** enables reading existing Confluence pages, editing th
 Uses Confluence's native Storage Format (XHTML-based) for best preservation.
 
 **Workflow:**
+
 ```
 REST API v2 (read)
     ↓ body.storage (Confluence XHTML)
@@ -57,8 +67,10 @@ REST API v2 (write)
 ```
 
 **Tools:**
+
 - **Read**: Confluence REST API v2
-- **HTML → Markdown**: [confluence-to-markdown-converter](https://github.com/highsource/confluence-to-markdown-converter)
+- **HTML → Markdown**:
+  [confluence-to-markdown-converter](https://github.com/highsource/confluence-to-markdown-converter)
 - **Markdown → HTML**: [md2cf](https://pypi.org/project/md2cf/) (uses mistune)
 
 **Python Implementation:**
@@ -159,11 +171,13 @@ if __name__ == "__main__":
 ```
 
 **Pros:**
+
 - ✅ Better format preservation (Storage Format is native)
 - ✅ Mature tooling (md2cf is well-tested)
 - ✅ Direct API control
 
 **Cons:**
+
 - ❌ Still loses macros
 - ❌ Requires Python dependencies
 - ❌ Need to manage API credentials
@@ -176,6 +190,7 @@ if __name__ == "__main__":
 Uses MCP tools with ADF (Atlassian Document Format) JSON conversion.
 
 **Workflow:**
+
 ```
 MCP getConfluencePage
     ↓ ADF JSON
@@ -189,6 +204,7 @@ MCP updateConfluencePage
 ```
 
 **Tools:**
+
 - **Read/Write**: Official Atlassian MCP or [@aashari](https://github.com/aashari/mcp-server-atlassian-confluence)
 - **ADF → Markdown**: [atlas-doc-parser](https://atlas-doc-parser.readthedocs.io/) (Python)
 - **Markdown → ADF**: [marklassian](https://marklassian.netlify.app/) (JavaScript/Node)
@@ -214,11 +230,13 @@ function markdownToAdf(markdown) {
 ```
 
 **Pros:**
+
 - ✅ Uses existing MCP infrastructure
 - ✅ OAuth authentication (simpler)
 - ✅ No need for separate API credentials
 
 **Cons:**
+
 - ❌ Requires both Python AND JavaScript
 - ❌ More complex toolchain
 - ❌ ADF conversion may be less mature than Storage Format
@@ -232,6 +250,7 @@ function markdownToAdf(markdown) {
 For simple edits, let Claude work directly with ADF JSON structure.
 
 **Workflow:**
+
 ```
 MCP getConfluencePage
     ↓ ADF JSON (as text)
@@ -279,16 +298,19 @@ def quick_edit_page(page_id: str, edit_instruction: str):
 ```
 
 **Pros:**
+
 - ✅ Fastest to implement
 - ✅ No conversion libraries needed
 - ✅ Uses existing MCP setup
 
 **Cons:**
+
 - ❌ Claude must understand ADF structure
 - ❌ Error-prone for complex edits
 - ❌ Still loses macros
 
 **Best For:**
+
 - Adding simple text paragraphs
 - Updating list items
 - Changing headings
@@ -396,6 +418,7 @@ def write_page_with_comment(page_id: str, markdown: str, metadata: dict, comment
 **Problem:** Page macros (TOC, info panels, etc.) are lost
 
 **Solutions:**
+
 1. **Don't use roundtrip** - Edit in Confluence web UI instead
 2. **Use raw ADF blocks** in Markdown (if supported by converter)
 3. **Warn users** before editing pages with macros
@@ -405,6 +428,7 @@ def write_page_with_comment(page_id: str, markdown: str, metadata: dict, comment
 **Problem:** Complex table formatting doesn't survive conversion
 
 **Solution:** Use simple Markdown tables only
+
 ```markdown
 | Column 1 | Column 2 |
 |----------|----------|
@@ -416,6 +440,7 @@ def write_page_with_comment(page_id: str, markdown: str, metadata: dict, comment
 **Problem:** Page was edited by someone else between read and write
 
 **Solution:** Check version number and retry
+
 ```python
 try:
     write_page(page_id, markdown, metadata)
@@ -430,6 +455,7 @@ except VersionConflictError:
 **Problem:** Special characters or emojis cause errors
 
 **Solution:** Ensure UTF-8 encoding throughout
+
 ```python
 requests.post(..., json=data)  # Not data=json.dumps(data)
 ```
@@ -472,6 +498,7 @@ requests.post(..., json=data)  # Not data=json.dumps(data)
 ### Option: Selective Macro Preservation
 
 Some converters support preserving specific macros:
+
 ```python
 # Preserve code blocks as Confluence code macro
 converter_options = {
@@ -483,6 +510,7 @@ converter_options = {
 ### Option: Hybrid Edit Mode
 
 Edit in Markdown but preserve macro blocks:
+
 ```markdown
 ## My Section
 
@@ -507,8 +535,10 @@ More editable text.
 - [md2cf Python Package](https://pypi.org/project/md2cf/)
 - [atlas-doc-parser Documentation](https://atlas-doc-parser.readthedocs.io/)
 - [marklassian - Markdown to ADF](https://marklassian.netlify.app/)
-- [Confluence Storage Format Specification](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html)
-- [Confluence Community: MCP & Macros](https://community.atlassian.com/forums/Confluence-questions/Confluence-MCP-amp-page-macros/qaq-p/3073340)
+- [Confluence Storage Format
+  Specification](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html)
+- [Confluence Community: MCP &
+  Macros](https://community.atlassian.com/forums/Confluence-questions/Confluence-MCP-amp-page-macros/qaq-p/3073340)
 
 ## Related Documentation
 

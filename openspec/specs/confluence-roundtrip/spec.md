@@ -1,11 +1,15 @@
 # confluence-roundtrip Specification
 
 ## Purpose
+
 TBD - created by archiving change 003-add-mcp-json-diff-roundtrip. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Roundtrip Page Editing
 
-The system SHALL support reading a Confluence page, allowing Claude to edit the content, and writing the changes back while preserving macros.
+The system SHALL support reading a Confluence page, allowing Claude to edit the content, and writing the changes back
+while preserving macros.
 
 #### Scenario: Edit text on page with macros
 
@@ -212,4 +216,3 @@ The system SHALL use safe defaults that minimize risk while allowing advanced us
 - **THEN** the system SHALL enable requested features
 - **AND** show clear warnings about increased risk
 - **AND** ensure backup is created
-

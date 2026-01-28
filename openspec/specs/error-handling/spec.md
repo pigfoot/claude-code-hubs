@@ -1,8 +1,11 @@
 # error-handling Specification
 
 ## Purpose
+
 TBD - created by archiving change 001-implement-batch-generation. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Continue on Individual Failure
 
 The batch generation script SHALL continue processing remaining slides when an individual slide generation fails.
@@ -15,6 +18,7 @@ The batch generation script SHALL continue processing remaining slides when an i
 **Given:** Batch generation is processing 10 slides
 **When:** Slide 3 fails with "API rate limit exceeded"
 **Then:**
+
 - Error is logged with slide number and message
 - Script continues to slide 4
 - Progress file updated with failed count
@@ -25,6 +29,7 @@ The batch generation script SHALL continue processing remaining slides when an i
 **Given:** Batch generation is processing 10 slides
 **When:** Slides 2, 5, and 8 fail
 **Then:**
+
 - All three errors are logged separately
 - Slides 1, 3, 4, 6, 7, 9, 10 complete successfully
 - Final results show 7 completed, 3 failed
@@ -46,6 +51,7 @@ The results file SHALL include complete error details for all failed slides.
 **Given:** 10-slide generation completed with 2 failures
 **When:** Results file is written
 **Then:**
+
 - Contains `completed: 8, failed: 2, total: 10`
 - `outputs` array lists 8 successful slides with paths
 - `errors` array contains 2 entries with:
@@ -54,6 +60,7 @@ The results file SHALL include complete error details for all failed slides.
   - Timestamp
 
 **Results File Example:**
+
 ```json
 {
   "completed": 8,
@@ -98,6 +105,7 @@ Claude SHALL communicate errors to the user in a clear, actionable format.
 **Given:** Results file shows 8 completed, 2 failed
 **When:** Claude reports results to user
 **Then:**
+
 - Success message: "✓ Completed 8 slides in 150s"
 - Warning: "⚠ 2 slides failed:"
 - Error details listed:
@@ -122,6 +130,7 @@ The batch generation script SHALL use appropriate exit codes to signal outcome.
 **Given:** 8 out of 10 slides generated successfully
 **When:** generate_batch.py exits
 **Then:**
+
 - Exit code is 0 (success - some slides completed)
 - Results file contains full details
 
@@ -130,6 +139,7 @@ The batch generation script SHALL use appropriate exit codes to signal outcome.
 **Given:** All 10 slides failed to generate
 **When:** generate_batch.py exits
 **Then:**
+
 - Exit code is 1 (failure - no slides completed)
 - Results file contains all error details
 - User is notified: "❌ All slides failed to generate"
@@ -150,6 +160,7 @@ The script SHALL handle different error types appropriately.
 **Given:** API returns 429 or 401 error
 **When:** Slide generation fails
 **Then:**
+
 - Error message includes API error code and description
 - Suggests wait time for rate limit
 - Continues to next slide
@@ -159,6 +170,7 @@ The script SHALL handle different error types appropriately.
 **Given:** Output directory is not writable
 **When:** Slide generation attempts to save file
 **Then:**
+
 - Error message includes permission details
 - Script does NOT continue (fatal error)
 - User is notified immediately
@@ -168,6 +180,7 @@ The script SHALL handle different error types appropriately.
 **Given:** Config JSON has invalid model name
 **When:** First slide generation attempts
 **Then:**
+
 - Error detected before API call
 - Clear validation error message
 - Script exits early (fail fast)
@@ -175,4 +188,3 @@ The script SHALL handle different error types appropriately.
 **Rationale:** Different error types need different handling strategies (continue vs fail fast).
 
 ---
-

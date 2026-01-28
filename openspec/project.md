@@ -1,9 +1,11 @@
 # Project Context
 
 ## Purpose
+
 [Describe your project's purpose and goals]
 
 ## Tech Stack
+
 - [List your primary technologies]
 - [e.g., TypeScript, React, Node.js]
 
@@ -12,21 +14,25 @@
 ### OpenSpec Change Naming
 
 All change proposals MUST follow the `NNN-feature-name` format where:
+
 - `NNN` is a zero-padded 3-digit sequential number (001, 002, 003, etc.)
 - `feature-name` is a kebab-case description of the change
 
 **When creating a new change:**
+
 1. Find the highest existing change number in `openspec/changes/` directory
 2. Increment by 1 for the new change
 3. Use zero-padded 3-digit format: `001`, `002`, `003`, etc.
 
 **Examples:**
+
 - First change: `001-initial-setup`
 - Second change: `002-add-authentication`
 - Third change: `003-implement-dashboard`
 - If highest is `003`, next change: `004-batch-generation`
 
 **Finding the next number:**
+
 ```bash
 # List all change directories and find the highest number
 ls openspec/changes/ | grep -o '^[0-9]\+' | sort -n | tail -1
@@ -34,25 +40,29 @@ ls openspec/changes/ | grep -o '^[0-9]\+' | sort -n | tail -1
 ```
 
 **Creating new changes:**
+
 ```bash
 # If the highest existing change is 003
 openspec proposal 004-my-new-feature
 ```
 
 This convention ensures:
+
 - Sequential tracking of all changes
 - Easy sorting and reference
 - Clear project evolution history
 
 ### Skill Development: Progressive Disclosure Strategy
 
-When developing, modifying, or fixing Claude Code skills, follow the **progressive disclosure pattern** to minimize token consumption while maintaining functionality.
+When developing, modifying, or fixing Claude Code skills, follow the **progressive disclosure pattern** to minimize
+token consumption while maintaining functionality.
 
 **Core Principle:** SKILL.md should contain decision-making information, NOT complete code examples.
 
 #### What Goes in SKILL.md
 
 **✅ Include (Decision-Making Information):**
+
 - Critical rules and warnings (e.g., which API to use, what NOT to do)
 - Quick reference tables (comparisons, options)
 - Decision trees and selection logic
@@ -60,6 +70,7 @@ When developing, modifying, or fixing Claude Code skills, follow the **progressi
 - Essential code snippets for decision points (5-15 lines max)
 
 **❌ Exclude (Move to references/):**
+
 - Complete code examples (heredocs, full scripts)
 - Detailed workflows (multi-step processes)
 - Long lists of options or patterns
@@ -69,6 +80,7 @@ When developing, modifying, or fixing Claude Code skills, follow the **progressi
 #### What Goes in references/
 
 Create focused reference documents for detailed content:
+
 - `references/api-guide.md` - Complete API usage examples with code
 - `references/workflow.md` - Step-by-step processes
 - `references/patterns.md` - Comprehensive pattern libraries
@@ -78,22 +90,27 @@ Create focused reference documents for detailed content:
 #### Critical: Enable Claude to Find References
 
 **❌ BAD - Causes Claude to Guess:**
+
 ```markdown
 <!-- SKILL.md without references -->
 Use the Python API to generate images.
 ```
+
 Result: Claude will guess the API, usually incorrectly.
 
 **✅ GOOD - Explicit Reference:**
+
 ```markdown
 <!-- SKILL.md with clear reference -->
 Use the Python API to generate images. For complete code examples, see `references/api-guide.md`.
 ```
+
 Result: Claude will Read the reference file and use correct API.
 
 #### Reference nano-banana Skill
 
 See `/plugins/nano-banana/skills/nano-banana/SKILL.md` for a production example:
+
 - **SKILL.md**: 387 lines (critical rules, quick reference, pointers to references/)
 - **references/gemini-api.md**: Complete Gemini API code examples
 - **references/imagen-api.md**: Complete Imagen API code examples
@@ -101,6 +118,7 @@ See `/plugins/nano-banana/skills/nano-banana/SKILL.md` for a production example:
 - **references/slide-deck-styles.md**: Multi-slide generation workflows
 
 **Key pattern in nano-banana:**
+
 ```markdown
 ### Complete Code Examples
 
@@ -123,22 +141,29 @@ For full working examples, see:
 - **References per skill**: 3-6 focused documents
 
 ### Code Style
+
 [Describe your code style preferences, formatting rules, and naming conventions]
 
 ### Architecture Patterns
+
 [Document your architectural decisions and patterns]
 
 ### Testing Strategy
+
 [Explain your testing approach and requirements]
 
 ### Git Workflow
+
 [Describe your branching strategy and commit conventions]
 
 ## Domain Context
+
 [Add domain-specific knowledge that AI assistants need to understand]
 
 ## Important Constraints
+
 [List any technical, business, or regulatory constraints]
 
 ## External Dependencies
+
 [Document key external services, APIs, or systems]

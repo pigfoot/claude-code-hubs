@@ -5,6 +5,7 @@ Prompt templates for professional presentation slides, infographics, and slide d
 **⚠️ NotebookLM Style**: Apply aesthetic but **NEVER** use "NotebookLM" brand/logo in prompts (see SKILL.md for details)
 
 **Important**: All slide deck styles automatically use **lossless WebP** format (VP8L encoding):
+
 - Saves 20-30% file size compared to PNG (typical for diagrams/slides)
 - Perfect for slides with text, icons, and graphics
 - Completely lossless (zero quality degradation)
@@ -376,7 +377,8 @@ Format: 16:9, suitable for professional presentation
 Style reference: Similar to Google's product documentation or modern tech blog infographics, but with Trend Micro color scheme
 ```
 
-**When to use Trend style**: The Trend Micro brand style automatically combines clean professional slide aesthetic with Trend's brand color palette. Perfect for corporate presentations, technical documentation, and professional slide decks.
+**When to use Trend style**: The Trend Micro brand style automatically combines clean professional slide aesthetic with
+Trend's brand color palette. Perfect for corporate presentations, technical documentation, and professional slide decks.
 
 ### Example 3: ML Workflow
 
@@ -414,18 +416,21 @@ Format: 16:9 landscape
 3. **Reference real data**: Provide actual numbers, percentages, or content when available
 4. **Iterate strategically**: Make small adjustments rather than full regeneration
 5. **Use natural language**: Describe what you want conversationally, not as keyword tags
-6. **File format**: Slide deck styles automatically use lossless WebP (VP8L) - no need to specify format, it's optimized for your content type
+6. **File format**: Slide deck styles automatically use lossless WebP (VP8L) - no need to specify format, it's optimized
+   for your content type
 
 ---
 
 ## Multi-Slide Generation
 
-**Mode Selection (Automatic):**
+### Mode Selection (Automatic)
+
 - **5+ slides**: Use batch mode for maximum efficiency (80% context reduction) → See `batch-generation.md`
 - **3-4 slides**: Use Task agents for parallel generation (documented below)
 - **1-2 slides**: Sequential direct execution
 
-**For 5+ slides:** This document focuses on 3-4 slide generation. For larger decks (5+ slides), see the complete batch generation workflow in `batch-generation.md`.
+**For 5+ slides:** This document focuses on 3-4 slide generation. For larger decks (5+ slides), see the complete batch
+generation workflow in `batch-generation.md`.
 
 ---
 
@@ -437,12 +442,13 @@ When generating 3-4 slides for a presentation, use the **Hybrid Mode**: Plan →
 
 Before generating, plan the entire deck:
 
-**1. Define overall theme and style**
+#### 1. Define overall theme and style
+
 - Choose visual style (Professional, Blackboard, Data Viz, etc.)
 - Lock down color palette (specific hex codes)
 - Set consistent layout format (16:9, 4:3)
 
-**2. Create content outline**
+#### 2. Create content outline
 
 ```
 Slide 1: Title - "Presentation Title"
@@ -452,7 +458,7 @@ Slide 4: Data - Charts and metrics
 Slide 5: Conclusion - Summary and CTA
 ```
 
-**3. Pre-plan output directory and file structure**
+#### 3. Pre-plan output directory and file structure
 
 All slides should be saved in a **single directory** with numbered filenames:
 
@@ -479,7 +485,8 @@ Task("Generate slide 3: Details, style: trend, colors: #d71920...")
 // All run in parallel
 ```
 
-**Critical - Pass identical style specification to each agent:**
+#### Critical - Pass identical style specification to each agent
+
 - Same colors, fonts, layout
 - Same `use_lossless = True` for consistency
 - Same aspect ratio and image size
@@ -551,7 +558,8 @@ After generation, review consistency and adjust if needed.
 
 ### Example 2: Professional Editorial Style (NotebookLM-Inspired Aesthetic)
 
-**⚠️ IMPORTANT**: This example shows how to use `style: notebooklm` trigger WITHOUT including NotebookLM branding in the output.
+**⚠️ IMPORTANT**: This example shows how to use `style: notebooklm` trigger WITHOUT including NotebookLM branding in the
+output.
 
 ```
 Generate a 5-slide presentation deck about "AI Product Development Best Practices".
@@ -623,14 +631,16 @@ Ensure consistent color usage and clean professional aesthetic across all slides
 
 ### Best Practices for Multi-Slide Generation
 
-**Do:**
+#### Do
+
 - ✅ Define complete style spec before starting
 - ✅ Use consistent hex codes (not "red", use "#d71920")
 - ✅ Pre-plan all directory names
 - ✅ Pass identical parameters to each agent
 - ✅ Review and adjust after generation
 
-**Don't:**
+#### Don't
+
 - ❌ Mix styles between slides (keep consistent)
 - ❌ Forget to specify `use_lossless = True`
 - ❌ Use vague color names ("blue" → specify "#005295")
