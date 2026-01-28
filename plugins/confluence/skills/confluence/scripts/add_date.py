@@ -49,8 +49,8 @@ def find_and_add_date_recursive(node, search_text, date_timestamp):
                         "type": "date",
                         "attrs": {
                             "timestamp": str(date_timestamp),
-                            "localId": f"date-{os.urandom(4).hex()}"
-                        }
+                            "localId": f"date-{os.urandom(4).hex()}",
+                        },
                     }
 
                     # Add space before date
@@ -111,17 +111,17 @@ def main():
     parser.add_argument(
         "--search-text",
         required=True,
-        help="Text to search for (date will be added after this text)"
+        help="Text to search for (date will be added after this text)",
     )
     parser.add_argument(
         "--date",
         required=True,
-        help="Date in ISO format (YYYY-MM-DD, e.g., '2026-03-15')"
+        help="Date in ISO format (YYYY-MM-DD, e.g., '2026-03-15')",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -130,7 +130,10 @@ def main():
     try:
         datetime.fromisoformat(args.date)
     except ValueError:
-        print(f"❌ Error: Invalid date format '{args.date}' (expected YYYY-MM-DD)", file=sys.stderr)
+        print(
+            f"❌ Error: Invalid date format '{args.date}' (expected YYYY-MM-DD)",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # Build dry-run description
@@ -142,7 +145,7 @@ def main():
         lambda adf: add_date(adf, args.search_text, args.date),
         dry_run=args.dry_run,
         dry_run_description=description,
-        version_message=f"Added date '{args.date}' via Python REST API"
+        version_message=f"Added date '{args.date}' via Python REST API",
     )
 
 

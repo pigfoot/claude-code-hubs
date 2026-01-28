@@ -47,36 +47,36 @@ from PIL import Image as PILImage
 # - Result: 7692×1359 (5.66:1) - matches frame aspect ratio perfectly
 # - With noChangeAspect=1, displays 100% of logo content (complete TRENDLIFE text)
 LOGO_POSITIONS = {
-    'title': {
-        'position': 'bottom-right',
-        'size_ratio': 0.1534,  # 294.6/1920 = 15.34% of slide width
-        'padding': (17, 20),  # Calibrated to match PowerPoint visible content position
-        'opacity': 1.0
+    "title": {
+        "position": "bottom-right",
+        "size_ratio": 0.1534,  # 294.6/1920 = 15.34% of slide width
+        "padding": (17, 20),  # Calibrated to match PowerPoint visible content position
+        "opacity": 1.0,
     },
-    'content': {
-        'position': 'bottom-right',
-        'size_ratio': 0.1534,  # Same size for all layouts (from template)
-        'padding': (17, 20),
-        'opacity': 1.0
+    "content": {
+        "position": "bottom-right",
+        "size_ratio": 0.1534,  # Same size for all layouts (from template)
+        "padding": (17, 20),
+        "opacity": 1.0,
     },
-    'divider': {
-        'position': 'bottom-right',
-        'size_ratio': 0.1534,
-        'padding': (17, 20),
-        'opacity': 1.0
+    "divider": {
+        "position": "bottom-right",
+        "size_ratio": 0.1534,
+        "padding": (17, 20),
+        "opacity": 1.0,
     },
-    'end': {
-        'position': 'bottom-right',  # All layouts use same position in template
-        'size_ratio': 0.1534,
-        'padding': (17, 20),
-        'opacity': 1.0
+    "end": {
+        "position": "bottom-right",  # All layouts use same position in template
+        "size_ratio": 0.1534,
+        "padding": (17, 20),
+        "opacity": 1.0,
     },
-    'default': {
-        'position': 'bottom-right',
-        'size_ratio': 0.1534,
-        'padding': (17, 20),
-        'opacity': 1.0
-    }
+    "default": {
+        "position": "bottom-right",
+        "size_ratio": 0.1534,
+        "padding": (17, 20),
+        "opacity": 1.0,
+    },
 }
 
 
@@ -86,7 +86,7 @@ def calculate_logo_position(
     logo_width: int,
     logo_height: int,
     position: str,
-    padding: Tuple[int, int]
+    padding: Tuple[int, int],
 ) -> Tuple[int, int]:
     """
     Calculate logo position coordinates based on placement strategy.
@@ -104,16 +104,16 @@ def calculate_logo_position(
     """
     x_pad, y_pad = padding
 
-    if position == 'bottom-right':
+    if position == "bottom-right":
         x = slide_width - logo_width - x_pad
         y = slide_height - logo_height - y_pad
-    elif position == 'center-bottom':
+    elif position == "center-bottom":
         x = (slide_width - logo_width) // 2
         y = slide_height - logo_height - y_pad
-    elif position == 'top-right':
+    elif position == "top-right":
         x = slide_width - logo_width - x_pad
         y = y_pad
-    elif position == 'top-left':
+    elif position == "top-left":
         x = x_pad
         y = y_pad
     else:
@@ -124,10 +124,7 @@ def calculate_logo_position(
     return (x, y)
 
 
-def resize_logo_proportional(
-    logo: PILImage.Image,
-    target_width: int
-) -> PILImage.Image:
+def resize_logo_proportional(logo: PILImage.Image, target_width: int) -> PILImage.Image:
     """
     Resize logo to match PowerPoint template display behavior.
 
@@ -149,18 +146,15 @@ def resize_logo_proportional(
     # At 295px width: height = 295 / 5.66 = 52px
     target_height = int(target_width * (logo.height / logo.width))
 
-    return logo.resize(
-        (target_width, target_height),
-        PILImage.Resampling.LANCZOS
-    )
+    return logo.resize((target_width, target_height), PILImage.Resampling.LANCZOS)
 
 
 def overlay_logo(
     background_path: Path,
     logo_path: Path,
     output_path: Path,
-    layout_type: str = 'default',
-    opacity: Optional[float] = None
+    layout_type: str = "default",
+    opacity: Optional[float] = None,
 ) -> Path:
     """
     Overlay logo on generated slide image with precise positioning.
@@ -187,18 +181,18 @@ def overlay_logo(
 
     # Get positioning configuration
     if layout_type not in LOGO_POSITIONS:
-        layout_type = 'default'
+        layout_type = "default"
 
     config = LOGO_POSITIONS[layout_type]
-    final_opacity = opacity if opacity is not None else config['opacity']
+    final_opacity = opacity if opacity is not None else config["opacity"]
 
     # Load images
-    background = PILImage.open(background_path).convert('RGBA')
-    logo = PILImage.open(logo_path).convert('RGBA')
+    background = PILImage.open(background_path).convert("RGBA")
+    logo = PILImage.open(logo_path).convert("RGBA")
 
     # Calculate target logo size
     slide_width, slide_height = background.size
-    target_logo_width = int(slide_width * config['size_ratio'])
+    target_logo_width = int(slide_width * config["size_ratio"])
 
     # Resize logo proportionally
     logo_resized = resize_logo_proportional(logo, target_logo_width)
@@ -212,29 +206,31 @@ def overlay_logo(
     # Calculate position
     logo_width, logo_height = logo_resized.size
     position = calculate_logo_position(
-        slide_width, slide_height,
-        logo_width, logo_height,
-        config['position'],
-        config['padding']
+        slide_width,
+        slide_height,
+        logo_width,
+        logo_height,
+        config["position"],
+        config["padding"],
     )
 
     # Composite logo onto background
     background.paste(logo_resized, position, logo_resized)
 
     # Convert back to RGB if saving as JPEG, keep RGBA for PNG/WebP
-    if output_path.suffix.lower() in ['.jpg', '.jpeg']:
-        background = background.convert('RGB')
+    if output_path.suffix.lower() in [".jpg", ".jpeg"]:
+        background = background.convert("RGB")
 
     # Save with high quality
-    if output_path.suffix.lower() == '.webp':
-        background.save(output_path, 'WEBP', quality=95, lossless=True)
-    elif output_path.suffix.lower() in ['.jpg', '.jpeg']:
-        background.save(output_path, 'JPEG', quality=95, optimize=True)
-    elif output_path.suffix.lower() == '.png':
-        background.save(output_path, 'PNG', optimize=True)
+    if output_path.suffix.lower() == ".webp":
+        background.save(output_path, "WEBP", quality=95, lossless=True)
+    elif output_path.suffix.lower() in [".jpg", ".jpeg"]:
+        background.save(output_path, "JPEG", quality=95, optimize=True)
+    elif output_path.suffix.lower() == ".png":
+        background.save(output_path, "PNG", optimize=True)
     else:
         # Default to WebP
-        background.save(output_path, 'WEBP', quality=95, lossless=True)
+        background.save(output_path, "WEBP", quality=95, lossless=True)
 
     return output_path
 
@@ -253,20 +249,23 @@ def detect_layout_type(prompt: str, slide_number: Optional[int] = None) -> str:
     prompt_lower = prompt.lower()
 
     # Title slide detection
-    if any(word in prompt_lower for word in ['title slide', 'cover slide', 'opening']):
-        return 'title'
+    if any(word in prompt_lower for word in ["title slide", "cover slide", "opening"]):
+        return "title"
 
     # End slide detection
-    if any(word in prompt_lower for word in ['end slide', 'closing', 'thank you', 'conclusion']):
-        return 'end'
+    if any(
+        word in prompt_lower
+        for word in ["end slide", "closing", "thank you", "conclusion"]
+    ):
+        return "end"
 
     # Divider slide detection
-    if any(word in prompt_lower for word in ['divider', 'section break', 'chapter']):
-        return 'divider'
+    if any(word in prompt_lower for word in ["divider", "section break", "chapter"]):
+        return "divider"
 
     # First slide is usually title
     if slide_number == 1:
-        return 'title'
+        return "title"
 
     # Default to content slide
-    return 'content'
+    return "content"

@@ -33,7 +33,9 @@ from confluence_adf_utils import (
 )
 
 
-def add_list_item(adf, heading_text, item_text, insert_position="end", list_type="bullet"):
+def add_list_item(
+    adf, heading_text, item_text, insert_position="end", list_type="bullet"
+):
     """
     Add item to a list after specified heading (supports recursive search in macros).
 
@@ -64,18 +66,18 @@ def add_list_item(adf, heading_text, item_text, insert_position="end", list_type
             {
                 "type": "paragraph",
                 "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-                "content": [{"type": "text", "text": item_text}]
+                "content": [{"type": "text", "text": item_text}],
             }
-        ]
+        ],
     }
 
     # Insert
     if insert_position == "end":
         list_node["content"].append(new_item)
-        print(f"✅ Added list item at end")
+        print("✅ Added list item at end")
     else:
         list_node["content"].insert(0, new_item)
-        print(f"✅ Added list item at start")
+        print("✅ Added list item at start")
 
     return True
 
@@ -88,29 +90,25 @@ def main():
     parser.add_argument(
         "--after-heading",
         required=True,
-        help="Heading text before the list (e.g., 'Requirements')"
+        help="Heading text before the list (e.g., 'Requirements')",
     )
-    parser.add_argument(
-        "--item",
-        required=True,
-        help="Text for the new list item"
-    )
+    parser.add_argument("--item", required=True, help="Text for the new list item")
     parser.add_argument(
         "--position",
         choices=["start", "end"],
         default="end",
-        help="Insert at start or end of list (default: end)"
+        help="Insert at start or end of list (default: end)",
     )
     parser.add_argument(
         "--list-type",
         choices=["bullet", "numbered"],
         default="bullet",
-        help="Type of list (default: bullet)"
+        help="Type of list (default: bullet)",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -131,6 +129,7 @@ def main():
 
         # Parse ADF body
         import json
+
         body_value = page_data.get("body", {}).get("atlas_doc_format", {}).get("value")
         if isinstance(body_value, str):
             adf = json.loads(body_value)
@@ -140,11 +139,7 @@ def main():
         # Add list item
         print(f"🔍 Finding list after heading '{args.after_heading}'...")
         success = add_list_item(
-            adf,
-            args.after_heading,
-            args.item,
-            args.position,
-            args.list_type
+            adf, args.after_heading, args.item, args.position, args.list_type
         )
 
         if not success:
@@ -160,7 +155,7 @@ def main():
             return
 
         # Update page
-        print(f"📝 Updating page...")
+        print("📝 Updating page...")
         result = update_page_adf(
             base_url,
             auth,
@@ -168,17 +163,18 @@ def main():
             title,
             adf,
             version,
-            "Added list item via Python REST API"
+            "Added list item via Python REST API",
         )
 
         new_version = result.get("version", {}).get("number")
-        print(f"✅ Page updated successfully!")
+        print("✅ Page updated successfully!")
         print(f"   New version: {new_version}")
         print(f"   URL: {base_url}/pages/{args.page_id}")
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

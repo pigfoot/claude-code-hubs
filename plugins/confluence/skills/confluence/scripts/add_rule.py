@@ -41,10 +41,7 @@ def add_rule(adf, after_heading=None):
     content = adf.get("content", [])
 
     # Create rule node
-    rule_node = {
-        "type": "rule",
-        "attrs": {"localId": f"rule-{os.urandom(4).hex()}"}
-    }
+    rule_node = {"type": "rule", "attrs": {"localId": f"rule-{os.urandom(4).hex()}"}}
 
     if after_heading:
         # Find heading
@@ -59,7 +56,7 @@ def add_rule(adf, after_heading=None):
     else:
         # Add at end
         content.append(rule_node)
-        print(f"✅ Added horizontal rule at end of page")
+        print("✅ Added horizontal rule at end of page")
 
     return True
 
@@ -70,25 +67,22 @@ def main():
     )
     parser.add_argument("page_id", help="Confluence page ID")
     parser.add_argument(
-        "--after-heading",
-        help="Add rule after this heading (e.g., 'Overview')"
+        "--after-heading", help="Add rule after this heading (e.g., 'Overview')"
     )
-    parser.add_argument(
-        "--at-end",
-        action="store_true",
-        help="Add rule at end of page"
-    )
+    parser.add_argument("--at-end", action="store_true", help="Add rule at end of page")
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
 
     # Validate arguments
     if not args.after_heading and not args.at_end:
-        print("❌ Error: Must specify either --after-heading or --at-end", file=sys.stderr)
+        print(
+            "❌ Error: Must specify either --after-heading or --at-end", file=sys.stderr
+        )
         sys.exit(1)
 
     # Build dry-run description
@@ -103,7 +97,7 @@ def main():
         lambda adf: add_rule(adf, args.after_heading),
         dry_run=args.dry_run,
         dry_run_description=description,
-        version_message="Added horizontal rule via Python REST API"
+        version_message="Added horizontal rule via Python REST API",
     )
 
 

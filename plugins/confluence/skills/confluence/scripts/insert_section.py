@@ -83,13 +83,8 @@ def insert_section(adf, after_heading, new_heading_text, level, content_text):
     # Create new heading
     new_heading = {
         "type": "heading",
-        "attrs": {
-            "level": level,
-            "localId": f"heading-{os.urandom(4).hex()}"
-        },
-        "content": [
-            {"type": "text", "text": new_heading_text}
-        ]
+        "attrs": {"level": level, "localId": f"heading-{os.urandom(4).hex()}"},
+        "content": [{"type": "text", "text": new_heading_text}],
     }
 
     # Insert heading
@@ -101,9 +96,7 @@ def insert_section(adf, after_heading, new_heading_text, level, content_text):
         new_paragraph = {
             "type": "paragraph",
             "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-            "content": [
-                {"type": "text", "text": content_text}
-            ]
+            "content": [{"type": "text", "text": content_text}],
         }
         content.insert(insert_idx, new_paragraph)
 
@@ -118,28 +111,25 @@ def main():
     parser.add_argument("page_id", help="Confluence page ID")
     parser.add_argument(
         "--after-heading",
-        help="Heading text to insert section after (omit to insert at end)"
+        help="Heading text to insert section after (omit to insert at end)",
     )
     parser.add_argument(
         "--new-heading",
         required=True,
-        help="Text for the new heading (e.g., 'Security Considerations')"
+        help="Text for the new heading (e.g., 'Security Considerations')",
     )
     parser.add_argument(
         "--level",
         type=int,
         choices=[1, 2, 3, 4, 5, 6],
         default=2,
-        help="Heading level 1-6 (default: 2)"
+        help="Heading level 1-6 (default: 2)",
     )
-    parser.add_argument(
-        "--content",
-        help="Paragraph text content (optional)"
-    )
+    parser.add_argument("--content", help="Paragraph text content (optional)")
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -160,6 +150,7 @@ def main():
 
         # Parse ADF body
         import json
+
         body_value = page_data.get("body", {}).get("atlas_doc_format", {}).get("value")
         if isinstance(body_value, str):
             adf = json.loads(body_value)
@@ -170,14 +161,10 @@ def main():
         if args.after_heading:
             print(f"🔍 Finding heading '{args.after_heading}'...")
         else:
-            print(f"🔍 Inserting at end of page...")
+            print("🔍 Inserting at end of page...")
 
         success = insert_section(
-            adf,
-            args.after_heading,
-            args.new_heading,
-            args.level,
-            args.content
+            adf, args.after_heading, args.new_heading, args.level, args.content
         )
 
         if not success:
@@ -193,7 +180,7 @@ def main():
             return
 
         # Update page
-        print(f"📝 Updating page...")
+        print("📝 Updating page...")
         result = update_page_adf(
             base_url,
             auth,
@@ -201,17 +188,18 @@ def main():
             title,
             adf,
             version,
-            "Inserted section via Python REST API"
+            "Inserted section via Python REST API",
         )
 
         new_version = result.get("version", {}).get("number")
-        print(f"✅ Page updated successfully!")
+        print("✅ Page updated successfully!")
         print(f"   New version: {new_version}")
         print(f"   URL: {base_url}/pages/{args.page_id}")
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

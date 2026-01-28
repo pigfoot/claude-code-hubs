@@ -45,18 +45,18 @@ def decode_tiny_url(tiny_code: str) -> int:
     """
     try:
         # Add padding if needed (Base64 requires length divisible by 4)
-        padded = tiny_code + '=='
+        padded = tiny_code + "=="
 
         # Convert URL-safe Base64 to standard Base64
         # URL-safe uses: - instead of +, _ instead of /
-        standard_b64 = padded.replace('-', '+').replace('_', '/')
+        standard_b64 = padded.replace("-", "+").replace("_", "/")
 
         # Decode Base64
         decoded_bytes = base64.b64decode(standard_b64)
 
         # Convert bytes to integer (little-endian)
         # Confluence uses little-endian byte order for page IDs
-        page_id = int.from_bytes(decoded_bytes, 'little')
+        page_id = int.from_bytes(decoded_bytes, "little")
 
         return page_id
     except Exception as e:
@@ -95,64 +95,42 @@ def resolve_confluence_url(url_or_id: Union[str, int]) -> Dict[str, str]:
     """
     # Convert to string if integer
     if isinstance(url_or_id, int):
-        return {
-            "type": "page_id",
-            "value": str(url_or_id)
-        }
+        return {"type": "page_id", "value": str(url_or_id)}
 
     url_str = str(url_or_id).strip()
 
     # Pattern 1: Direct numeric page ID
     if url_str.isdigit():
-        return {
-            "type": "page_id",
-            "value": url_str
-        }
+        return {"type": "page_id", "value": url_str}
 
     # Pattern 2: Short URL - /wiki/x/{code}
-    short_url_pattern = r'/wiki/x/([A-Za-z0-9_-]+)'
+    short_url_pattern = r"/wiki/x/([A-Za-z0-9_-]+)"
     match = re.search(short_url_pattern, url_str)
     if match:
         tiny_code = match.group(1)
         try:
             page_id = decode_tiny_url(tiny_code)
-            return {
-                "type": "page_id",
-                "value": str(page_id)
-            }
+            return {"type": "page_id", "value": str(page_id)}
         except ValueError as e:
             # Decoding failed, return as unknown
-            return {
-                "type": "unknown",
-                "value": url_str,
-                "error": str(e)
-            }
+            return {"type": "unknown", "value": url_str, "error": str(e)}
 
     # Pattern 3: Full URL - /wiki/spaces/{space}/pages/{id}/{title}
-    full_url_pattern = r'/wiki/spaces/[^/]+/pages/(\d+)'
+    full_url_pattern = r"/wiki/spaces/[^/]+/pages/(\d+)"
     match = re.search(full_url_pattern, url_str)
     if match:
         page_id = match.group(1)
-        return {
-            "type": "page_id",
-            "value": page_id
-        }
+        return {"type": "page_id", "value": page_id}
 
     # Pattern 4: Alternative full URL - /pages/{id}/{title}
-    alt_url_pattern = r'/pages/(\d+)'
+    alt_url_pattern = r"/pages/(\d+)"
     match = re.search(alt_url_pattern, url_str)
     if match:
         page_id = match.group(1)
-        return {
-            "type": "page_id",
-            "value": page_id
-        }
+        return {"type": "page_id", "value": page_id}
 
     # Unknown format
-    return {
-        "type": "unknown",
-        "value": url_str
-    }
+    return {"type": "unknown", "value": url_str}
 
 
 def main():
@@ -162,7 +140,9 @@ def main():
         print()
         print("Examples:")
         print("  python url_resolver.py 'https://site.atlassian.net/wiki/x/2oEBfw'")
-        print("  python url_resolver.py 'https://site.atlassian.net/wiki/spaces/SPACE/pages/123456/Title'")
+        print(
+            "  python url_resolver.py 'https://site.atlassian.net/wiki/spaces/SPACE/pages/123456/Title'"
+        )
         print("  python url_resolver.py '123456789'")
         sys.exit(1)
 
@@ -171,6 +151,7 @@ def main():
 
     # Pretty print result
     import json
+
     print(json.dumps(result, indent=2))
 
     # Exit code

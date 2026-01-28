@@ -13,9 +13,6 @@ Usage:
     uv run roundtrip_helper.py  # Will show usage message
 """
 
-import sys
-from pathlib import Path
-
 # Import core classes
 from mcp_json_diff_roundtrip import (
     ADFTextExtractor,
@@ -24,7 +21,6 @@ from mcp_json_diff_roundtrip import (
     BackupManager,
     MacroBodyDetector,
     ADFValidator,
-    TextChange
 )
 
 
@@ -35,7 +31,7 @@ def process_confluence_edit(
     page_version: int,
     space_id: str,
     edit_instruction: str,
-    advanced_mode: bool = False
+    advanced_mode: bool = False,
 ) -> dict:
     """
     Process a Confluence page edit using Method 6.
@@ -64,11 +60,7 @@ def process_confluence_edit(
         - backup_file: Path to backup
         - macros: List of detected macros (if any)
     """
-    result = {
-        "status": "pending",
-        "page_id": page_id,
-        "page_title": page_title
-    }
+    result = {"status": "pending", "page_id": page_id, "page_title": page_title}
 
     # Step 1: Validate ADF
     validator = ADFValidator()
@@ -83,11 +75,7 @@ def process_confluence_edit(
     detector = MacroBodyDetector()
     macros = detector.detect_macros_with_content(page_adf)
     result["macros"] = [
-        {
-            "type": m.type,
-            "preview": m.preview,
-            "text_count": m.text_count
-        }
+        {"type": m.type, "preview": m.preview, "text_count": m.text_count}
         for m in macros
     ]
 
@@ -99,7 +87,7 @@ def process_confluence_edit(
             adf_content=page_adf,
             version=page_version,
             title=page_title,
-            space_id=space_id
+            space_id=space_id,
         )
         result["backup_file"] = str(backup_file)
     except Exception as e:
@@ -136,7 +124,7 @@ def compute_changes_and_patch(
     original_adf: dict,
     original_nodes_data: list,  # Can be reconstructed if needed
     edited_markdown: str,
-    include_macro_bodies: bool = False
+    include_macro_bodies: bool = False,
 ) -> dict:
     """
     Compute changes between original and edited markdown, then patch ADF.
@@ -167,7 +155,7 @@ def compute_changes_and_patch(
     if not changes:
         return {
             "status": "no_changes",
-            "message": "No changes detected between original and edited content"
+            "message": "No changes detected between original and edited content",
         }
 
     # Apply changes
@@ -177,14 +165,10 @@ def compute_changes_and_patch(
         "status": "success",
         "patched_adf": patched_adf,
         "changes": [
-            {
-                "path": c.path,
-                "old_text": c.old_text,
-                "new_text": c.new_text
-            }
+            {"path": c.path, "old_text": c.old_text, "new_text": c.new_text}
             for c in changes
         ],
-        "change_count": len(changes)
+        "change_count": len(changes),
     }
 
 

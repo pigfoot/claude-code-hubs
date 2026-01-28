@@ -25,7 +25,6 @@ import requests
 # Import from confluence_adf_utils.py
 sys.path.insert(0, str(Path(__file__).parent))
 from confluence_adf_utils import (
-    execute_modification,
     find_heading_index,
     get_auth,
 )
@@ -45,29 +44,26 @@ def upload_attachment(base_url, auth, page_id, image_path):
         Attachment ID or None if failed
     """
     # Prepare upload
-    api_base = base_url.rstrip('/').replace("/wiki", "")
+    api_base = base_url.rstrip("/").replace("/wiki", "")
     url = f"{api_base}/wiki/rest/api/content/{page_id}/child/attachment"
 
     # Read file
-    with open(image_path, 'rb') as f:
-        files = {
-            'file': (Path(image_path).name, f, 'image/png')
-        }
+    with open(image_path, "rb") as f:
+        files = {"file": (Path(image_path).name, f, "image/png")}
 
         # Upload
         response = requests.post(
-            url,
-            auth=auth,
-            files=files,
-            headers={"X-Atlassian-Token": "no-check"}
+            url, auth=auth, files=files, headers={"X-Atlassian-Token": "no-check"}
         )
 
     if response.ok:
         result = response.json()
         # Get attachment ID from results
-        if 'results' in result and len(result['results']) > 0:
-            attachment_id = result['results'][0]['id']
-            print(f"   Uploaded attachment: {Path(image_path).name} (ID: {attachment_id})")
+        if "results" in result and len(result["results"]) > 0:
+            attachment_id = result["results"][0]["id"]
+            print(
+                f"   Uploaded attachment: {Path(image_path).name} (ID: {attachment_id})"
+            )
             return attachment_id
 
     print(f"   ⚠️ Upload failed: {response.status_code} - {response.text}")
@@ -95,7 +91,7 @@ def add_media(adf, attachment_id, image_filename, width=None, after_heading=None
         "id": attachment_id,
         "type": "file",
         "collection": "",
-        "localId": f"media-{os.urandom(4).hex()}"
+        "localId": f"media-{os.urandom(4).hex()}",
     }
 
     if width:
@@ -103,16 +99,8 @@ def add_media(adf, attachment_id, image_filename, width=None, after_heading=None
 
     media_single_node = {
         "type": "mediaSingle",
-        "attrs": {
-            "layout": "center",
-            "localId": f"mediasingle-{os.urandom(4).hex()}"
-        },
-        "content": [
-            {
-                "type": "media",
-                "attrs": media_attrs
-            }
-        ]
+        "attrs": {"layout": "center", "localId": f"mediasingle-{os.urandom(4).hex()}"},
+        "content": [{"type": "media", "attrs": media_attrs}],
     }
 
     if after_heading:
@@ -141,33 +129,28 @@ def main():
     parser.add_argument(
         "--image-path",
         required=True,
-        help="Path to image file (e.g., './screenshot.png')"
+        help="Path to image file (e.g., './screenshot.png')",
     )
     parser.add_argument(
-        "--after-heading",
-        help="Add image after this heading (e.g., 'Screenshots')"
+        "--after-heading", help="Add image after this heading (e.g., 'Screenshots')"
     )
     parser.add_argument(
-        "--at-end",
-        action="store_true",
-        help="Add image at end of page"
+        "--at-end", action="store_true", help="Add image at end of page"
     )
-    parser.add_argument(
-        "--width",
-        type=int,
-        help="Optional image width in pixels"
-    )
+    parser.add_argument("--width", type=int, help="Optional image width in pixels")
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
 
     # Validate arguments
     if not args.after_heading and not args.at_end:
-        print("❌ Error: Must specify either --after-heading or --at-end", file=sys.stderr)
+        print(
+            "❌ Error: Must specify either --after-heading or --at-end", file=sys.stderr
+        )
         sys.exit(1)
 
     # Validate image file exists
@@ -176,9 +159,15 @@ def main():
         sys.exit(1)
 
     # Build dry-run description
-    location = f"after heading '{args.after_heading}'" if args.after_heading else "at end of page"
+    location = (
+        f"after heading '{args.after_heading}'"
+        if args.after_heading
+        else "at end of page"
+    )
     width_info = f" (width: {args.width}px)" if args.width else ""
-    description = f"Upload and add image '{Path(args.image_path).name}' {location}{width_info}"
+    description = (
+        f"Upload and add image '{Path(args.image_path).name}' {location}{width_info}"
+    )
 
     if args.dry_run:
         print("🔍 Dry run - would do:")
@@ -207,7 +196,7 @@ def main():
                 attachment_id,
                 Path(args.image_path).name,
                 args.width,
-                args.after_heading
+                args.after_heading,
             )
 
         from confluence_adf_utils import execute_modification
@@ -216,12 +205,13 @@ def main():
             args.page_id,
             modify,
             dry_run=False,  # Already handled dry-run above
-            version_message=f"Added image '{Path(args.image_path).name}' via Python REST API"
+            version_message=f"Added image '{Path(args.image_path).name}' via Python REST API",
         )
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

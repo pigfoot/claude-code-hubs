@@ -73,7 +73,7 @@ def get_page_adf(base_url: str, auth: Tuple[str, str], page_id: str) -> Dict[str
         requests.HTTPError: If API request fails
     """
     # Remove /wiki/ suffix if present and ensure no double slashes
-    api_base = base_url.rstrip('/').replace("/wiki", "")
+    api_base = base_url.rstrip("/").replace("/wiki", "")
     url = f"{api_base}/wiki/api/v2/pages/{page_id}?body-format=atlas_doc_format"
 
     response = requests.get(url, auth=auth)
@@ -89,7 +89,7 @@ def update_page_adf(
     title: str,
     body: Dict[str, Any],
     version: int,
-    version_message: Optional[str] = None
+    version_message: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Update page content in ADF format via REST API v2.
@@ -109,21 +109,18 @@ def update_page_adf(
     Raises:
         requests.HTTPError: If API request fails
     """
-    api_base = base_url.rstrip('/').replace("/wiki", "")
+    api_base = base_url.rstrip("/").replace("/wiki", "")
     url = f"{api_base}/wiki/api/v2/pages/{page_id}"
 
     payload = {
         "id": page_id,
         "status": "current",
         "title": title,  # Must provide existing title
-        "body": {
-            "representation": "atlas_doc_format",
-            "value": json.dumps(body)
-        },
+        "body": {"representation": "atlas_doc_format", "value": json.dumps(body)},
         "version": {
             "number": version + 1,
-            "message": version_message or "Updated via Python REST API"
-        }
+            "message": version_message or "Updated via Python REST API",
+        },
     }
 
     response = requests.put(url, auth=auth, json=payload)
@@ -193,7 +190,9 @@ def find_node_recursive(node, node_type: str, search_fn=None):
     return None
 
 
-def find_table_recursive(adf: Dict[str, Any], heading_text: str = None) -> Optional[Dict]:
+def find_table_recursive(
+    adf: Dict[str, Any], heading_text: str = None
+) -> Optional[Dict]:
     """
     Recursively find a table in the entire document.
 
@@ -225,7 +224,9 @@ def find_table_recursive(adf: Dict[str, Any], heading_text: str = None) -> Optio
         return find_node_recursive(adf, "table")
 
 
-def find_list_recursive(adf: Dict[str, Any], heading_text: str = None, list_type: str = "bulletList") -> Optional[Dict]:
+def find_list_recursive(
+    adf: Dict[str, Any], heading_text: str = None, list_type: str = "bulletList"
+) -> Optional[Dict]:
     """
     Recursively find a bullet/ordered list in the entire document.
 
@@ -258,7 +259,9 @@ def find_list_recursive(adf: Dict[str, Any], heading_text: str = None, list_type
         return find_node_recursive(adf, list_type)
 
 
-def find_table_after_heading(content: List[Dict], heading_text: str) -> Optional[Tuple[int, Dict]]:
+def find_table_after_heading(
+    content: List[Dict], heading_text: str
+) -> Optional[Tuple[int, Dict]]:
     """
     Find the first table after a specified heading.
 
@@ -331,7 +334,7 @@ def create_table_row(cells: List[str]) -> Dict[str, Any]:
     new_row = {
         "type": "tableRow",
         "attrs": {"localId": f"added-{os.urandom(4).hex()}"},
-        "content": []
+        "content": [],
     }
 
     # Add cells
@@ -341,17 +344,15 @@ def create_table_row(cells: List[str]) -> Dict[str, Any]:
             "attrs": {
                 "colspan": 1,
                 "rowspan": 1,
-                "localId": f"cell-{i}-{os.urandom(4).hex()}"
+                "localId": f"cell-{i}-{os.urandom(4).hex()}",
             },
             "content": [
                 {
                     "type": "paragraph",
                     "attrs": {"localId": f"para-{i}-{os.urandom(4).hex()}"},
-                    "content": [
-                        {"type": "text", "text": cell_text}
-                    ]
+                    "content": [{"type": "text", "text": cell_text}],
                 }
-            ]
+            ],
         }
         new_row["content"].append(cell)
 
@@ -362,7 +363,7 @@ def insert_table_row(
     adf: Dict[str, Any],
     table_heading: str,
     after_row_containing: str,
-    new_row_cells: List[str]
+    new_row_cells: List[str],
 ) -> bool:
     """
     Insert a new row into a specified table (supports recursive search in macros).
@@ -399,9 +400,7 @@ def insert_table_row(
 
 # Convenience function for the most common workflow
 def quick_update_page(
-    page_id: str,
-    modify_fn,
-    version_message: Optional[str] = None
+    page_id: str, modify_fn, version_message: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Convenience function: Read page → Modify → Write back.
@@ -442,7 +441,9 @@ def quick_update_page(
         raise ValueError("Modification function returned False")
 
     # Update page
-    result = update_page_adf(base_url, auth, page_id, title, adf, version, version_message)
+    result = update_page_adf(
+        base_url, auth, page_id, title, adf, version, version_message
+    )
 
     return result
 
@@ -451,7 +452,10 @@ def quick_update_page(
 # High-level helper functions to reduce boilerplate in modification scripts
 # ============================================================================
 
-def load_page_for_modification(page_id: str) -> Tuple[str, Tuple[str, str], Dict[str, Any], str, int]:
+
+def load_page_for_modification(
+    page_id: str,
+) -> Tuple[str, Tuple[str, str], Dict[str, Any], str, int]:
     """
     Load a Confluence page for modification (standard workflow).
 
@@ -491,7 +495,7 @@ def save_modified_page(
     title: str,
     adf: Dict[str, Any],
     version: int,
-    message: str = "Updated via Python REST API"
+    message: str = "Updated via Python REST API",
 ) -> Dict[str, Any]:
     """
     Save modified page and print success message (standard workflow).
@@ -511,11 +515,11 @@ def save_modified_page(
     Raises:
         requests.HTTPError: If API request fails
     """
-    print(f"📝 Updating page...")
+    print("📝 Updating page...")
     result = update_page_adf(base_url, auth, page_id, title, adf, version, message)
 
     new_version = result.get("version", {}).get("number")
-    print(f"✅ Page updated successfully!")
+    print("✅ Page updated successfully!")
     print(f"   New version: {new_version}")
     print(f"   URL: {base_url}/pages/{page_id}")
 
@@ -527,7 +531,7 @@ def execute_modification(
     modify_fn,
     dry_run: bool = False,
     dry_run_description: Optional[str] = None,
-    version_message: str = "Updated via Python REST API"
+    version_message: str = "Updated via Python REST API",
 ):
     """
     Execute the complete modification workflow: load → modify → save.
@@ -575,10 +579,13 @@ def execute_modification(
             sys.exit(0)
 
         # Save
-        save_modified_page(base_url, auth, page_id, title, adf, version, version_message)
+        save_modified_page(
+            base_url, auth, page_id, title, adf, version, version_message
+        )
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

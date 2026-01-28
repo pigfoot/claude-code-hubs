@@ -50,7 +50,7 @@ def find_and_update_codeblock(node, search_text, add_line, position):
             # Check if search text is in this code block
             if search_text in code_content:
                 # Add the new line
-                lines = code_content.split('\n')
+                lines = code_content.split("\n")
                 new_lines = []
 
                 for line in lines:
@@ -66,7 +66,7 @@ def find_and_update_codeblock(node, search_text, add_line, position):
                 # Update the text node
                 for text_node in text_nodes:
                     if text_node.get("type") == "text":
-                        text_node["text"] = '\n'.join(new_lines)
+                        text_node["text"] = "\n".join(new_lines)
                         break
 
                 return True
@@ -113,23 +113,21 @@ def main():
     parser.add_argument(
         "--search-text",
         required=True,
-        help="Text to search for in code blocks (e.g., 'brew install uv')"
+        help="Text to search for in code blocks (e.g., 'brew install uv')",
     )
     parser.add_argument(
-        "--add-line",
-        required=True,
-        help="Line to add (e.g., 'brew install node')"
+        "--add-line", required=True, help="Line to add (e.g., 'brew install node')"
     )
     parser.add_argument(
         "--position",
         choices=["before", "after"],
         default="after",
-        help="Add line before or after search text (default: after)"
+        help="Add line before or after search text (default: after)",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -150,6 +148,7 @@ def main():
 
         # Parse ADF body
         import json
+
         body_value = page_data.get("body", {}).get("atlas_doc_format", {}).get("value")
         if isinstance(body_value, str):
             adf = json.loads(body_value)
@@ -158,12 +157,7 @@ def main():
 
         # Add to code block
         print(f"🔍 Finding code block with '{args.search_text}'...")
-        success = add_to_codeblock(
-            adf,
-            args.search_text,
-            args.add_line,
-            args.position
-        )
+        success = add_to_codeblock(adf, args.search_text, args.add_line, args.position)
 
         if not success:
             sys.exit(1)
@@ -177,7 +171,7 @@ def main():
             return
 
         # Update page
-        print(f"📝 Updating page...")
+        print("📝 Updating page...")
         result = update_page_adf(
             base_url,
             auth,
@@ -185,17 +179,18 @@ def main():
             title,
             adf,
             version,
-            "Added line to code block via Python REST API"
+            "Added line to code block via Python REST API",
         )
 
         new_version = result.get("version", {}).get("number")
-        print(f"✅ Page updated successfully!")
+        print("✅ Page updated successfully!")
         print(f"   New version: {new_version}")
         print(f"   URL: {base_url}/pages/{args.page_id}")
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

@@ -39,6 +39,7 @@ def find_expand_by_title(adf, expand_title):
     Returns:
         Expand node or None
     """
+
     def matches_title(node):
         return node.get("attrs", {}).get("title", "") == expand_title
 
@@ -70,17 +71,15 @@ def add_nested_expand(adf, parent_expand_title, nested_title, nested_content):
         "type": "nestedExpand",
         "attrs": {
             "title": nested_title,
-            "localId": f"nestedexpand-{os.urandom(4).hex()}"
+            "localId": f"nestedexpand-{os.urandom(4).hex()}",
         },
         "content": [
             {
                 "type": "paragraph",
                 "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-                "content": [
-                    {"type": "text", "text": nested_content}
-                ]
+                "content": [{"type": "text", "text": nested_content}],
             }
-        ]
+        ],
     }
 
     # Add to parent expand's content
@@ -88,7 +87,9 @@ def add_nested_expand(adf, parent_expand_title, nested_title, nested_content):
         parent_expand["content"] = []
 
     parent_expand["content"].append(nested_expand_node)
-    print(f"✅ Added nested expand '{nested_title}' inside expand '{parent_expand_title}'")
+    print(
+        f"✅ Added nested expand '{nested_title}' inside expand '{parent_expand_title}'"
+    )
 
     return True
 
@@ -101,22 +102,18 @@ def main():
     parser.add_argument(
         "--parent-expand",
         required=True,
-        help="Title of parent expand panel to add nested expand into"
+        help="Title of parent expand panel to add nested expand into",
     )
     parser.add_argument(
-        "--title",
-        required=True,
-        help="Title for the nested expand panel"
+        "--title", required=True, help="Title for the nested expand panel"
     )
     parser.add_argument(
-        "--content",
-        required=True,
-        help="Text content for the nested expand"
+        "--content", required=True, help="Text content for the nested expand"
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -127,10 +124,12 @@ def main():
     # Execute modification using helper
     execute_modification(
         args.page_id,
-        lambda adf: add_nested_expand(adf, args.parent_expand, args.title, args.content),
+        lambda adf: add_nested_expand(
+            adf, args.parent_expand, args.title, args.content
+        ),
         dry_run=args.dry_run,
         dry_run_description=description,
-        version_message=f"Added nested expand '{args.title}' via Python REST API"
+        version_message=f"Added nested expand '{args.title}' via Python REST API",
     )
 
 

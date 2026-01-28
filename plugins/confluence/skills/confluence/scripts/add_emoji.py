@@ -50,8 +50,8 @@ def find_and_add_emoji_recursive(node, search_text, emoji_shortname, emoji_id):
                             "shortName": emoji_shortname,
                             "id": emoji_id,
                             "text": emoji_shortname,
-                            "localId": f"emoji-{os.urandom(4).hex()}"
-                        }
+                            "localId": f"emoji-{os.urandom(4).hex()}",
+                        },
                     }
 
                     # Add space before emoji
@@ -65,12 +65,16 @@ def find_and_add_emoji_recursive(node, search_text, emoji_shortname, emoji_id):
 
         # Recursively search in nested structures
         for value in node.values():
-            if find_and_add_emoji_recursive(value, search_text, emoji_shortname, emoji_id):
+            if find_and_add_emoji_recursive(
+                value, search_text, emoji_shortname, emoji_id
+            ):
                 return True
 
     elif isinstance(node, list):
         for item in node:
-            if find_and_add_emoji_recursive(item, search_text, emoji_shortname, emoji_id):
+            if find_and_add_emoji_recursive(
+                item, search_text, emoji_shortname, emoji_id
+            ):
                 return True
 
     return False
@@ -108,17 +112,17 @@ def main():
     parser.add_argument(
         "--search-text",
         required=True,
-        help="Text to search for (emoji will be added after this text)"
+        help="Text to search for (emoji will be added after this text)",
     )
     parser.add_argument(
         "--emoji",
         required=True,
-        help="Emoji shortname (e.g., ':smile:', ':thumbsup:', ':warning:')"
+        help="Emoji shortname (e.g., ':smile:', ':thumbsup:', ':warning:')",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -132,7 +136,7 @@ def main():
         lambda adf: add_emoji(adf, args.search_text, args.emoji),
         dry_run=args.dry_run,
         dry_run_description=description,
-        version_message=f"Added emoji {args.emoji} via Python REST API"
+        version_message=f"Added emoji {args.emoji} via Python REST API",
     )
 
 

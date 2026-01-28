@@ -46,10 +46,7 @@ def find_and_add_inline_card_recursive(node, search_text, url):
                     # Found it! Add inline card after the text
                     card_node = {
                         "type": "inlineCard",
-                        "attrs": {
-                            "url": url,
-                            "localId": f"card-{os.urandom(4).hex()}"
-                        }
+                        "attrs": {"url": url, "localId": f"card-{os.urandom(4).hex()}"},
                     }
 
                     # Add space before card
@@ -102,28 +99,30 @@ def main():
     parser.add_argument(
         "--search-text",
         required=True,
-        help="Text to search for (card will be added after this text)"
+        help="Text to search for (card will be added after this text)",
     )
     parser.add_argument(
         "--url",
         required=True,
-        help="URL for the card (e.g., 'https://developer.atlassian.com')"
+        help="URL for the card (e.g., 'https://developer.atlassian.com')",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
 
     # Validate URL format
-    if not args.url.startswith(('http://', 'https://')):
-        print(f"❌ Error: URL must start with http:// or https://", file=sys.stderr)
+    if not args.url.startswith(("http://", "https://")):
+        print("❌ Error: URL must start with http:// or https://", file=sys.stderr)
         sys.exit(1)
 
     # Build dry-run description
-    description = f"Add inline card for '{args.url}' after text '{args.search_text[:40]}...'"
+    description = (
+        f"Add inline card for '{args.url}' after text '{args.search_text[:40]}...'"
+    )
 
     # Execute modification using helper
     execute_modification(
@@ -131,7 +130,7 @@ def main():
         lambda adf: add_inline_card(adf, args.search_text, args.url),
         dry_run=args.dry_run,
         dry_run_description=description,
-        version_message=f"Added inline card for '{args.url}' via Python REST API"
+        version_message=f"Added inline card for '{args.url}' via Python REST API",
     )
 
 

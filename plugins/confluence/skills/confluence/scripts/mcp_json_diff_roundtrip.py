@@ -21,17 +21,17 @@ Usage:
 """
 
 import json
-import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
 class TextNode:
     """Represents a text node with its JSON path."""
+
     path: str  # JSON path like "content.0.content.1.text"
     text: str
 
@@ -39,6 +39,7 @@ class TextNode:
 @dataclass
 class TextChange:
     """Represents a text change to apply."""
+
     path: str
     old_text: str
     new_text: str
@@ -47,6 +48,7 @@ class TextChange:
 @dataclass
 class MacroInfo:
     """Information about a detected macro with editable content."""
+
     type: str  # e.g., "expand", "panel", "info"
     preview: str  # First 50 chars of content
     text_count: int  # Number of text nodes inside
@@ -56,7 +58,13 @@ class ADFTextExtractor:
     """Extracts and patches text nodes from Atlassian Document Format (ADF)."""
 
     # Node types that represent macros/special structures
-    MACRO_NODE_TYPES = {"inlineExtension", "extension", "bodiedExtension", "panel", "expand"}
+    MACRO_NODE_TYPES = {
+        "inlineExtension",
+        "extension",
+        "bodiedExtension",
+        "panel",
+        "expand",
+    }
 
     def __init__(self, skip_macro_bodies: bool = True):
         """
@@ -83,11 +91,7 @@ class ADFTextExtractor:
         return text_nodes
 
     def _extract_recursive(
-        self,
-        node: Any,
-        path: str,
-        text_nodes: list[TextNode],
-        inside_macro: bool
+        self, node: Any, path: str, text_nodes: list[TextNode], inside_macro: bool
     ) -> None:
         """Recursively extract text nodes from ADF structure."""
         if not isinstance(node, dict):
@@ -98,9 +102,9 @@ class ADFTextExtractor:
 
         # Check if this is a macro node (by type or by special attributes)
         is_macro = (
-            node_type in self.MACRO_NODE_TYPES or
-            "extensionKey" in attrs or
-            "panelType" in attrs  # For panel nodes
+            node_type in self.MACRO_NODE_TYPES
+            or "extensionKey" in attrs
+            or "panelType" in attrs  # For panel nodes
         )
 
         # Decide whether to skip this subtree
@@ -121,10 +125,7 @@ class ADFTextExtractor:
             for i, child in enumerate(content):
                 child_path = f"{path}.content.{i}" if path else f"content.{i}"
                 self._extract_recursive(
-                    child,
-                    child_path,
-                    text_nodes,
-                    inside_macro=is_macro or inside_macro
+                    child, child_path, text_nodes, inside_macro=is_macro or inside_macro
                 )
 
     def apply_text_changes(self, adf: dict, changes: list[TextChange]) -> dict:
@@ -140,6 +141,7 @@ class ADFTextExtractor:
         """
         # Deep copy to avoid mutating original
         import copy
+
         result = copy.deepcopy(adf)
 
         for change in changes:
@@ -180,7 +182,9 @@ class SimpleMarkdownConverter:
             Markdown string
         """
         lines = []
-        self._convert_recursive(adf, lines, inside_macro=False, include_macro_bodies=include_macro_bodies)
+        self._convert_recursive(
+            adf, lines, inside_macro=False, include_macro_bodies=include_macro_bodies
+        )
         return "\n".join(lines)
 
     def _convert_recursive(
@@ -188,7 +192,7 @@ class SimpleMarkdownConverter:
         node: Any,
         lines: list[str],
         inside_macro: bool,
-        include_macro_bodies: bool
+        include_macro_bodies: bool,
     ) -> None:
         """Recursively convert ADF nodes to Markdown."""
         if not isinstance(node, dict):
@@ -199,18 +203,14 @@ class SimpleMarkdownConverter:
         # Check if this is a macro
         attrs = node.get("attrs", {})
         is_macro = (
-            node_type in ADFTextExtractor.MACRO_NODE_TYPES or
-            "extensionKey" in attrs or
-            "panelType" in attrs
+            node_type in ADFTextExtractor.MACRO_NODE_TYPES
+            or "extensionKey" in attrs
+            or "panelType" in attrs
         )
 
         if is_macro:
             # Insert placeholder comment with macro identifier
-            macro_id = (
-                attrs.get("extensionKey") or
-                attrs.get("panelType") or
-                node_type
-            )
+            macro_id = attrs.get("extensionKey") or attrs.get("panelType") or node_type
             lines.append(f"\n<!-- MACRO: {macro_id} -->\n")
 
             if not include_macro_bodies:
@@ -253,12 +253,16 @@ class SimpleMarkdownConverter:
             # Document root - process content
             content = node.get("content", [])
             for child in content:
-                self._convert_recursive(child, lines, inside_macro, include_macro_bodies)
+                self._convert_recursive(
+                    child, lines, inside_macro, include_macro_bodies
+                )
 
         # For other types, just recurse into content
         elif "content" in node:
             for child in node["content"]:
-                self._convert_recursive(child, lines, is_macro or inside_macro, include_macro_bodies)
+                self._convert_recursive(
+                    child, lines, is_macro or inside_macro, include_macro_bodies
+                )
 
     def _extract_text(self, node: dict) -> str:
         """Extract all text from a node and its children."""
@@ -292,9 +296,7 @@ class TextDiffer:
         self.overlap_threshold = overlap_threshold
 
     def compute_changes(
-        self,
-        original_nodes: list[TextNode],
-        edited_markdown: str
+        self, original_nodes: list[TextNode], edited_markdown: str
     ) -> list[TextChange]:
         """
         Compute text changes by comparing original nodes with edited markdown.
@@ -328,11 +330,11 @@ class TextDiffer:
 
             if best_match and best_match[1] != node.text:
                 # Text changed
-                changes.append(TextChange(
-                    path=node.path,
-                    old_text=node.text,
-                    new_text=best_match[1]
-                ))
+                changes.append(
+                    TextChange(
+                        path=node.path, old_text=node.text, new_text=best_match[1]
+                    )
+                )
                 used_edited.add(best_match[0])
 
         return changes
@@ -400,7 +402,13 @@ class MacroBodyDetector:
     }
 
     # ADF node types that represent macros
-    MACRO_NODE_TYPES = {"panel", "expand", "inlineExtension", "extension", "bodiedExtension"}
+    MACRO_NODE_TYPES = {
+        "panel",
+        "expand",
+        "inlineExtension",
+        "extension",
+        "bodiedExtension",
+    }
 
     def detect_macros_with_content(self, adf: dict) -> list[MacroInfo]:
         """
@@ -432,9 +440,9 @@ class MacroBodyDetector:
 
             # Try different ways to identify macro type
             macro_identifier = (
-                attrs.get("extensionKey") or  # For extension nodes
-                attrs.get("panelType") or      # For panel nodes
-                node_type                       # Fallback to node type
+                attrs.get("extensionKey")  # For extension nodes
+                or attrs.get("panelType")  # For panel nodes
+                or node_type  # Fallback to node type
             )
 
             # Count text nodes inside
@@ -445,13 +453,13 @@ class MacroBodyDetector:
                 preview = self._extract_preview(node)
 
                 # Get friendly name
-                macro_type = self.MACRO_TYPES.get(macro_identifier, macro_identifier.title())
+                macro_type = self.MACRO_TYPES.get(
+                    macro_identifier, macro_identifier.title()
+                )
 
-                macros.append(MacroInfo(
-                    type=macro_type,
-                    preview=preview,
-                    text_count=text_count
-                ))
+                macros.append(
+                    MacroInfo(type=macro_type, preview=preview, text_count=text_count)
+                )
 
         # Recurse into content (don't recurse if we already processed this macro)
         if not is_macro:
@@ -517,12 +525,7 @@ class BackupManager:
         self.retention_limit = retention_limit
 
     def create_backup(
-        self,
-        page_id: str,
-        adf_content: dict,
-        version: int,
-        title: str,
-        space_id: str
+        self, page_id: str, adf_content: dict, version: int, title: str, space_id: str
     ) -> Path:
         """
         Create a backup of page content.
@@ -552,7 +555,7 @@ class BackupManager:
             "space_id": space_id,
             "version": version,
             "timestamp": timestamp,
-            "adf_content": adf_content
+            "adf_content": adf_content,
         }
 
         # Write backup
@@ -613,11 +616,13 @@ class BackupManager:
         for backup_file in sorted(page_backup_dir.glob("*.json"), reverse=True):
             with open(backup_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                backups.append({
-                    "timestamp": data["timestamp"],
-                    "title": data["title"],
-                    "version": data["version"]
-                })
+                backups.append(
+                    {
+                        "timestamp": data["timestamp"],
+                        "title": data["title"],
+                        "version": data["version"],
+                    }
+                )
 
         return backups
 
@@ -627,7 +632,7 @@ class BackupManager:
         backups = sorted(page_backup_dir.glob("*.json"), reverse=True)
 
         # Delete backups exceeding limit
-        for backup_file in backups[self.retention_limit:]:
+        for backup_file in backups[self.retention_limit :]:
             backup_file.unlink()
 
 
@@ -703,11 +708,7 @@ class ADFValidator:
 class MCPJsonDiffRoundtrip:
     """Main controller for MCP + JSON Diff roundtrip editing."""
 
-    def __init__(
-        self,
-        mcp_client: Any,
-        backup_manager: BackupManager | None = None
-    ):
+    def __init__(self, mcp_client: Any, backup_manager: BackupManager | None = None):
         """
         Initialize the roundtrip controller.
 
@@ -724,7 +725,7 @@ class MCPJsonDiffRoundtrip:
         cloud_id: str,
         page_id: str,
         edit_instruction: str,
-        advanced_mode: bool = False
+        advanced_mode: bool = False,
     ) -> dict:
         """
         Edit a Confluence page using intelligent roundtrip editing.
@@ -770,7 +771,7 @@ class MCPJsonDiffRoundtrip:
                 return {
                     "status": "error",
                     "error": "Invalid ADF format",
-                    "details": validation_errors
+                    "details": validation_errors,
                 }
 
             # Step 2: Detect macros (if advanced mode requested)
@@ -782,7 +783,9 @@ class MCPJsonDiffRoundtrip:
                 if macros:
                     print(f"\n🔍 Found {len(macros)} macro(s) with editable content:")
                     for macro in macros:
-                        print(f"   - {macro.type}: \"{macro.preview}\" ({macro.text_count} text nodes)")
+                        print(
+                            f'   - {macro.type}: "{macro.preview}" ({macro.text_count} text nodes)'
+                        )
 
                     # Ask user for confirmation
                     print("\n⚙️  Choose editing mode:")
@@ -790,26 +793,32 @@ class MCPJsonDiffRoundtrip:
                     print("[2] Advanced Mode - Edit macro body content too")
                     choice = input("Your choice [1]: ").strip() or "1"
 
-                    include_macro_bodies = (choice == "2")
+                    include_macro_bodies = choice == "2"
                     if include_macro_bodies:
-                        print("⚠️  Advanced Mode: Macro bodies will be editable. Backup will be created.")
+                        print(
+                            "⚠️  Advanced Mode: Macro bodies will be editable. Backup will be created."
+                        )
                 else:
-                    print("✅ No macros with editable content detected. Proceeding normally.")
+                    print(
+                        "✅ No macros with editable content detected. Proceeding normally."
+                    )
 
             # Step 3: Create backup
-            print(f"💾 Creating backup...")
+            print("💾 Creating backup...")
             try:
                 backup_file = self.backup_manager.create_backup(
                     page_id=page_id,
                     adf_content=adf_content,
                     version=version,
                     title=title,
-                    space_id=space_id
+                    space_id=space_id,
                 )
                 print(f"   Backup saved: {backup_file}")
             except Exception as e:
                 print(f"⚠️  Warning: Backup creation failed: {e}")
-                print("   Proceeding without backup (not recommended for Advanced Mode)")
+                print(
+                    "   Proceeding without backup (not recommended for Advanced Mode)"
+                )
                 if advanced_mode and include_macro_bodies:
                     print("❌ Cannot proceed with Advanced Mode without backup.")
                     return {"status": "error", "error": "Backup creation failed"}
@@ -826,7 +835,7 @@ class MCPJsonDiffRoundtrip:
             # Step 6: Let Claude edit (simulated for now)
             # TODO: Integrate with Claude API
             print(f"\n🤖 Claude would edit based on: {edit_instruction}")
-            print(f"   (Simulated edit - returning original for now)")
+            print("   (Simulated edit - returning original for now)")
             edited_markdown = markdown  # Placeholder
 
             # Step 7: Compute diff
@@ -843,7 +852,7 @@ class MCPJsonDiffRoundtrip:
             patched_adf = extractor.apply_text_changes(adf_content, changes)
 
             # Step 9: Write back via MCP
-            print(f"📝 Writing changes back to Confluence...")
+            print("📝 Writing changes back to Confluence...")
             self._write_page(cloud_id, page_id, patched_adf)
 
             print("✅ Page updated successfully!")
@@ -851,12 +860,12 @@ class MCPJsonDiffRoundtrip:
             return {
                 "status": "success",
                 "changes": len(changes),
-                "backup": str(backup_file)
+                "backup": str(backup_file),
             }
 
         except Exception as e:
             print(f"❌ Error during edit: {e}")
-            print(f"🔄 Attempting auto-rollback...")
+            print("🔄 Attempting auto-rollback...")
 
             try:
                 backup_data = self.backup_manager.load_backup(page_id)
@@ -870,14 +879,11 @@ class MCPJsonDiffRoundtrip:
                     "status": "rollback_failed",
                     "error": str(e),
                     "rollback_error": str(rollback_error),
-                    "backup": str(backup_file)
+                    "backup": str(backup_file),
                 }
 
     def rollback_page(
-        self,
-        cloud_id: str,
-        page_id: str,
-        timestamp: str | None = None
+        self, cloud_id: str, page_id: str, timestamp: str | None = None
     ) -> dict:
         """
         Manually rollback a page to a previous backup.
@@ -899,7 +905,9 @@ class MCPJsonDiffRoundtrip:
 
                 print("\n📋 Available backups:")
                 for i, backup in enumerate(backups, 1):
-                    print(f"[{i}] {backup['timestamp']} - {backup['title']} (v{backup['version']})")
+                    print(
+                        f"[{i}] {backup['timestamp']} - {backup['title']} (v{backup['version']})"
+                    )
 
                 choice = input("\nSelect backup number: ").strip()
                 try:
@@ -912,7 +920,7 @@ class MCPJsonDiffRoundtrip:
             print(f"🔄 Loading backup {timestamp}...")
             backup_data = self.backup_manager.load_backup(page_id, timestamp)
 
-            print(f"📝 Restoring page...")
+            print("📝 Restoring page...")
             self._write_page(cloud_id, page_id, backup_data["adf_content"])
 
             print("✅ Rollback successful!")
@@ -930,7 +938,7 @@ class MCPJsonDiffRoundtrip:
         where MCP tools are available. When using this module standalone,
         you need to provide a mock mcp_client with get_page method.
         """
-        if hasattr(self.mcp_client, 'get_page'):
+        if hasattr(self.mcp_client, "get_page"):
             # Using mock client (for testing)
             return self.mcp_client.get_page(cloud_id, page_id, content_format="adf")
         else:
@@ -949,13 +957,13 @@ class MCPJsonDiffRoundtrip:
         where MCP tools are available. When using this module standalone,
         you need to provide a mock mcp_client with update_page method.
         """
-        if hasattr(self.mcp_client, 'update_page'):
+        if hasattr(self.mcp_client, "update_page"):
             # Using mock client (for testing)
             self.mcp_client.update_page(
                 cloud_id=cloud_id,
                 page_id=page_id,
                 body=json.dumps(adf_content),
-                content_format="adf"
+                content_format="adf",
             )
         else:
             # This will be replaced by actual MCP tool call when invoked by Claude

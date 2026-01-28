@@ -40,7 +40,7 @@ def truncate_text(text: str, max_length: int = 60) -> str:
     """Truncate text to max_length, adding ellipsis if needed."""
     if len(text) <= max_length:
         return text
-    return text[:max_length-3] + "..."
+    return text[: max_length - 3] + "..."
 
 
 def extract_text_from_node(node: Dict) -> str:
@@ -86,7 +86,7 @@ def analyze_table(node: Dict, context: str = "") -> Dict[str, Any]:
         "rows": row_count,
         "preview": truncate_text(preview),
         "context": context,
-        "tool": "add_table_row.py"
+        "tool": "add_table_row.py",
     }
 
 
@@ -105,7 +105,7 @@ def analyze_list(node: Dict, list_type: str, context: str = "") -> Dict[str, Any
         "items": item_count,
         "preview": truncate_text(preview),
         "context": context,
-        "tool": "add_list_item.py"
+        "tool": "add_list_item.py",
     }
 
 
@@ -119,7 +119,7 @@ def analyze_codeblock(node: Dict, context: str = "") -> Dict[str, Any]:
             code_text = text_node.get("text", "")
             break
 
-    lines = code_text.split('\n')
+    lines = code_text.split("\n")
     first_line = lines[0] if lines else ""
 
     return {
@@ -128,7 +128,7 @@ def analyze_codeblock(node: Dict, context: str = "") -> Dict[str, Any]:
         "lines": len(lines),
         "preview": truncate_text(first_line),
         "context": context,
-        "tool": "add_to_codeblock.py"
+        "tool": "add_to_codeblock.py",
     }
 
 
@@ -142,7 +142,7 @@ def analyze_panel(node: Dict, context: str = "") -> Dict[str, Any]:
         "panelType": panel_type,
         "preview": truncate_text(content_text),
         "context": context,
-        "tool": "add_panel.py"
+        "tool": "add_panel.py",
     }
 
 
@@ -156,7 +156,7 @@ def analyze_heading(node: Dict, context: str = "") -> Dict[str, Any]:
         "level": level,
         "text": text,
         "context": context,
-        "tool": "insert_section.py (to add section after this heading)"
+        "tool": "insert_section.py (to add section after this heading)",
     }
 
 
@@ -168,7 +168,7 @@ def analyze_expand(node: Dict, context: str = "") -> Dict[str, Any]:
         "type": "expand",
         "title": title,
         "context": context,
-        "tool": "(contains nested content - see child components below)"
+        "tool": "(contains nested content - see child components below)",
     }
 
 
@@ -180,17 +180,13 @@ def analyze_blockquote(node: Dict, context: str = "") -> Dict[str, Any]:
         "type": "blockquote",
         "preview": truncate_text(quote_text),
         "context": context,
-        "tool": "add_blockquote.py"
+        "tool": "add_blockquote.py",
     }
 
 
 def analyze_rule(node: Dict, context: str = "") -> Dict[str, Any]:
     """Analyze a horizontal rule node."""
-    return {
-        "type": "rule",
-        "context": context,
-        "tool": "add_rule.py"
-    }
+    return {"type": "rule", "context": context, "tool": "add_rule.py"}
 
 
 def analyze_media_single(node: Dict, context: str = "") -> Dict[str, Any]:
@@ -202,7 +198,7 @@ def analyze_media_single(node: Dict, context: str = "") -> Dict[str, Any]:
         "type": "mediaSingle",
         "media_id": media_id,
         "context": context,
-        "tool": "add_media.py"
+        "tool": "add_media.py",
     }
 
 
@@ -214,7 +210,7 @@ def analyze_media_group(node: Dict, context: str = "") -> Dict[str, Any]:
         "type": "mediaGroup",
         "images": media_count,
         "context": context,
-        "tool": "add_media_group.py"
+        "tool": "add_media_group.py",
     }
 
 
@@ -226,7 +222,7 @@ def analyze_nested_expand(node: Dict, context: str = "") -> Dict[str, Any]:
         "type": "nestedExpand",
         "title": title,
         "context": context,
-        "tool": "add_nested_expand.py"
+        "tool": "add_nested_expand.py",
     }
 
 
@@ -238,7 +234,7 @@ def analyze_inline_card(node: Dict, context: str = "") -> Dict[str, Any]:
         "type": "inlineCard",
         "url": truncate_text(url, 50),
         "context": context,
-        "tool": "add_inline_card.py"
+        "tool": "add_inline_card.py",
     }
 
 
@@ -252,7 +248,7 @@ def analyze_status(node: Dict, context: str = "") -> Dict[str, Any]:
         "text": status_text,
         "color": status_color,
         "context": context,
-        "tool": "add_status.py"
+        "tool": "add_status.py",
     }
 
 
@@ -264,7 +260,7 @@ def analyze_mention(node: Dict, context: str = "") -> Dict[str, Any]:
         "type": "mention",
         "text": mention_text,
         "context": context,
-        "tool": "add_mention.py"
+        "tool": "add_mention.py",
     }
 
 
@@ -276,7 +272,7 @@ def analyze_date(node: Dict, context: str = "") -> Dict[str, Any]:
         "type": "date",
         "timestamp": timestamp,
         "context": context,
-        "tool": "add_date.py"
+        "tool": "add_date.py",
     }
 
 
@@ -288,7 +284,7 @@ def analyze_emoji(node: Dict, context: str = "") -> Dict[str, Any]:
         "type": "emoji",
         "shortName": emoji_shortname,
         "context": context,
-        "tool": "add_emoji.py"
+        "tool": "add_emoji.py",
     }
 
 
@@ -297,7 +293,7 @@ def find_components_recursive(
     components: List[Dict],
     filter_type: Optional[str] = None,
     context: str = "",
-    parent_headings: List[str] = None
+    parent_headings: List[str] = None,
 ):
     """
     Recursively find all components in ADF document.
@@ -355,7 +351,9 @@ def find_components_recursive(
             if not filter_type or filter_type == "expand":
                 components.append(analyze_expand(node, location))
             # Recurse into expand content with updated context
-            expand_context = f"Inside expand: '{node.get('attrs', {}).get('title', 'no title')}'"
+            expand_context = (
+                f"Inside expand: '{node.get('attrs', {}).get('title', 'no title')}'"
+            )
             if context:
                 expand_context = f"{context} > {expand_context}"
 
@@ -403,26 +401,20 @@ def find_components_recursive(
         for key, value in node.items():
             new_context = context
             if node_type == "expand":
-                new_context = f"Inside expand: '{node.get('attrs', {}).get('title', 'no title')}'"
+                new_context = (
+                    f"Inside expand: '{node.get('attrs', {}).get('title', 'no title')}'"
+                )
                 if context:
                     new_context = f"{context} > {new_context}"
 
             find_components_recursive(
-                value,
-                components,
-                filter_type,
-                new_context,
-                parent_headings
+                value, components, filter_type, new_context, parent_headings
             )
 
     elif isinstance(node, list):
         for item in node:
             find_components_recursive(
-                item,
-                components,
-                filter_type,
-                context,
-                parent_headings
+                item, components, filter_type, context, parent_headings
             )
 
 
@@ -469,7 +461,7 @@ def print_component(comp: Dict, show_content: bool = True):
             print(f"  Quote: {comp['preview']}")
 
     elif comp_type == "rule":
-        print(f"  (Horizontal divider line)")
+        print("  (Horizontal divider line)")
 
     elif comp_type == "mediaSingle":
         print(f"  Media ID: {comp['media_id']}")
@@ -508,16 +500,30 @@ def main():
     parser.add_argument(
         "--type",
         choices=[
-            "table", "bulletList", "orderedList", "codeBlock", "panel", "heading", "expand",
-            "blockquote", "rule", "mediaSingle", "mediaGroup", "nestedExpand", "inlineCard",
-            "status", "mention", "date", "emoji"
+            "table",
+            "bulletList",
+            "orderedList",
+            "codeBlock",
+            "panel",
+            "heading",
+            "expand",
+            "blockquote",
+            "rule",
+            "mediaSingle",
+            "mediaGroup",
+            "nestedExpand",
+            "inlineCard",
+            "status",
+            "mention",
+            "date",
+            "emoji",
         ],
-        help="Filter by component type"
+        help="Filter by component type",
     )
     parser.add_argument(
         "--structure-only",
         action="store_true",
-        help="Show structure only (no content preview)"
+        help="Show structure only (no content preview)",
     )
 
     args = parser.parse_args()
@@ -608,6 +614,7 @@ def main():
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

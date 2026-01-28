@@ -25,7 +25,6 @@ Usage:
         print(f"Try CQL: {analysis.cql_query}")
 """
 
-import re
 import sys
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
@@ -34,6 +33,7 @@ from typing import List, Dict, Any, Optional
 @dataclass
 class SearchAnalysis:
     """Search result quality analysis"""
+
     query: str
     total_results: int
     title_matches: int
@@ -57,11 +57,7 @@ class SmartSearch:
         """Initialize smart search analyzer"""
         pass
 
-    def calculate_confidence(
-        self,
-        query: str,
-        results: List[Dict[str, Any]]
-    ) -> float:
+    def calculate_confidence(self, query: str, results: List[Dict[str, Any]]) -> float:
         """
         Calculate confidence score for search results.
 
@@ -91,8 +87,7 @@ class SmartSearch:
         # Count title matches (case-insensitive, partial match)
         query_lower = query.lower()
         title_matches = sum(
-            1 for result in results
-            if query_lower in result.get("title", "").lower()
+            1 for result in results if query_lower in result.get("title", "").lower()
         )
 
         # Calculate confidence based on title matches
@@ -159,9 +154,7 @@ class SmartSearch:
         return escaped
 
     def analyze_results(
-        self,
-        query: str,
-        results: List[Dict[str, Any]]
+        self, query: str, results: List[Dict[str, Any]]
     ) -> SearchAnalysis:
         """
         Analyze search results and generate suggestions.
@@ -178,8 +171,7 @@ class SmartSearch:
         # Count title matches
         query_lower = query.lower()
         title_matches = sum(
-            1 for result in results
-            if query_lower in result.get("title", "").lower()
+            1 for result in results if query_lower in result.get("title", "").lower()
         )
 
         # Calculate confidence
@@ -215,7 +207,7 @@ class SmartSearch:
             confidence_level=level,
             should_suggest_cql=should_suggest,
             suggestion=suggestion,
-            cql_query=cql_query
+            cql_query=cql_query,
         )
 
     def _generate_suggestion(
@@ -224,7 +216,7 @@ class SmartSearch:
         total_results: int,
         title_matches: int,
         confidence: float,
-        cql_query: str
+        cql_query: str,
     ) -> str:
         """
         Generate user-facing suggestion message (bilingual: EN + ZH-TW).

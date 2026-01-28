@@ -49,11 +49,9 @@ def add_blockquote(adf, quote_text, after_heading=None):
             {
                 "type": "paragraph",
                 "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-                "content": [
-                    {"type": "text", "text": quote_text}
-                ]
+                "content": [{"type": "text", "text": quote_text}],
             }
-        ]
+        ],
     }
 
     if after_heading:
@@ -69,7 +67,7 @@ def add_blockquote(adf, quote_text, after_heading=None):
     else:
         # Add at end
         content.append(blockquote_node)
-        print(f"✅ Added blockquote at end of page")
+        print("✅ Added blockquote at end of page")
 
     return True
 
@@ -79,36 +77,35 @@ def main():
         description="Add blockquote to Confluence page via REST API (fast!)"
     )
     parser.add_argument("page_id", help="Confluence page ID")
+    parser.add_argument("--quote", required=True, help="Text content for the quote")
     parser.add_argument(
-        "--quote",
-        required=True,
-        help="Text content for the quote"
+        "--after-heading", help="Add quote after this heading (e.g., 'References')"
     )
     parser.add_argument(
-        "--after-heading",
-        help="Add quote after this heading (e.g., 'References')"
-    )
-    parser.add_argument(
-        "--at-end",
-        action="store_true",
-        help="Add quote at end of page"
+        "--at-end", action="store_true", help="Add quote at end of page"
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
 
     # Validate arguments
     if not args.after_heading and not args.at_end:
-        print("❌ Error: Must specify either --after-heading or --at-end", file=sys.stderr)
+        print(
+            "❌ Error: Must specify either --after-heading or --at-end", file=sys.stderr
+        )
         sys.exit(1)
 
     # Build dry-run description
-    location = f"after heading '{args.after_heading}'" if args.after_heading else "at end of page"
-    description = f"Add blockquote {location}: \"{args.quote[:50]}...\""
+    location = (
+        f"after heading '{args.after_heading}'"
+        if args.after_heading
+        else "at end of page"
+    )
+    description = f'Add blockquote {location}: "{args.quote[:50]}..."'
 
     # Execute modification using helper
     execute_modification(
@@ -116,7 +113,7 @@ def main():
         lambda adf: add_blockquote(adf, args.quote, args.after_heading),
         dry_run=args.dry_run,
         dry_run_description=description,
-        version_message="Added blockquote via Python REST API"
+        version_message="Added blockquote via Python REST API",
     )
 
 

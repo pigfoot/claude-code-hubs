@@ -49,8 +49,8 @@ def find_and_add_status_recursive(node, search_text, status_text, status_color):
                         "attrs": {
                             "text": status_text,
                             "color": status_color,
-                            "localId": f"status-{os.urandom(4).hex()}"
-                        }
+                            "localId": f"status-{os.urandom(4).hex()}",
+                        },
                     }
 
                     # Add space before status
@@ -64,12 +64,16 @@ def find_and_add_status_recursive(node, search_text, status_text, status_color):
 
         # Recursively search in nested structures
         for value in node.values():
-            if find_and_add_status_recursive(value, search_text, status_text, status_color):
+            if find_and_add_status_recursive(
+                value, search_text, status_text, status_color
+            ):
                 return True
 
     elif isinstance(node, list):
         for item in node:
-            if find_and_add_status_recursive(item, search_text, status_text, status_color):
+            if find_and_add_status_recursive(
+                item, search_text, status_text, status_color
+            ):
                 return True
 
     return False
@@ -104,23 +108,23 @@ def main():
     parser.add_argument(
         "--search-text",
         required=True,
-        help="Text to search for (status will be added after this text)"
+        help="Text to search for (status will be added after this text)",
     )
     parser.add_argument(
         "--status",
         required=True,
-        help="Status text (e.g., 'TODO', 'DONE', 'IN PROGRESS')"
+        help="Status text (e.g., 'TODO', 'DONE', 'IN PROGRESS')",
     )
     parser.add_argument(
         "--color",
         choices=["neutral", "purple", "blue", "red", "yellow", "green"],
         default="neutral",
-        help="Status color (default: neutral)"
+        help="Status color (default: neutral)",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -134,7 +138,7 @@ def main():
         lambda adf: add_status(adf, args.search_text, args.status, args.color),
         dry_run=args.dry_run,
         dry_run_description=description,
-        version_message=f"Added status '{args.status}' via Python REST API"
+        version_message=f"Added status '{args.status}' via Python REST API",
     )
 
 

@@ -41,23 +41,20 @@ def main():
     parser.add_argument(
         "--table-heading",
         required=True,
-        help="Heading text before the table (e.g., 'Access Control Inventory')"
+        help="Heading text before the table (e.g., 'Access Control Inventory')",
     )
     parser.add_argument(
         "--after-row-containing",
         required=True,
-        help="Text in first cell of row to insert after (e.g., 'GitHub')"
+        help="Text in first cell of row to insert after (e.g., 'GitHub')",
     )
     parser.add_argument(
-        "--cells",
-        nargs="+",
-        required=True,
-        help="Cell contents for the new row"
+        "--cells", nargs="+", required=True, help="Cell contents for the new row"
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -78,6 +75,7 @@ def main():
 
         # Parse ADF body
         import json
+
         body_value = page_data.get("body", {}).get("atlas_doc_format", {}).get("value")
         if isinstance(body_value, str):
             adf = json.loads(body_value)
@@ -87,10 +85,7 @@ def main():
         # Insert row
         print(f"🔍 Finding table '{args.table_heading}'...")
         success = insert_table_row(
-            adf,
-            args.table_heading,
-            args.after_row_containing,
-            args.cells
+            adf, args.table_heading, args.after_row_containing, args.cells
         )
 
         if not success:
@@ -105,7 +100,7 @@ def main():
             return
 
         # Update page
-        print(f"📝 Updating page...")
+        print("📝 Updating page...")
         result = update_page_adf(
             base_url,
             auth,
@@ -113,17 +108,18 @@ def main():
             title,
             adf,
             version,
-            "Added table row via Python REST API"
+            "Added table row via Python REST API",
         )
 
         new_version = result.get("version", {}).get("number")
-        print(f"✅ Page updated successfully!")
+        print("✅ Page updated successfully!")
         print(f"   New version: {new_version}")
         print(f"   URL: {base_url}/pages/{args.page_id}")
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

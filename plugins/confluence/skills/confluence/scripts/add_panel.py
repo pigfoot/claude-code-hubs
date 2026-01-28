@@ -57,17 +57,14 @@ def add_panel(adf, after_heading, panel_type, content_text):
     # Create panel node
     panel = {
         "type": "panel",
-        "attrs": {
-            "panelType": panel_type,
-            "localId": f"panel-{os.urandom(4).hex()}"
-        },
+        "attrs": {"panelType": panel_type, "localId": f"panel-{os.urandom(4).hex()}"},
         "content": [
             {
                 "type": "paragraph",
                 "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-                "content": [{"type": "text", "text": content_text}]
+                "content": [{"type": "text", "text": content_text}],
             }
-        ]
+        ],
     }
 
     # Insert after heading
@@ -84,23 +81,19 @@ def main():
     parser.add_argument(
         "--after-heading",
         required=True,
-        help="Heading text to insert panel after (e.g., 'Overview')"
+        help="Heading text to insert panel after (e.g., 'Overview')",
     )
     parser.add_argument(
         "--panel-type",
         choices=["info", "warning", "note", "success"],
         default="info",
-        help="Type of panel (default: info)"
+        help="Type of panel (default: info)",
     )
-    parser.add_argument(
-        "--content",
-        required=True,
-        help="Text content for the panel"
-    )
+    parser.add_argument("--content", required=True, help="Text content for the panel")
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -121,6 +114,7 @@ def main():
 
         # Parse ADF body
         import json
+
         body_value = page_data.get("body", {}).get("atlas_doc_format", {}).get("value")
         if isinstance(body_value, str):
             adf = json.loads(body_value)
@@ -129,12 +123,7 @@ def main():
 
         # Add panel
         print(f"🔍 Finding heading '{args.after_heading}'...")
-        success = add_panel(
-            adf,
-            args.after_heading,
-            args.panel_type,
-            args.content
-        )
+        success = add_panel(adf, args.after_heading, args.panel_type, args.content)
 
         if not success:
             sys.exit(1)
@@ -148,7 +137,7 @@ def main():
             return
 
         # Update page
-        print(f"📝 Updating page...")
+        print("📝 Updating page...")
         result = update_page_adf(
             base_url,
             auth,
@@ -156,17 +145,18 @@ def main():
             title,
             adf,
             version,
-            f"Added {args.panel_type} panel via Python REST API"
+            f"Added {args.panel_type} panel via Python REST API",
         )
 
         new_version = result.get("version", {}).get("number")
-        print(f"✅ Page updated successfully!")
+        print("✅ Page updated successfully!")
         print(f"   New version: {new_version}")
         print(f"   URL: {base_url}/pages/{args.page_id}")
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

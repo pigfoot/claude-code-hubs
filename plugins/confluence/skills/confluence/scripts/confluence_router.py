@@ -18,29 +18,32 @@ import os
 import sys
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Dict, Any, Literal
+from typing import Optional, Dict, Any
 
 
 class OperationType(Enum):
     """Types of Confluence operations"""
-    READ = "read"              # Read page content
-    WRITE = "write"            # Update page content
+
+    READ = "read"  # Read page content
+    WRITE = "write"  # Update page content
     SEARCH_CQL = "search_cql"  # CQL-based search
     SEARCH_ROVO = "search_rovo"  # Rovo AI semantic search
-    UPLOAD = "upload"          # Upload with attachments
+    UPLOAD = "upload"  # Upload with attachments
 
 
 class APIMode(Enum):
     """Available API modes"""
-    REST_API = "rest_api"      # REST API with token (fast, permanent token)
-    MCP = "mcp"                # MCP with OAuth (easy setup, 55-min expiry)
+
+    REST_API = "rest_api"  # REST API with token (fast, permanent token)
+    MCP = "mcp"  # MCP with OAuth (easy setup, 55-min expiry)
 
 
 @dataclass
 class CredentialConfig:
     """Detected credential configuration"""
-    has_rest_api: bool         # REST API credentials available
-    has_mcp: bool              # MCP assumed available (OAuth via Claude Code)
+
+    has_rest_api: bool  # REST API credentials available
+    has_mcp: bool  # MCP assumed available (OAuth via Claude Code)
     confluence_url: Optional[str] = None
     confluence_user: Optional[str] = None
     # Note: API token is sensitive, not stored in dataclass
@@ -49,6 +52,7 @@ class CredentialConfig:
 @dataclass
 class RoutingDecision:
     """Routing decision with rationale"""
+
     api_mode: APIMode
     reason: str
     warning: Optional[str] = None  # Warning message if applicable
@@ -90,13 +94,11 @@ class ConfluenceRouter:
             has_rest_api=has_rest_api,
             has_mcp=has_mcp,
             confluence_url=url,
-            confluence_user=user
+            confluence_user=user,
         )
 
     def route_operation(
-        self,
-        operation: OperationType,
-        params: Optional[Dict[str, Any]] = None
+        self, operation: OperationType, params: Optional[Dict[str, Any]] = None
     ) -> RoutingDecision:
         """
         Determine optimal API for the given operation.
@@ -120,22 +122,26 @@ class ConfluenceRouter:
             return RoutingDecision(
                 api_mode=APIMode.MCP,
                 reason="Rovo AI search is MCP-exclusive feature",
-                fallback_available=False
+                fallback_available=False,
             )
 
         # If REST API is available, prefer it for speed
         if self.credentials.has_rest_api:
-            if operation in [OperationType.READ, OperationType.SEARCH_CQL, OperationType.UPLOAD]:
+            if operation in [
+                OperationType.READ,
+                OperationType.SEARCH_CQL,
+                OperationType.UPLOAD,
+            ]:
                 return RoutingDecision(
                     api_mode=APIMode.REST_API,
                     reason="REST API available and faster for read/search operations",
-                    fallback_available=True  # Can fall back to MCP if REST fails
+                    fallback_available=True,  # Can fall back to MCP if REST fails
                 )
             elif operation == OperationType.WRITE:
                 return RoutingDecision(
                     api_mode=APIMode.REST_API,
                     reason="REST API provides fast writes (~1 second)",
-                    fallback_available=True
+                    fallback_available=True,
                 )
 
         # Fallback to MCP when no REST API credentials
@@ -143,25 +149,25 @@ class ConfluenceRouter:
         if operation == OperationType.WRITE:
             warning = (
                 "⚠️  Writing via MCP without REST API token (~26 seconds).\n"
-                f"For faster writes (~1 second), configure REST API credentials:\n"
-                f"  export CONFLUENCE_URL=\"https://yoursite.atlassian.net/wiki\"\n"
-                f"  export CONFLUENCE_USER=\"your-email@company.com\"\n"
-                f"  export CONFLUENCE_API_TOKEN=\"your-token\"\n"
-                f"\nGenerate token: https://id.atlassian.com/manage-profile/security/api-tokens"
+                "For faster writes (~1 second), configure REST API credentials:\n"
+                '  export CONFLUENCE_URL="https://yoursite.atlassian.net/wiki"\n'
+                '  export CONFLUENCE_USER="your-email@company.com"\n'
+                '  export CONFLUENCE_API_TOKEN="your-token"\n'
+                "\nGenerate token: https://id.atlassian.com/manage-profile/security/api-tokens"
             )
 
         return RoutingDecision(
             api_mode=APIMode.MCP,
             reason=f"MCP fallback mode (no REST API credentials for {operation.value})",
             warning=warning,
-            fallback_available=False  # Already using fallback
+            fallback_available=False,  # Already using fallback
         )
 
     def handle_fallback(
         self,
         original_operation: OperationType,
         original_mode: APIMode,
-        error: Exception
+        error: Exception,
     ) -> Optional[RoutingDecision]:
         """
         Handle API failure with graceful fallback.
@@ -187,7 +193,7 @@ class ConfluenceRouter:
                 api_mode=APIMode.MCP,
                 reason=f"Fallback to MCP after REST API error: {error}",
                 warning="Using MCP fallback mode, operation may be slower",
-                fallback_available=False
+                fallback_available=False,
             )
 
         # Scenario 2: MCP session expired
@@ -197,7 +203,7 @@ class ConfluenceRouter:
                 return RoutingDecision(
                     api_mode=APIMode.REST_API,
                     reason="MCP session expired, using REST API",
-                    fallback_available=False
+                    fallback_available=False,
                 )
             else:
                 # No REST API available, prompt user to re-authenticate
@@ -205,7 +211,7 @@ class ConfluenceRouter:
                     "❌ MCP session expired. Please re-authenticate:\n"
                     "   Run: /mcp\n"
                     "   Select: atlassian → Authenticate",
-                    file=sys.stderr
+                    file=sys.stderr,
                 )
                 return None
 
@@ -214,7 +220,7 @@ class ConfluenceRouter:
             return RoutingDecision(
                 api_mode=APIMode.REST_API,
                 reason=f"Fallback to REST API after MCP error: {error}",
-                fallback_available=False
+                fallback_available=False,
             )
 
         # No fallback available
@@ -231,15 +237,15 @@ class ConfluenceRouter:
             "rest_api_available": self.credentials.has_rest_api,
             "mcp_available": self.credentials.has_mcp,
             "primary_mode": (
-                "REST API (fast)"
-                if self.credentials.has_rest_api
-                else "MCP (fallback)"
+                "REST API (fast)" if self.credentials.has_rest_api else "MCP (fallback)"
             ),
             "credentials": {
                 "confluence_url": self.credentials.confluence_url or "Not set",
                 "confluence_user": self.credentials.confluence_user or "Not set",
-                "confluence_api_token": "Set" if os.getenv("CONFLUENCE_API_TOKEN") else "Not set"
-            }
+                "confluence_api_token": "Set"
+                if os.getenv("CONFLUENCE_API_TOKEN")
+                else "Not set",
+            },
         }
 
     def log_decision(self, operation: OperationType, decision: RoutingDecision):
@@ -250,7 +256,9 @@ class ConfluenceRouter:
             operation: The operation being routed
             decision: The routing decision
         """
-        print(f"🔀 Router: {operation.value} → {decision.api_mode.value}", file=sys.stderr)
+        print(
+            f"🔀 Router: {operation.value} → {decision.api_mode.value}", file=sys.stderr
+        )
         print(f"   Reason: {decision.reason}", file=sys.stderr)
         if decision.warning:
             print(f"   {decision.warning}", file=sys.stderr)
@@ -264,22 +272,24 @@ def main():
     router = ConfluenceRouter()
     status = router.get_status()
 
-    print(f"\nConfiguration:")
-    print(f"  REST API Available: {'✅ Yes' if status['rest_api_available'] else '❌ No'}")
+    print("\nConfiguration:")
+    print(
+        f"  REST API Available: {'✅ Yes' if status['rest_api_available'] else '❌ No'}"
+    )
     print(f"  MCP Available: {'✅ Yes' if status['mcp_available'] else '❌ No'}")
     print(f"  Primary Mode: {status['primary_mode']}")
 
-    print(f"\nCredentials:")
-    for key, value in status['credentials'].items():
+    print("\nCredentials:")
+    for key, value in status["credentials"].items():
         print(f"  {key}: {value}")
 
-    print(f"\nRouting Examples:")
+    print("\nRouting Examples:")
     operations = [
         OperationType.READ,
         OperationType.WRITE,
         OperationType.SEARCH_CQL,
         OperationType.SEARCH_ROVO,
-        OperationType.UPLOAD
+        OperationType.UPLOAD,
     ]
 
     for op in operations:

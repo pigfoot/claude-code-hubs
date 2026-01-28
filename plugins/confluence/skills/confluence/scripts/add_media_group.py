@@ -25,7 +25,6 @@ import requests
 # Import from confluence_adf_utils.py
 sys.path.insert(0, str(Path(__file__).parent))
 from confluence_adf_utils import (
-    execute_modification,
     find_heading_index,
     get_auth,
 )
@@ -45,28 +44,23 @@ def upload_attachment(base_url, auth, page_id, image_path):
         Attachment ID or None if failed
     """
     # Prepare upload
-    api_base = base_url.rstrip('/').replace("/wiki", "")
+    api_base = base_url.rstrip("/").replace("/wiki", "")
     url = f"{api_base}/wiki/rest/api/content/{page_id}/child/attachment"
 
     # Read file
-    with open(image_path, 'rb') as f:
-        files = {
-            'file': (Path(image_path).name, f, 'image/png')
-        }
+    with open(image_path, "rb") as f:
+        files = {"file": (Path(image_path).name, f, "image/png")}
 
         # Upload
         response = requests.post(
-            url,
-            auth=auth,
-            files=files,
-            headers={"X-Atlassian-Token": "no-check"}
+            url, auth=auth, files=files, headers={"X-Atlassian-Token": "no-check"}
         )
 
     if response.ok:
         result = response.json()
         # Get attachment ID from results
-        if 'results' in result and len(result['results']) > 0:
-            attachment_id = result['results'][0]['id']
+        if "results" in result and len(result["results"]) > 0:
+            attachment_id = result["results"][0]["id"]
             print(f"   Uploaded: {Path(image_path).name} (ID: {attachment_id})")
             return attachment_id
 
@@ -98,15 +92,15 @@ def add_media_group(adf, attachment_ids, image_filenames, after_heading=None):
                 "id": att_id,
                 "type": "file",
                 "collection": "",
-                "localId": f"media-{os.urandom(4).hex()}"
-            }
+                "localId": f"media-{os.urandom(4).hex()}",
+            },
         }
         media_children.append(media_node)
 
     media_group_node = {
         "type": "mediaGroup",
         "attrs": {"localId": f"mediagroup-{os.urandom(4).hex()}"},
-        "content": media_children
+        "content": media_children,
     }
 
     if after_heading:
@@ -118,7 +112,9 @@ def add_media_group(adf, attachment_ids, image_filenames, after_heading=None):
 
         # Insert after heading
         content.insert(heading_idx + 1, media_group_node)
-        print(f"✅ Added image group ({len(attachment_ids)} images) after heading '{after_heading}'")
+        print(
+            f"✅ Added image group ({len(attachment_ids)} images) after heading '{after_heading}'"
+        )
     else:
         # Add at end
         content.append(media_group_node)
@@ -134,30 +130,29 @@ def main():
     parser.add_argument("page_id", help="Confluence page ID")
     parser.add_argument(
         "--images",
-        nargs='+',
+        nargs="+",
         required=True,
-        help="Paths to image files (e.g., './img1.png' './img2.png')"
+        help="Paths to image files (e.g., './img1.png' './img2.png')",
     )
     parser.add_argument(
-        "--after-heading",
-        help="Add images after this heading (e.g., 'Screenshots')"
+        "--after-heading", help="Add images after this heading (e.g., 'Screenshots')"
     )
     parser.add_argument(
-        "--at-end",
-        action="store_true",
-        help="Add images at end of page"
+        "--at-end", action="store_true", help="Add images at end of page"
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
 
     # Validate arguments
     if not args.after_heading and not args.at_end:
-        print("❌ Error: Must specify either --after-heading or --at-end", file=sys.stderr)
+        print(
+            "❌ Error: Must specify either --after-heading or --at-end", file=sys.stderr
+        )
         sys.exit(1)
 
     # Validate all image files exist
@@ -167,7 +162,11 @@ def main():
             sys.exit(1)
 
     # Build dry-run description
-    location = f"after heading '{args.after_heading}'" if args.after_heading else "at end of page"
+    location = (
+        f"after heading '{args.after_heading}'"
+        if args.after_heading
+        else "at end of page"
+    )
     image_names = [Path(p).name for p in args.images]
     description = f"Upload and add image group ({len(args.images)} images: {', '.join(image_names)}) {location}"
 
@@ -194,12 +193,7 @@ def main():
 
         # Now modify page to add media group reference
         def modify(adf):
-            return add_media_group(
-                adf,
-                attachment_ids,
-                image_names,
-                args.after_heading
-            )
+            return add_media_group(adf, attachment_ids, image_names, args.after_heading)
 
         from confluence_adf_utils import execute_modification
 
@@ -207,12 +201,13 @@ def main():
             args.page_id,
             modify,
             dry_run=False,
-            version_message=f"Added image group ({len(args.images)} images) via Python REST API"
+            version_message=f"Added image group ({len(args.images)} images) via Python REST API",
         )
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

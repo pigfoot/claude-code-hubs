@@ -50,8 +50,8 @@ def find_and_add_mention_recursive(node, search_text, user_id, display_name):
                             "id": user_id,
                             "text": f"@{display_name or user_id}",
                             "accessLevel": "",
-                            "localId": f"mention-{os.urandom(4).hex()}"
-                        }
+                            "localId": f"mention-{os.urandom(4).hex()}",
+                        },
                     }
 
                     # Add space before mention
@@ -65,7 +65,9 @@ def find_and_add_mention_recursive(node, search_text, user_id, display_name):
 
         # Recursively search in nested structures
         for value in node.values():
-            if find_and_add_mention_recursive(value, search_text, user_id, display_name):
+            if find_and_add_mention_recursive(
+                value, search_text, user_id, display_name
+            ):
                 return True
 
     elif isinstance(node, list):
@@ -106,21 +108,20 @@ def main():
     parser.add_argument(
         "--search-text",
         required=True,
-        help="Text to search for (mention will be added after this text)"
+        help="Text to search for (mention will be added after this text)",
     )
     parser.add_argument(
         "--user-id",
         required=True,
-        help="User's Atlassian account ID (e.g., '557058...')"
+        help="User's Atlassian account ID (e.g., '557058...')",
     )
     parser.add_argument(
-        "--display-name",
-        help="Optional display name for the user (e.g., 'John Doe')"
+        "--display-name", help="Optional display name for the user (e.g., 'John Doe')"
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without actually updating"
+        help="Show what would be done without actually updating",
     )
 
     args = parser.parse_args()
@@ -135,7 +136,7 @@ def main():
         lambda adf: add_mention(adf, args.search_text, args.user_id, args.display_name),
         dry_run=args.dry_run,
         dry_run_description=description,
-        version_message=f"Added mention @{display} via Python REST API"
+        version_message=f"Added mention @{display} via Python REST API",
     )
 
 
