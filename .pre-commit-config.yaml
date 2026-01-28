@@ -1,0 +1,176 @@
+# Pre-commit hooks for claude-code-hubs
+# https://pre-commit.com
+
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+
+repos:
+  # ============================================================================
+  # Phase 1: General file checks (fast, no dependencies)
+  # ============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        args: [--markdown-linebreak-ext=md]
+
+      - id: end-of-file-fixer
+        name: Fix end of files
+
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+
+      - id: check-added-large-files
+        name: Check for large files
+        args: [--maxkb=500]
+
+      - id: check-json
+        name: Check JSON syntax
+        exclude: '.vscode/.*'  # Allow comments in VS Code config
+
+      - id: check-yaml
+        name: Check YAML syntax
+        args: [--unsafe]  # Allow custom YAML tags
+
+      - id: mixed-line-ending
+        name: Check line endings
+        args: [--fix=lf]
+
+  # ============================================================================
+  # Phase 2: Secrets protection (CRITICAL - highest priority)
+  # ============================================================================
+  - repo: local
+    hooks:
+      - id: block-env-files
+        name: Block .env files
+        entry: bash -c
+        language: system
+        pass_filenames: false
+        args:
+          - -c
+          - |
+            if git diff --cached --name-only | grep -E "\.env$" | grep -v "\.env\.example$" | grep -v "\.env\.template$"; then
+              echo "ERROR: Do not commit .env files!"
+              exit 1
+            fi
+
+  # Detect secrets (official hook - managed by pre-commit framework)
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: .secrets.baseline
+
+  # ============================================================================
+  # Phase 3: Language-specific linting
+  # ============================================================================
+
+  # Python: Ruff (replaces black, isort, flake8)
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff linter
+        entry: uvx --managed-python ruff check --fix
+        language: system
+        types: [python]
+        require_serial: true
+
+      - id: ruff-format
+        name: Ruff formatter
+        entry: uvx --managed-python ruff format
+        language: system
+        types: [python]
+        require_serial: true
+
+  # YAML: yamllint
+  - repo: local
+    hooks:
+      - id: yamllint
+        name: YAML linter
+        entry: uvx --managed-python yamllint -c .yamllint.yaml
+        language: system
+        types: [yaml]
+
+  # Markdown: markdownlint
+  - repo: local
+    hooks:
+      - id: markdownlint
+        name: Markdown linter
+        entry: bunx markdownlint-cli --config .markdownlint.json --fix
+        language: system
+        types: [markdown]
+        exclude: 'CHANGELOG.md'
+
+  # ============================================================================
+  # Phase 4: Project-specific validations
+  # ============================================================================
+
+  # Plugin metadata validation
+  - repo: local
+    hooks:
+      - id: check-plugin-json-syntax
+        name: Validate plugin.json syntax
+        entry: bash -c
+        language: system
+        files: '\.claude-plugin/plugin\.json$'
+        pass_filenames: false
+        args:
+          - -c
+          - |
+            for f in plugins/*/.claude-plugin/plugin.json; do
+              jq empty "$f" 2>/dev/null || { echo "Invalid JSON: $f"; exit 1; }
+            done
+
+      - id: check-plugin-required-fields
+        name: Check plugin.json required fields
+        entry: bash -c
+        language: system
+        files: '\.claude-plugin/plugin\.json$'
+        pass_filenames: false
+        args:
+          - -c
+          - |
+            for f in plugins/*/.claude-plugin/plugin.json; do
+              jq -e ".name and .version and .description and .skills" "$f" >/dev/null || \
+                { echo "Missing required fields in $f"; exit 1; }
+            done
+
+  # Version consistency validation
+  - repo: local
+    hooks:
+      - id: check-version-consistency
+        name: Check version consistency
+        entry: uv run --managed-python scripts/check-versions.py
+        language: system
+        files: '(plugin\.json|SKILL\.md|README\.md)$'
+        pass_filenames: false
+
+  # SKILL.md frontmatter validation
+  - repo: local
+    hooks:
+      - id: validate-skill-metadata
+        name: Validate SKILL.md frontmatter
+        entry: uv run --managed-python scripts/validate-skill.py
+        language: system
+        files: 'SKILL\.md$'
+        pass_filenames: false
+
+  # ============================================================================
+  # Phase 5: Commit message validation
+  # ============================================================================
+  # Note: Commit message format is managed by commit skill (supports emoji prefixes)
+  # conventional-pre-commit is not used as it conflicts with our emoji + type format
+        args:
+          - feat
+          - fix
+          - docs
+          - style
+          - refactor
+          - perf
+          - test
+          - build
+          - ci
+          - chore
+          - revert

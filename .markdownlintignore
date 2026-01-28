@@ -1,0 +1,5 @@
+# Claude Code working directory - not part of project
+.claude/
+
+# Changelog - managed separately
+CHANGELOG.md
