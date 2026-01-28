@@ -2,7 +2,25 @@
 
 Python scripting and Gemini/Imagen image generation using uv with inline script dependencies.
 
-## ✨ Recent Improvements (v0.0.8)
+## ✨ Recent Improvements (v0.0.9)
+
+**Reproducible Generation & Parameter Control:**
+- ✅ **Seed parameter** - Reproducible image generation with automatic seed tracking
+  - Auto-generate timestamp-based seeds (recorded in results JSON)
+  - Manual seed specification for exact reproduction
+  - Per-slide or global seed configuration
+- ✅ **Temperature parameter** - Experimental control over generation randomness (0.0-2.0)
+  - Per-slide or global temperature configuration
+  - Range validation and priority handling
+- ✅ **Results tracking** - `generation-results.json` records actual seed and temperature used
+- ✅ **Comprehensive testing** - 28+ test images validating seed reproducibility
+- ✅ **Documentation** - Complete usage examples, natural language parsing guide, experiment results
+
+**Key Findings:**
+- Seed: ✅ Highly effective - same seed produces visually identical images
+- Temperature: ⚠️ Limited effect - changes output but unpredictable (recommend keeping default 1.0)
+
+## Previous Improvements (v0.0.8)
 
 **uv Compatibility Enhancement:**
 - ✅ **PEP 723 for library modules** - Added inline dependency metadata to `logo_overlay.py`

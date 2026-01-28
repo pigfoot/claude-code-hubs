@@ -17,13 +17,28 @@ Usage:
 Config format:
     {
         "slides": [
-            {"number": 1, "prompt": "...", "style": "professional"},
+            {"number": 1, "prompt": "...", "style": "professional", "temperature": 0.8, "seed": 42},
             {"number": 2, "prompt": "...", "style": "data-viz"}
         ],
         "output_dir": "./output/",
         "format": "webp",
-        "quality": 90
+        "quality": 90,
+        "temperature": 1.0,
+        "seed": 12345
     }
+
+Temperature:
+    - Range: 0.0 to 2.0
+    - Default: 1.0 (Gemini 3 recommended)
+    - Lower values (0.0-0.5): More deterministic and consistent
+    - Higher values (0.7-1.0+): More random and creative
+    - Priority: slide.temperature > config.temperature > 1.0
+
+Seed:
+    - Integer value for reproducible generation
+    - Same seed + same prompt + same temperature = same image
+    - Default: None (random seed each time)
+    - Priority: slide.seed > config.seed > None
 
 Note: Model is set via NANO_BANANA_MODEL environment variable, not in config.
 
@@ -37,6 +52,7 @@ import sys
 import os
 import io
 import tempfile
+import time
 from pathlib import Path
 from datetime import datetime, UTC
 from typing import Dict, List, Tuple, Optional
@@ -120,6 +136,20 @@ def load_config(config_path: str) -> Dict:
     # Validate output_dir is relative path
     validate_output_dir(config['output_dir'])
 
+    # Validate global temperature if specified
+    if 'temperature' in config:
+        temp = config['temperature']
+        if not isinstance(temp, (int, float)) or temp < 0.0 or temp > 2.0:
+            print(f"Error: Global temperature must be between 0.0 and 2.0, got: {temp}", file=sys.stderr)
+            sys.exit(1)
+
+    # Validate global seed if specified
+    if 'seed' in config:
+        seed = config['seed']
+        if not isinstance(seed, int):
+            print(f"Error: Global seed must be an integer, got: {seed}", file=sys.stderr)
+            sys.exit(1)
+
     # Validate each slide
     for i, slide in enumerate(config['slides']):
         if 'number' not in slide:
@@ -128,6 +158,20 @@ def load_config(config_path: str) -> Dict:
         if 'prompt' not in slide:
             print(f"Error: Slide {i} missing 'prompt' field", file=sys.stderr)
             sys.exit(1)
+
+        # Validate per-slide temperature if specified
+        if 'temperature' in slide:
+            temp = slide['temperature']
+            if not isinstance(temp, (int, float)) or temp < 0.0 or temp > 2.0:
+                print(f"Error: Slide {i} temperature must be between 0.0 and 2.0, got: {temp}", file=sys.stderr)
+                sys.exit(1)
+
+        # Validate per-slide seed if specified
+        if 'seed' in slide:
+            seed = slide['seed']
+            if not isinstance(seed, int):
+                print(f"Error: Slide {i} seed must be an integer, got: {seed}", file=sys.stderr)
+                sys.exit(1)
 
     return config
 
@@ -201,6 +245,20 @@ def write_results(completed: List[Dict], failed: List[int],
         sys.exit(1)
 
 
+def generate_seed() -> int:
+    """Generate a unique seed based on timestamp.
+
+    Returns:
+        Integer seed value (fits in 32-bit signed int range)
+    """
+    # Use nanosecond timestamp to ensure uniqueness within same batch
+    # Add small sleep to ensure different timestamps even in tight loops
+    time.sleep(0.001)
+    timestamp_ns = time.time_ns()
+    # Modulo to fit in 32-bit signed int range
+    return int(timestamp_ns % 2147483647)
+
+
 def detect_api_type(model: str) -> str:
     """Detect which API to use based on model name.
 
@@ -215,7 +273,9 @@ def detect_api_type(model: str) -> str:
 
 def generate_slide_gemini(client: genai.Client, slide: Dict,
                           output_dir: Path, model: str,
-                          output_format: str, quality: int) -> Tuple[bool, Optional[str], Optional[str]]:
+                          output_format: str, quality: int,
+                          global_temperature: Optional[float] = None,
+                          global_seed: Optional[int] = None) -> Tuple[bool, Optional[str], Optional[str], Optional[int], Optional[float]]:
     """Generate single slide using Gemini API.
 
     Args:
@@ -225,9 +285,11 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
         model: Model name
         output_format: Output format (webp, png, jpeg)
         quality: Image quality (1-100)
+        global_temperature: Global temperature setting from config
+        global_seed: Global seed setting from config
 
     Returns:
-        Tuple of (success, output_path, error_message)
+        Tuple of (success, output_path, error_message, actual_seed, actual_temperature)
     """
     try:
         # Build prompt with style if specified
@@ -250,14 +312,30 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
         # Get aspect ratio from slide config (default to 16:9 for slides)
         aspect_ratio = slide.get('aspect_ratio', '16:9')
 
-        # Generate image
-        config = types.GenerateContentConfig(
-            response_modalities=['IMAGE'],
-            image_config=types.ImageConfig(
+        # Determine temperature value (priority: slide > global > default 1.0)
+        temperature = slide.get('temperature', global_temperature if global_temperature is not None else 1.0)
+
+        # Determine seed value (priority: slide > global > auto-generate)
+        seed = slide.get('seed')
+        if seed is None:
+            seed = global_seed
+        if seed is None:
+            # Auto-generate unique seed based on timestamp
+            seed = generate_seed()
+
+        # Build config kwargs
+        config_kwargs = {
+            'response_modalities': ['IMAGE'],
+            'image_config': types.ImageConfig(
                 aspect_ratio=aspect_ratio,
                 image_size='2K'
-            )
-        )
+            ),
+            'temperature': temperature,
+            'seed': seed
+        }
+
+        # Generate image
+        config = types.GenerateContentConfig(**config_kwargs)
 
         response = client.models.generate_content(
             model=model,
@@ -267,11 +345,11 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
 
         # Save image
         if not response.candidates or not response.candidates[0].content.parts:
-            return False, None, "No image generated in response"
+            return False, None, "No image generated in response", None, None
 
         image_part = response.candidates[0].content.parts[0]
         if not hasattr(image_part, 'inline_data') or not image_part.inline_data:
-            return False, None, "No image data in response"
+            return False, None, "No image data in response", None, None
 
         image_bytes = image_part.inline_data.data
         image = PILImage.open(io.BytesIO(image_bytes))
@@ -289,7 +367,7 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
                 image = image.convert('RGB')
             image.save(output_path, 'JPEG', quality=quality, optimize=True)
         else:
-            return False, None, f"Unsupported format: {output_format}"
+            return False, None, f"Unsupported format: {output_format}", None, None
 
         # TrendLife Logo Overlay (MANDATORY for trendlife style)
         if slide.get('style') == 'trendlife':
@@ -322,10 +400,10 @@ def generate_slide_gemini(client: genai.Client, slide: Dict,
         # Get file size
         size_kb = output_path.stat().st_size // 1024
 
-        return True, str(output_path), None
+        return True, str(output_path), None, seed, temperature
 
     except Exception as e:
-        return False, None, str(e)
+        return False, None, str(e), None, None
 
 
 def generate_slide_imagen(client: genai.Client, slide: Dict,
@@ -453,6 +531,8 @@ def main():
     model = os.environ.get("NANO_BANANA_MODEL") or "gemini-3-pro-image-preview"
     output_format = config.get('format', 'webp').lower()
     quality = config.get('quality', 90)
+    global_temperature = config.get('temperature')  # None if not specified
+    global_seed = config.get('seed')  # None if not specified
 
     # Create output directory
     try:
@@ -497,22 +577,30 @@ def main():
 
         # Generate slide
         if api_type == 'gemini':
-            success, output_path, error = generate_slide_gemini(
-                client, slide, output_dir, model, output_format, quality
+            success, output_path, error, actual_seed, actual_temp = generate_slide_gemini(
+                client, slide, output_dir, model, output_format, quality, global_temperature, global_seed
             )
         else:  # imagen
             success, output_path, error = generate_slide_imagen(
                 client, slide, output_dir, model, output_format, quality
             )
+            actual_seed, actual_temp = None, None
 
         # Track result
         if success:
             size_kb = Path(output_path).stat().st_size // 1024
-            completed.append({
+            slide_result = {
                 "slide": slide_num,
                 "path": output_path,
                 "size_kb": size_kb
-            })
+            }
+            # Record actual seed and temperature if available
+            if actual_seed is not None:
+                slide_result["seed"] = actual_seed
+            if actual_temp is not None:
+                slide_result["temperature"] = actual_temp
+
+            completed.append(slide_result)
             print(f"✓ Slide {slide_num} completed: {output_path}")
         else:
             failed.append(slide_num)
@@ -528,6 +616,30 @@ def main():
 
     # Write results
     write_results(completed, failed, errors, started_at)
+
+    # Also save results to output directory for permanent record
+    try:
+        results_in_output = output_dir / "generation-results.json"
+        started_dt = datetime.fromisoformat(started_at.rstrip('Z'))
+        completed_at = datetime.now(UTC).isoformat() + 'Z'
+        completed_dt = datetime.fromisoformat(completed_at.rstrip('Z'))
+        duration = (completed_dt - started_dt).total_seconds()
+
+        results = {
+            "completed": len(completed),
+            "failed": len(failed),
+            "total": len(completed) + len(failed),
+            "outputs": completed,
+            "errors": errors,
+            "started_at": started_at,
+            "completed_at": completed_at,
+            "duration_seconds": int(duration)
+        }
+
+        with open(results_in_output, 'w') as f:
+            json.dump(results, f, indent=2)
+    except Exception as e:
+        print(f"Warning: Failed to write results to output directory: {e}", file=sys.stderr)
 
     # Print summary
     print(f"\n{'='*60}")

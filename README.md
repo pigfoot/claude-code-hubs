@@ -683,7 +683,7 @@ Once configured, Claude will:
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
 | [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads | 0.1.0 |
-| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.8 |
+| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.9 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
 

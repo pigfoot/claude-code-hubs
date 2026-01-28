@@ -8,7 +8,7 @@ description: |
 allowed-tools: Bash Write Read AskUserQuestion
 metadata:
   short-description: Unified image generation workflow with Gemini/Imagen models
-  version: "0.0.8"
+  version: "0.0.9"
 
 # === GitHub Copilot ===
 license: MIT
@@ -112,10 +112,44 @@ if not model:
 - Image editing with AI
 - Prompt help ("help me craft", "improve my prompt")
 - Brand styles ("use style trend", "notebooklm style")
+- Reproducible generation ("use seed 42", "regenerate that image")
 
 **Mode selection:**
 - **Interactive Prompting**: User asks for prompt help OR prompt too vague (<5 words)
 - **Unified Generation**: User provides detailed prompt (uses generate_images.py)
+
+### Parsing User Intent for Seed & Temperature
+
+**Extract seed from user message:**
+- "seed 42" → `"seed": 42`
+- "use seed 392664860" → `"seed": 392664860`
+- "regenerate with the same seed" → Use seed from previous results JSON
+- "seed: 123" (inline) → `"seed": 123`
+
+**Extract temperature from user message:**
+- "temperature 0.5" → `"temperature": 0.5`
+- "temp 1.5" → `"temperature": 1.5`
+- "lower temperature" → `"temperature": 0.5` (suggest conservative value)
+- "higher temperature" → `"temperature": 1.5` (suggest exploratory value)
+- "more creative" → `"temperature": 1.5`
+- "temperature: 0.8" (inline) → `"temperature": 0.8`
+
+**Combined examples:**
+```
+User: "Generate a robot image, seed 42, temperature 0.8"
+→ Config: {"slides": [{"number": 1, "prompt": "robot", "seed": 42, "temperature": 0.8}]}
+
+User: "Regenerate that image with seed 392664860"
+→ Config: {"slides": [{"number": 1, "prompt": "<previous_prompt>", "seed": 392664860}]}
+
+User: "Create 3 slides with same seed 100"
+→ Config: {"seed": 100, "slides": [{...}, {...}, {...}]}
+```
+
+**If user asks about reproducibility:**
+- Explain that seed enables regenerating the same image
+- Mention that results JSON automatically records seeds
+- Show example of how to use seed from previous generation
 
 ## Style Detection
 
@@ -246,10 +280,20 @@ All image generation uses the same fixed Python script with JSON config:
 
 ```json
 {
-  "slides": [{"number": 1, "prompt": "...", "style": "trendlife"}],
+  "slides": [
+    {
+      "number": 1,
+      "prompt": "...",
+      "style": "trendlife",
+      "temperature": 0.8,  // Optional: 0.0-2.0 per-slide override
+      "seed": 42           // Optional: integer for reproducible generation
+    }
+  ],
   "output_dir": "./001-feature-name/",  // MUST use NNN-short-name format
-  "format": "webp",    // Optional: webp (default, RECOMMENDED), png, jpg
-  "quality": 90        // Optional: 1-100 (default: 90)
+  "format": "webp",      // Optional: webp (default, RECOMMENDED), png, jpg
+  "quality": 90,         // Optional: 1-100 (default: 90)
+  "temperature": 1.0,    // Optional: 0.0-2.0 global default (default: 1.0)
+  "seed": 12345          // Optional: integer global default (default: auto-generate)
 }
 ```
 
@@ -257,6 +301,77 @@ All image generation uses the same fixed Python script with JSON config:
 - **webp (RECOMMENDED)**: Default format, automatically uses lossless compression for presentation styles (trendlife, professional, data-viz). Same quality as PNG but 25-35% smaller file size.
 - **png**: Only use if webp compatibility is a concern (rare). Larger file size.
 - **jpg**: For photos only, not suitable for slides/diagrams (lossy compression).
+
+### Temperature & Seed Parameters
+
+**⚡ NEW: Reproducible Generation**
+
+#### Seed Parameter (Recommended)
+
+**Purpose:** Enable reproducible image generation
+
+**How it works:**
+- Same seed + same prompt + same temperature = visually identical image
+- Default: Auto-generated timestamp-based seed (recorded in results JSON)
+- Use case: "I like this image, regenerate it exactly"
+
+**User natural language patterns:**
+- "use seed 42"
+- "regenerate with seed 392664860"
+- "same seed as before"
+- "seed: 123" (inline spec)
+
+**Config examples:**
+```json
+// Global seed (all slides use same seed)
+{"seed": 42, "slides": [...]}
+
+// Per-slide seed (each slide has different seed)
+{"slides": [
+  {"number": 1, "prompt": "...", "seed": 42},
+  {"number": 2, "prompt": "...", "seed": 123}
+]}
+
+// No seed specified (auto-generate and record)
+{"slides": [...]}  // Results JSON will contain: "seed": 1738051234
+```
+
+**Results tracking:**
+- All generated images record their actual seed in `{output_dir}/generation-results.json`
+- Example output:
+```json
+{
+  "outputs": [
+    {"slide": 1, "path": "slide-01.png", "seed": 392664860, "temperature": 1.0}
+  ]
+}
+```
+
+#### Temperature Parameter (Experimental)
+
+**Purpose:** Control randomness in generation (0.0-2.0)
+
+**Official guidance:** Gemini 3 recommends keeping default value 1.0
+
+**Effect:**
+- ⚠️ **Limited impact observed in testing** - changes output but effect is unpredictable
+- No clear "low temperature = conservative, high temperature = creative" pattern
+- Changes generation result when combined with same seed
+
+**User natural language patterns:**
+- "temperature 0.5"
+- "use lower temperature"
+- "more creative (temperature 1.5)"
+- "temperature: 0.8" (inline spec)
+
+**Recommendation:**
+- ✅ Use seed for reproducibility (highly effective)
+- ⚠️ Use temperature conservatively for experimentation only
+- 💡 Keep default 1.0 unless exploring variations
+
+**Priority rules:**
+- slide.temperature > config.temperature > 1.0 (default)
+- slide.seed > config.seed > auto-generate
 
 **Field Rules:**
 - ✅ `output_dir` MUST be relative path with NNN-short-name format: `./001-feature-name/`
@@ -360,8 +475,86 @@ Write tool: C:/Users/<user>/AppData/Local/Temp/nano-banana-config-1234567890.jso
 | Saving to flat files | Use `NNN-short-name/` directories |
 | Using PIL to draw/edit | Use Gemini/Imagen API with image in `contents` |
 
+## Example Workflows
+
+### Scenario 1: First Generation (Auto Seed)
+
+```
+User: "Generate a modern office interior"
+
+Assistant actions:
+1. Create config WITHOUT seed (auto-generate):
+   {
+     "slides": [{"number": 1, "prompt": "Modern office interior with natural lighting"}],
+     "output_dir": "./001-office-design/"
+   }
+2. Execute: uv run --managed-python {base_dir}/generate_images.py --config {temp_config}
+3. Read results: ./001-office-design/generation-results.json
+   → {"outputs": [{"slide": 1, "path": "slide-01.png", "seed": 392664860}]}
+4. Report to user: "Generated at ./001-office-design/slide-01.png (seed: 392664860)"
+```
+
+### Scenario 2: Reproduce Previous Image
+
+```
+User: "I love that office image! Regenerate it with seed 392664860"
+
+Assistant actions:
+1. Create config WITH seed:
+   {
+     "slides": [{"number": 1, "prompt": "Modern office interior with natural lighting", "seed": 392664860}],
+     "output_dir": "./002-office-design-v2/"
+   }
+2. Execute script
+3. Result: Visually identical image
+```
+
+### Scenario 3: Explore Variations
+
+```
+User: "Generate 3 variations of a robot holding flowers, use different temperatures"
+
+Assistant actions:
+1. Create config with per-slide temperatures:
+   {
+     "seed": 42,  // Same seed for comparison
+     "slides": [
+       {"number": 1, "prompt": "A cute robot holding flowers", "temperature": 0.5},
+       {"number": 2, "prompt": "A cute robot holding flowers", "temperature": 1.0},
+       {"number": 3, "prompt": "A cute robot holding flowers", "temperature": 1.5}
+     ],
+     "output_dir": "./003-robot-variations/"
+   }
+2. Execute script
+3. Result: 3 different compositions (temperature effect)
+```
+
+### Scenario 4: Batch with Consistent Style
+
+```
+User: "Create 5 presentation slides with TrendLife style, use same seed"
+
+Assistant actions:
+1. Create config with global seed:
+   {
+     "seed": 12345,
+     "slides": [
+       {"number": 1, "prompt": "Title slide: AI Safety", "style": "trendlife"},
+       {"number": 2, "prompt": "Key features overview", "style": "trendlife"},
+       {"number": 3, "prompt": "Technical architecture", "style": "trendlife"},
+       {"number": 4, "prompt": "Use cases and benefits", "style": "trendlife"},
+       {"number": 5, "prompt": "Thank you slide", "style": "trendlife"}
+     ],
+     "output_dir": "./004-ai-safety-deck/"
+   }
+2. Execute in background (5+ slides)
+3. Monitor progress file
+4. Results: 5 slides with TrendLife logo, all use seed 12345 + auto-incremented variation
+```
+
 ## References
 
 - **Advanced workflows**: `references/guide.md` (thinking, search grounding, 16+ prompting techniques)
 - **Brand styles**: `references/brand-styles.md` (Trend Micro specs)
 - **Slide decks**: `references/slide-deck-styles.md` (NotebookLM aesthetic, infographics, data viz)
+- **Experiments**: `../EXPERIMENT_RESULTS.md` (temperature & seed testing results)
