@@ -157,20 +157,30 @@ repos:
         files: 'SKILL\.md$'
         pass_filenames: false
 
+  # Superpowers version sync
+  - repo: local
+    hooks:
+      - id: update-superpowers-version
+        name: Update superpowers version
+        entry: bash -c
+        language: system
+        pass_filenames: false
+        args:
+          - -c
+          - |
+            LATEST=$(curl -sk "https://api.github.com/repos/obra/superpowers/releases/latest" | sed -En '/"tag_name"/ s|.*"v([^"]+)".*|\1|p')
+            if [ -n "$LATEST" ]; then
+              CURRENT=$(jq -r '.plugins[] | select(.name == "superpowers") | .version' .claude-plugin/marketplace.json)
+              if [ "$CURRENT" != "$LATEST" ]; then
+                echo "Updating superpowers version: $CURRENT → $LATEST"
+                jq --arg ver "$LATEST" '(.plugins[] | select(.name == "superpowers") | .version) = $ver' .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
+                mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
+                git add .claude-plugin/marketplace.json
+              fi
+            fi
+
   # ============================================================================
   # Phase 5: Commit message validation
   # ============================================================================
   # Note: Commit message format is managed by commit skill (supports emoji prefixes)
   # conventional-pre-commit is not used as it conflicts with our emoji + type format
-        args:
-          - feat
-          - fix
-          - docs
-          - style
-          - refactor
-          - perf
-          - test
-          - build
-          - ci
-          - chore
-          - revert
