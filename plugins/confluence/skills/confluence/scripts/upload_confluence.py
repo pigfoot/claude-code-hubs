@@ -71,13 +71,15 @@ class ConfluenceStorageRenderer(mistune.HTMLRenderer):
 
     def block_code(self, code, info=None):
         """Render code blocks as Confluence code macros."""
+        # Strip trailing newline that mistune adds
+        code = code.rstrip("\n")
         if info:
             return f'<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">{info}</ac:parameter><ac:parameter ac:name="linenumbers">true</ac:parameter><ac:plain-text-body><![CDATA[{code}]]></ac:plain-text-body></ac:structured-macro>\n'
         return f'<ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter><ac:plain-text-body><![CDATA[{code}]]></ac:plain-text-body></ac:structured-macro>\n'
 
     def block_quote(self, text):
-        """Render blockquotes as Confluence quote macros."""
-        return f'<ac:structured-macro ac:name="quote"><ac:rich-text-body>{text}</ac:rich-text-body></ac:structured-macro>\n'
+        """Render blockquotes as HTML blockquote tags (quote macro causes errors)."""
+        return f"<blockquote>{text}</blockquote>\n"
 
     # Table support
     def table(self, text):
@@ -411,10 +413,26 @@ IMPORTANT:
         print(f"ERROR: Failed to parse markdown: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Determine parameters (CLI overrides frontmatter)
+    # Determine user intent based on CLI arguments
+    # Priority:
+    # 1. Explicit --id → Update that page
+    # 2. Explicit --space (without --id) → Create new page (ignore frontmatter id)
+    # 3. No arguments → Use frontmatter
     title = args.title or extracted_title
-    page_id = args.id or frontmatter.get("confluence", {}).get("id")
-    space_key = args.space or frontmatter.get("confluence", {}).get("space")
+
+    if args.id:
+        # User explicitly wants to update a specific page
+        page_id = args.id
+        space_key = args.space or frontmatter.get("confluence", {}).get("space")
+    elif args.space:
+        # User explicitly wants to create a new page (ignore frontmatter id)
+        page_id = None
+        space_key = args.space
+    else:
+        # No CLI arguments, use frontmatter
+        page_id = frontmatter.get("confluence", {}).get("id")
+        space_key = frontmatter.get("confluence", {}).get("space")
+
     parent_id = args.parent_id or frontmatter.get("parent", {}).get("id")
 
     # Validate

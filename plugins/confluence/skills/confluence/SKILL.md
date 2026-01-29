@@ -185,15 +185,48 @@ Simply use natural language commands, system handles automatically:
 
 **CRITICAL**: Use absolute path to script WITHOUT `cd` command.
 
+#### User Intent Detection (Decision Tree)
+
+The script automatically detects user intent based on CLI arguments:
+
+**1. Update existing page** (explicit):
+
 ```bash
-# Update existing page
-uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id 780369923
+uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
+# Always updates PAGE_ID, ignores frontmatter
+```
 
-# Create new page
-uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --space DEV --parent-id 123456
+**2. Create new page** (explicit):
 
-# Preview first (recommended)
+```bash
+uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --space SPACE_KEY --parent-id PARENT_ID
+# Always creates new page, even if frontmatter has id
+# Use this when cloning docs to another space or creating duplicate pages
+```
+
+**3. Auto-detect from frontmatter** (no CLI args):
+
+```bash
+uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md
+# Uses frontmatter id (update) or space (create)
+# Best for downloaded files with frontmatter metadata
+```
+
+#### When User Says
+
+- "Upload X to Confluence under page Y" → Use `--space` + `--parent-id` (create new)
+- "Create a new page based on this downloaded doc" → Use `--space` + `--parent-id` (ignores frontmatter id)
+- "Update Confluence page 123" → Use `--id 123` (update existing)
+- "Upload this downloaded file" → No args (use frontmatter)
+
+#### Additional Options
+
+```bash
+# Preview before uploading (recommended)
 uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --dry-run
+
+# Override title
+uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --title "New Title"
 ```
 
 ### Structural Modifications (Fast Method) 🚀
