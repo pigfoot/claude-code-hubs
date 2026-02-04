@@ -641,6 +641,55 @@ Ask Claude to set up CI/CD for your container builds.
 
 ---
 
+### 📅 taiwan-calendar Plugin - Taiwan Calendar Queries
+
+```bash
+claude plugin install --scope user taiwan-calendar@pigfoot-marketplace
+```
+
+**What it does:**
+Provides accurate Taiwan working day and holiday information by querying government APIs in real-time, solving
+Claude's knowledge cutoff issues with Taiwan dates.
+
+**Prerequisites:**
+
+- [uv](https://docs.astral.sh/uv/) installed (no API key required - uses public government data)
+
+**Benefits:**
+
+- ✅ **Accurate dates** - No more getting weekdays wrong or missing Taiwan holidays
+- ✅ **Real-time data** - Queries government open data platform for current calendar
+- ✅ **Working day aware** - Calculate deadlines accounting for holidays and weekends
+- ✅ **Make-up workday support** - Knows about Taiwan's unique 補班日 system
+- ✅ **Multi-year support** - Automatically fetches data across year boundaries
+- ✅ **Smart caching** - 1-hour cache reduces API calls while staying current
+
+**Features:**
+
+- **Today's date** - Current Taiwan date (UTC+8) with weekday and working day status
+- **Date queries** - Check any date for holiday/working day information
+- **Range calculations** - Count working days between dates
+- **Advanced calculations** - Find date N working days from now, next working day, next holiday
+
+**Usage:**
+Just ask Claude about Taiwan dates naturally - the skill triggers automatically.
+
+**Examples:**
+
+- "今天是工作日嗎？" → "今天 2026-02-04 (週三) 是工作日。"
+- "2/16 是星期幾？" → "2026-02-16 (週一) 是非工作日 - 農曆除夕。"
+- "5 個工作日後是哪天？" → "從今天算起 5 個工作日後是 2026-02-11 (週三)。"
+- "這個月有幾個工作日？"
+- "下一個連假什麼時候？"
+
+**Data Sources:**
+
+- Primary: Taiwan government open data (data.gov.tw via CDN)
+- Fallback: New Taipei City open data platform
+- Cache: 1-hour expiry with multi-year accumulation
+
+---
+
 ### 🦸 superpowers Plugin - Proven Development Workflows
 
 ```bash
@@ -732,6 +781,7 @@ Once configured, Claude will:
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
 | [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads | 0.1.0 |
 | [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.9 |
+| [taiwan-calendar](./plugins/taiwan-calendar/) | Taiwan working day/holiday calendar queries | 0.0.1 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
 

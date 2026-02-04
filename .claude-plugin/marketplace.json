@@ -60,6 +60,16 @@
       }
     },
     {
+      "name": "taiwan-calendar",
+      "source": "./plugins/taiwan-calendar",
+      "description": "Taiwan calendar skill for accurate working day/holiday information. Queries government API to provide today's date, check specific dates, count working days, and calculate N working days from a date. Solves Claude's knowledge cutoff issues with Taiwan holidays and weekdays.",
+      "version": "0.0.1",
+      "author": {
+        "name": "pigfoot",
+        "email": "pigfoot@gmail.com"
+      }
+    },
+    {
       "name": "superpowers",
       "source": {
         "source": "url",
