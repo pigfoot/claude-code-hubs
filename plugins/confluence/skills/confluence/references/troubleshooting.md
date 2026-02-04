@@ -61,7 +61,7 @@ Then follow the OAuth flow to reconnect to `plugin:confluence:atlassian`.
 **Fix:** Use the upload script instead:
 
 ```bash
-uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
+uv run scripts/upload_confluence.py document.md --id PAGE_ID
 ```
 
 ### "Page not found"

@@ -84,10 +84,10 @@ Use `Bash` tool with `run_in_background=True` to start batch generation:
 ```python
 # CRITICAL: Must use 'uv run' not plain 'python'
 # The script dependencies are managed by uv via PEP 723 inline metadata
-# {base_dir} is the skill base directory provided by Claude Code
+# Script path is relative to skill directory
 
 task_result = Bash(
-    command="uv run {base_dir}/generate_images.py --config {config_path}",
+    command="uv run scripts/generate_images.py --config {config_path}",
     run_in_background=True,
     description="Generate 10 slides in batch mode"
 )
@@ -121,26 +121,26 @@ Bash(
 
 ```python
 Bash(
-    command="cd {base_dir} && uv run generate_images.py --config {config_path}",
+    command="cd scripts && uv run generate_images.py --config {config_path}",
     run_in_background=True
 )
 ```
 
-This makes `Path.cwd()` return the plugin cache directory, causing `./001-slides/` to resolve to the wrong location.
+This makes `Path.cwd()` return the scripts directory, causing `./001-slides/` to resolve to the wrong location.
 
 ✅ **CORRECT:**
 
 ```python
 Bash(
-    command="uv run {base_dir}/generate_images.py --config {config_path}",
+    command="uv run scripts/generate_images.py --config {config_path}",
     run_in_background=True
 )
 ```
 
 #### Key Points
 
-- `{base_dir}` is the skill base directory provided by Claude Code when loading the skill
-- Use absolute path to script WITHOUT `cd` command
+- Script path is relative to skill directory
+- Use relative path to script WITHOUT `cd` command
 - This keeps execution cwd in user's project directory, so relative paths in config work correctly
 
 ---
@@ -513,7 +513,7 @@ with open(config_path, 'w') as f:
 # Step 2: Start background task
 print("🚀 Starting batch generation for 5 slides...")
 # Use Bash tool with run_in_background=True
-# Command: uv run /path/to/generate_images.py --config {config_path}
+# Command: uv run scripts/generate_images.py --config {config_path}
 
 # Step 3: Poll progress (Claude handles automatically)
 # Read progress file from temp directory every 10-15s

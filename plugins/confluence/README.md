@@ -248,7 +248,7 @@ updates. Manual editing is tedious, and other tools lose macros during conversio
 **Solution**: Write locally in your favorite editor, sync with one command:
 
 ```bash
-uv run {base_dir}/scripts/upload_confluence.py docs/api-guide.md --id 123456
+uv run scripts/upload_confluence.py docs/api-guide.md --id 123456
 ```
 
 ✅ Preserves formatting
@@ -291,7 +291,7 @@ uploads.
 
 ```bash
 # Single command uploads document + all images
-uv run {base_dir}/scripts/upload_confluence.py report.md --id 789012
+uv run scripts/upload_confluence.py report.md --id 789012
 ```
 
 ✅ Batch image handling
@@ -308,7 +308,7 @@ uv run {base_dir}/scripts/upload_confluence.py report.md --id 789012
 
 ```bash
 # Download page + all children + attachments
-uv run {base_dir}/scripts/download_confluence.py --download-children 456789
+uv run scripts/download_confluence.py --download-children 456789
 ```
 
 ✅ Preserves page structure
@@ -372,10 +372,10 @@ uv run {base_dir}/scripts/download_confluence.py --download-children 456789
 
 ```bash
 # List available backups
-uv run {base_dir}/scripts/rollback_confluence.py --list 123456
+uv run scripts/rollback_confluence.py --list 123456
 
 # Restore from backup
-uv run {base_dir}/scripts/rollback_confluence.py --restore 123456 2026-01-23T10-30-15
+uv run scripts/rollback_confluence.py --restore 123456 2026-01-23T10-30-15
 ```
 
 **When to use each mode:**
@@ -404,23 +404,23 @@ uv run {base_dir}/scripts/rollback_confluence.py --restore 123456 2026-01-23T10-
 
 ```bash
 # Basic update
-uv run {base_dir}/scripts/upload_confluence.py document.md --id 780369923
+uv run scripts/upload_confluence.py document.md --id 780369923
 
 # Preview before uploading (recommended)
-uv run {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --dry-run
+uv run scripts/upload_confluence.py document.md --id 780369923 --dry-run
 
 # Force re-upload all attachments
-uv run {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --force-reupload
+uv run scripts/upload_confluence.py document.md --id 780369923 --force-reupload
 ```
 
 **Create new page:**
 
 ```bash
 # Create in specific space
-uv run {base_dir}/scripts/upload_confluence.py document.md --space DEV --title "API Guide"
+uv run scripts/upload_confluence.py document.md --space DEV --title "API Guide"
 
 # Create as child page
-uv run {base_dir}/scripts/upload_confluence.py document.md --space DEV --parent-id 123456
+uv run scripts/upload_confluence.py document.md --space DEV --parent-id 123456
 ```
 
 **Tips:**
@@ -437,17 +437,17 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --space DEV --parent-
 
 ```bash
 # Download page by ID
-uv run {base_dir}/scripts/download_confluence.py 123456789
+uv run scripts/download_confluence.py 123456789
 
 # Custom output directory
-uv run {base_dir}/scripts/download_confluence.py --output-dir ./docs 123456789
+uv run scripts/download_confluence.py --output-dir ./docs 123456789
 ```
 
 **Page hierarchy:**
 
 ```bash
 # Download page + all children
-uv run {base_dir}/scripts/download_confluence.py --download-children 123456789
+uv run scripts/download_confluence.py --download-children 123456789
 ```
 
 **Output:**
@@ -496,7 +496,7 @@ See [CQL Reference](skills/references/cql_reference.md) for complete syntax.
 **Markdown to Wiki:**
 
 ```bash
-uv run {base_dir}/scripts/convert_markdown_to_wiki.py input.md output.wiki
+uv run scripts/convert_markdown_to_wiki.py input.md output.wiki
 ```
 
 **Use cases:**
@@ -690,7 +690,7 @@ images), you need API Token credentials.
 
    ```bash
    # Test with a dry-run
-   uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID --dry-run
+   uv run scripts/upload_confluence.py document.md --id PAGE_ID --dry-run
    ```
 
 ---
@@ -902,7 +902,7 @@ cat .env
 **Fix:** Use upload script instead:
 
 ```bash
-uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
+uv run scripts/upload_confluence.py document.md --id PAGE_ID
 ```
 
 ### "Authentication failed" for scripts
@@ -942,7 +942,7 @@ uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
 3. Use `--dry-run` to preview before upload:
 
    ```bash
-   uv run {base_dir}/scripts/upload_confluence.py doc.md --id PAGE_ID --dry-run
+   uv run scripts/upload_confluence.py doc.md --id PAGE_ID --dry-run
    ```
 
 ### Mermaid/PlantUML diagrams not showing
@@ -959,7 +959,7 @@ mmdc -i diagram.mmd -o diagram.png -b transparent
 # ![Architecture](./diagram.png)
 
 # Then upload
-uv run {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
+uv run scripts/upload_confluence.py document.md --id PAGE_ID
 ```
 
 ## 📚 Reference Documentation

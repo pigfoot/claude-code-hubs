@@ -18,10 +18,10 @@ Version: 0.1.0 (Testing Phase)
 ```bash
 # Use REST API scripts instead:
 # For uploading documents:
-uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
+uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID
 
 # For structural modifications (adding table rows, etc.):
-uv run --managed-python {base_dir}/scripts/add_table_row.py PAGE_ID --table-heading "..." --after-row-containing "..." --cells "..." "..." "..."
+uv run --managed-python scripts/add_table_row.py PAGE_ID --table-heading "..." --after-row-containing "..." --cells "..." "..." "..."
 ```
 
 **DO NOT CREATE TEMPORARY ANALYSIS SCRIPTS** - Use existing `analyze_page.py` tool
@@ -32,8 +32,8 @@ uv run --managed-python {base_dir}/scripts/add_table_row.py PAGE_ID --table-head
 /tmp/show_all_blocks.py
 
 # DO use the existing tool:
-uv run --managed-python {base_dir}/scripts/analyze_page.py PAGE_ID
-uv run --managed-python {base_dir}/scripts/analyze_page.py PAGE_ID --type codeBlock
+uv run --managed-python scripts/analyze_page.py PAGE_ID
+uv run --managed-python scripts/analyze_page.py PAGE_ID --type codeBlock
 ```
 
 **Performance Reality**:
@@ -94,7 +94,7 @@ processing overhead**.
 2. **Resolve to page ID**:
 
    ```bash
-   uv run --managed-python {base_dir}/scripts/url_resolver.py "URL"
+   uv run --managed-python scripts/url_resolver.py "URL"
    ```
 
 3. **Read page content** (via MCP):
@@ -192,14 +192,14 @@ The script automatically detects user intent based on CLI arguments:
 **1. Update existing page** (explicit):
 
 ```bash
-uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
+uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID
 # Always updates PAGE_ID, ignores frontmatter
 ```
 
 **2. Create new page** (explicit):
 
 ```bash
-uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --space SPACE_KEY --parent-id PARENT_ID
+uv run --managed-python scripts/upload_confluence.py document.md --space SPACE_KEY --parent-id PARENT_ID
 # Always creates new page, even if frontmatter has id
 # Use this when cloning docs to another space or creating duplicate pages
 ```
@@ -207,7 +207,7 @@ uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --sp
 **3. Auto-detect from frontmatter** (no CLI args):
 
 ```bash
-uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md
+uv run --managed-python scripts/upload_confluence.py document.md
 # Uses frontmatter id (update) or space (create)
 # Best for downloaded files with frontmatter metadata
 ```
@@ -223,10 +223,10 @@ uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md
 
 ```bash
 # Preview before uploading (recommended)
-uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --dry-run
+uv run --managed-python scripts/upload_confluence.py document.md --id 780369923 --dry-run
 
 # Override title
-uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id 780369923 --title "New Title"
+uv run --managed-python scripts/upload_confluence.py document.md --id 780369923 --title "New Title"
 ```
 
 ### Structural Modifications (Fast Method) 🚀
@@ -237,14 +237,14 @@ uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id
 
 ```bash
 # Preview first (recommended)
-uv run --managed-python {base_dir}/scripts/add_table_row.py PAGE_ID \
+uv run --managed-python scripts/add_table_row.py PAGE_ID \
   --table-heading "Access Control Inventory" \
   --after-row-containing "GitHub" \
   --cells "Service" "Owner" "Access" \
   --dry-run
 
 # Actual update
-uv run --managed-python {base_dir}/scripts/add_table_row.py 2117534137 \
+uv run --managed-python scripts/add_table_row.py 2117534137 \
   --table-heading "Access Control Inventory" \
   --after-row-containing "GitHub" \
   --cells "Elasticsearch Cluster" "@Data Team" "Read-Only"
@@ -266,19 +266,19 @@ uv run --managed-python {base_dir}/scripts/add_table_row.py 2117534137 \
 
 ```bash
 # Single page
-uv run --managed-python {base_dir}/scripts/download_confluence.py 123456789
+uv run --managed-python scripts/download_confluence.py 123456789
 
 # With child pages
-uv run --managed-python {base_dir}/scripts/download_confluence.py --download-children 123456789
+uv run --managed-python scripts/download_confluence.py --download-children 123456789
 
 # Custom output directory
-uv run --managed-python {base_dir}/scripts/download_confluence.py --output-dir ./docs 123456789
+uv run --managed-python scripts/download_confluence.py --output-dir ./docs 123456789
 ```
 
 ### Convert Markdown to Wiki Markup
 
 ```bash
-uv run --managed-python {base_dir}/scripts/convert_markdown_to_wiki.py input.md output.wiki
+uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki
 ```
 
 ### Search Confluence (via MCP)
@@ -332,7 +332,7 @@ mcp__atlassian__confluence_update_page({
 3. **Upload** (script handles attachments):
 
    ```bash
-   uv run --managed-python {base_dir}/scripts/upload_confluence.py document.md --id PAGE_ID
+   uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID
    ```
 
 ### Common Mistakes

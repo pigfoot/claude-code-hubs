@@ -268,11 +268,11 @@ All image generation uses the same fixed Python script with JSON config:
 1. **Create Config:** Write JSON to system temp directory (NOT skill directory)
    - Use `Write` tool with path: `{temp_dir}/nano-banana-config-{timestamp}.json`
    - Get temp_dir from user's OS temp location (cross-platform)
-2. **Execute Script:** `uv run --managed-python {base_dir}/generate_images.py --config <temp_config_path>`
-   - `{base_dir}` is the skill base directory provided by Claude Code when loading the skill
-   - **CRITICAL:** Use absolute path to script WITHOUT changing directory (no `cd` command)
-   - **WRONG:** `cd {base_dir} && uv run --managed-python generate_images.py ...` ❌
-   - **CORRECT:** `uv run --managed-python {base_dir}/generate_images.py ...` ✅
+2. **Execute Script:** `uv run --managed-python scripts/generate_images.py --config <temp_config_path>`
+   - Script path is relative to skill directory
+   - **CRITICAL:** Use relative path to script WITHOUT changing directory (no `cd` command)
+   - **WRONG:** `cd scripts && uv run --managed-python generate_images.py ...` ❌
+   - **CORRECT:** `uv run --managed-python scripts/generate_images.py ...` ✅
    - This ensures execution cwd remains in user's project directory, so relative paths in config work correctly
 3. **Track Progress:** Monitor progress/results files (for background tasks)
 4. **Return Paths:** Report generated image locations
@@ -280,7 +280,7 @@ All image generation uses the same fixed Python script with JSON config:
 #### IMPORTANT
 
 - Always write config to system temp directory, NEVER to skill base directory
-- Always use `{base_dir}/generate_images.py` for the script path (cross-platform compatible)
+- Always use `scripts/generate_images.py` for the script path (relative to skill directory)
 
 #### Config Requirements
 
@@ -519,7 +519,7 @@ Assistant actions:
      "slides": [{"number": 1, "prompt": "Modern office interior with natural lighting"}],
      "output_dir": "./001-office-design/"
    }
-2. Execute: uv run --managed-python {base_dir}/generate_images.py --config {temp_config}
+2. Execute: uv run --managed-python scripts/generate_images.py --config {temp_config}
 3. Read results: ./001-office-design/generation-results.json
    → {"outputs": [{"slide": 1, "path": "slide-01.png", "seed": 392664860}]}
 4. Report to user: "Generated at ./001-office-design/slide-01.png (seed: 392664860)"
