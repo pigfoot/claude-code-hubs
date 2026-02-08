@@ -2,7 +2,22 @@
 
 Python scripting and Gemini/Imagen image generation using uv with inline script dependencies.
 
-## ✨ Recent Improvements (v0.0.9)
+## ✨ Recent Improvements (v0.1.0)
+
+- **Logo Update**: Upgraded to TrendLife 2026 logo design (`trendlife-2026-logo-light.png`)
+- **Smart Cover Pages**: TrendLife slide deck cover pages now use logo as reference image (Gemini API) for
+  professional branding, instead of simple corner overlay
+- **Layout Detection Fix**: Improved keyword matching with word boundary check to prevent false positives (e.g.,
+  "smart cover pages" no longer triggers "cover page" detection)
+- **Logo Space Optimization**: Removed excessive blank space reservation hints - logos now overlay content directly
+  for better space utilization
+- **Python Compatibility**: Added fallback support for Python 3.9+ (while maintaining 3.14+ as recommended version)
+- **Git LFS Error Detection**: Added automatic detection of Git LFS pointer files with clear installation
+  instructions (resolves most common user issues)
+- **Better Error Messages**: Added pre-flight environment checks with helpful hints for version mismatches and missing dependencies
+- **Improved Documentation**: Clarified Git LFS, uv, and Python version requirements in Prerequisites
+
+## Previous Improvements (v0.0.9)
 
 ### Reproducible Generation & Parameter Control
 
@@ -66,8 +81,17 @@ Python scripting and Gemini/Imagen image generation using uv with inline script 
 
 ## Prerequisites
 
-- [uv](https://docs.astral.sh/uv/) installed
-- `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) environment variable set with a valid Gemini API key
+- **[Git LFS](https://git-lfs.com/)** installed
+  - Logo files are managed by Git LFS
+  - Without Git LFS, you'll get pointer files instead of actual images, causing errors
+  - Install: `git lfs install` (run once per machine)
+  - After cloning without Git LFS: `git lfs pull` to fetch actual files
+- **[uv](https://docs.astral.sh/uv/)** version 0.4.0+ installed
+  - This skill uses `uv --managed-python` to automatically manage Python 3.14+
+  - First run will download Python if needed (requires internet connection)
+  - Optional: Pre-install with `uv python install 3.14` to avoid download during first execution
+  - Note: The script includes fallback support for Python 3.9+ if run directly without uv
+- **`GEMINI_API_KEY`** (or `GOOGLE_API_KEY`) environment variable set with a valid Gemini API key
 
 ## Quick Setup
 

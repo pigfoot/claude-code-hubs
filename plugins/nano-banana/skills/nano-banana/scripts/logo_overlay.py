@@ -56,7 +56,7 @@ LOGO_POSITIONS = {
     "content": {
         "position": "bottom-right",
         "size_ratio": 0.1534,  # Same size for all layouts (from template)
-        "padding": (17, 20),
+        "padding": (50, 25),  # Adjusted: 50px from right, 25px from bottom
         "opacity": 1.0,
     },
     "divider": {
@@ -248,24 +248,70 @@ def detect_layout_type(prompt: str, slide_number: Optional[int] = None) -> str:
     """
     prompt_lower = prompt.lower()
 
-    # Title slide detection
-    if any(word in prompt_lower for word in ["title slide", "cover slide", "opening"]):
+    # Only check the first part of prompt for layout keywords to avoid false positives
+    # from example text (e.g., "Example: 'title slide'" should not trigger title detection)
+    # Use first sentence or first 50 words, whichever is shorter
+    first_sentence_end = prompt_lower.find(". ")
+    if first_sentence_end != -1:
+        prompt_first_part = prompt_lower[: first_sentence_end + 1]
+    else:
+        # No sentence break found, use first 50 words
+        words = prompt_lower.split()
+        prompt_first_part = " ".join(words[:50])
+
+    # Title slide detection - explicit keywords (check first part only)
+    # Use word boundary check to avoid false positives (e.g., "cover pages" != "cover page")
+    title_keywords = ["title slide", "cover slide", "cover page", "opening slide"]
+    text_padded = f" {prompt_first_part} "
+    if any(f" {keyword} " in text_padded for keyword in title_keywords):
         return "title"
 
-    # End slide detection
+    # Title slide detection - typical title slide patterns
+    # Annual Report, Quarterly Review, etc. followed by year or brand name
+    title_patterns = [
+        "annual report",
+        "quarterly review",
+        "presentation",
+        "overview deck",
+    ]
+    if any(pattern in prompt_first_part for pattern in title_patterns):
+        # Check if it looks like a title (short, with year/brand, no detailed content)
+        words = prompt_lower.split()
+        if len(words) <= 15:  # Title slides are usually concise
+            return "title"
+
+    # End slide detection (check first part only to avoid example text like "thank you")
     if any(
-        word in prompt_lower
+        word in prompt_first_part
         for word in ["end slide", "closing", "thank you", "conclusion"]
     ):
         return "end"
 
-    # Divider slide detection
-    if any(word in prompt_lower for word in ["divider", "section break", "chapter"]):
+    # Divider slide detection (check first part only)
+    if any(
+        word in prompt_first_part for word in ["divider", "section break", "chapter"]
+    ):
         return "divider"
 
-    # First slide is usually title
+    # Content slide detection - explicit keywords
+    content_keywords = [
+        "content slide",
+        "about",
+        "trends",
+        "analysis",
+        "data",
+        "chart",
+        "graph",
+        "findings",
+    ]
+    if any(keyword in prompt_lower for keyword in content_keywords):
+        return "content"
+
+    # First slide heuristic (weakest signal, only use if no other clues)
     if slide_number == 1:
-        return "title"
+        # Only default to title if prompt is very short (likely a title)
+        if len(prompt.split()) <= 10:
+            return "title"
 
     # Default to content slide
     return "content"

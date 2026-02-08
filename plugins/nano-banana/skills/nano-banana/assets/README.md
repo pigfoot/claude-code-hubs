@@ -7,7 +7,7 @@ Brand assets for TrendLife and other branded slide generation.
 ```
 assets/
 ├── logos/                    # Brand logos (extracted and processed)
-│   ├── trendlife-logo.png    # TrendLife logo (166 KB)
+│   ├── trendlife-2026-logo-light.png  # TrendLife 2026 logo (Git LFS)
 │   └── README.md             # Logo usage guidelines
 ├── templates/                # Reference PowerPoint templates
 │   ├── 1201_TrendLife PowerPoint Deck.pptx  # TrendLife template (17 MB)
@@ -23,7 +23,7 @@ Processed brand logos ready for overlay on generated slides.
 
 **Current:**
 
-- `logos/trendlife-logo.png` - TrendLife product logo (icon + text)
+- `logos/trendlife-2026-logo-light.png` - TrendLife 2026 product logo (icon + text)
 
 **Future:**
 
@@ -62,7 +62,7 @@ from logo_overlay import overlay_logo
 
 overlay_logo(
     background_path=generated_slide_path,
-    logo_path=Path(__file__).parent / 'assets/logos/trendlife-logo.png',
+    logo_path=Path(__file__).parent / 'assets/logos/trendlife-2026-logo-light.png',
     output_path=final_output_path,
     layout_type='content'
 )

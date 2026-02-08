@@ -11,7 +11,7 @@ description: |
 allowed-tools: Bash Write Read AskUserQuestion
 metadata:
   short-description: Unified image generation workflow with Gemini/Imagen models
-  version: "0.0.9"
+  version: "0.1.0"
 
 # === GitHub Copilot ===
 
@@ -223,7 +223,7 @@ layout_type = detect_layout_type(prompt, slide_number=1)
 # Or override: layout_type = 'title'  # 'title', 'content', 'divider', 'end'
 
 # Logo path
-logo_path = Path(__file__).parent / 'assets/logos/trendlife-logo.png'
+logo_path = Path(__file__).parent / 'assets/logos/trendlife-2026-logo-light.png'
 
 # Apply logo overlay
 output_with_logo = output_path.with_stem(output_path.stem + '_with_logo')
@@ -302,8 +302,9 @@ All image generation uses the same fixed Python script with JSON config:
       "number": 1,
       "prompt": "...",
       "style": "trendlife",
-      "temperature": 0.8,  // Optional: 0.0-2.0 per-slide override
-      "seed": 42           // Optional: integer for reproducible generation
+      "layout": "featured",  // Optional: "featured" or "content" (auto-detect if omitted)
+      "temperature": 0.8,    // Optional: 0.0-2.0 per-slide override
+      "seed": 42             // Optional: integer for reproducible generation
     }
   ],
   "output_dir": "./001-feature-name/",  // MUST use NNN-short-name format
@@ -320,6 +321,51 @@ All image generation uses the same fixed Python script with JSON config:
   professional, data-viz). Same quality as PNG but 25-35% smaller file size.
 - **png**: Only use if webp compatibility is a concern (rare). Larger file size.
 - **jpg**: For photos only, not suitable for slides/diagrams (lossy compression).
+
+#### Layout Field (TrendLife Only)
+
+**Purpose:** Control logo integration strategy for TrendLife brand slides
+
+**Valid values:**
+
+- **`"featured"`** - For title slides, dividers, and closing slides
+  - Logo is used as **reference image** during AI generation (Gemini only)
+  - AI naturally integrates logo into the overall design
+  - Provides creative, professional branding
+  - **Note:** Imagen API doesn't support reference images, so logo is overlaid instead
+
+- **`"content"`** - For content/information slides
+  - Logo is **overlaid** in bottom-right corner (50px, 25px padding)
+  - Fixed positioning ensures logo doesn't interfere with content
+  - Consistent across all content slides
+
+- **Omitted or `null`** - Auto-detection (backwards compatibility)
+  - System attempts to detect layout from prompt keywords
+  - Less reliable than explicit specification
+
+**When to use each:**
+
+```json
+// Title/cover slides
+{"number": 1, "prompt": "Product Launch 2026", "style": "trendlife", "layout": "featured"}
+
+// Section dividers
+{"number": 3, "prompt": "Part 2: Technical Details", "style": "trendlife", "layout": "featured"}
+
+// Closing slides
+{"number": 6, "prompt": "Thank You", "style": "trendlife", "layout": "featured"}
+
+// Content slides (everything else)
+{"number": 2, "prompt": "Key features and benefits", "style": "trendlife", "layout": "content"}
+{"number": 4, "prompt": "Performance metrics", "style": "trendlife", "layout": "content"}
+```
+
+**IMPORTANT:** When generating JSON configs for TrendLife presentations:
+
+1. **Analyze each slide's purpose** (not just keywords)
+2. **Title/cover/divider/closing** → `"layout": "featured"`
+3. **Information/data/content** → `"layout": "content"`
+4. **Always specify `layout` explicitly** for TrendLife slides (don't rely on auto-detection)
 
 ### Temperature & Seed Parameters
 
@@ -566,22 +612,75 @@ Assistant actions:
 User: "Create 5 presentation slides with TrendLife style, use same seed"
 
 Assistant actions:
-1. Create config with global seed:
+1. Create config with global seed and appropriate layout for each slide:
    {
      "seed": 12345,
      "slides": [
-       {"number": 1, "prompt": "Title slide: AI Safety", "style": "trendlife"},
-       {"number": 2, "prompt": "Key features overview", "style": "trendlife"},
-       {"number": 3, "prompt": "Technical architecture", "style": "trendlife"},
-       {"number": 4, "prompt": "Use cases and benefits", "style": "trendlife"},
-       {"number": 5, "prompt": "Thank you slide", "style": "trendlife"}
+       {"number": 1, "prompt": "AI Safety: Building Secure Systems", "style": "trendlife", "layout": "featured"},  // Title
+       {"number": 2, "prompt": "Key features overview", "style": "trendlife", "layout": "content"},  // Content
+       {"number": 3, "prompt": "Technical architecture", "style": "trendlife", "layout": "content"},  // Content
+       {"number": 4, "prompt": "Use cases and benefits", "style": "trendlife", "layout": "content"},  // Content
+       {"number": 5, "prompt": "Thank You - Contact Us", "style": "trendlife", "layout": "featured"}  // Closing
      ],
      "output_dir": "./004-ai-safety-deck/"
    }
 2. Execute in background (5+ slides)
 3. Monitor progress file
-4. Results: 5 slides with TrendLife logo, all use seed 12345 + auto-incremented variation
+4. Results:
+   - Slide 1 (featured): Logo integrated naturally by AI into title design
+   - Slides 2-4 (content): Logo overlaid in bottom-right corner
+   - Slide 5 (featured): Logo integrated naturally by AI into closing design
+   - All slides use seed 12345 for visual consistency
 ```
+
+## Common Errors and Solutions
+
+If script execution fails, check these common issues:
+
+### 1. "Logo file is Git LFS pointer" or "cannot identify image file"
+
+**Most common issue**: User doesn't have Git LFS installed
+
+- Logo files are managed by Git LFS - without it, you get text pointer files instead of images
+- **Solution**:
+
+  ```bash
+  # Install Git LFS (once per machine)
+  git lfs install
+
+  # Pull actual files (in the plugin directory)
+  git lfs pull
+  ```
+
+- Git LFS install: <https://git-lfs.com/>
+- After installing, re-run the image generation command
+
+### 2. "command not found: uv"
+
+- User needs to install uv: <https://docs.astral.sh/uv/>
+- **Solution**: Ask user to run:
+
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
+### 3. "Python 3.14+ recommended" or "Python 3.9+ required"
+
+- First run with `--managed-python` downloads Python 3.14+ automatically
+- If download fails, user can pre-install: `uv python install 3.14`
+- Script supports Python 3.9+ as fallback but 3.14+ is recommended
+- **Check**: Internet connection and disk space
+
+### 4. Permission denied or download errors
+
+- Check write permissions in uv cache directory (usually `~/.local/share/uv/`)
+- **Verify**: Firewall/proxy settings allow uv to download Python
+
+### 5. Missing dependencies (google-genai, pillow)
+
+- Dependencies are automatically installed by `uv run` via PEP 723 metadata
+- If user bypasses uv and runs script directly with python, they'll see standard ImportError
+- **Solution**: Always use `uv run --managed-python scripts/generate_images.py`
 
 ## References
 

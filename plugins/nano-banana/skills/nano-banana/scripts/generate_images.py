@@ -54,7 +54,14 @@ import io
 import tempfile
 import time
 from pathlib import Path
-from datetime import datetime, UTC
+
+try:
+    from datetime import datetime, UTC
+except ImportError:
+    # Fallback for Python < 3.11
+    from datetime import datetime, timezone
+
+    UTC = timezone.utc
 from typing import Dict, List, Tuple, Optional
 
 from google import genai
@@ -314,6 +321,30 @@ def generate_slide_gemini(
         Tuple of (success, output_path, error_message, actual_seed, actual_temperature)
     """
     try:
+        # Detect if this is a featured slide for TrendLife style (for reference image)
+        # Priority: explicit layout field > auto-detection
+        layout_type = None
+        is_trendlife_featured = False
+        if slide.get("style") == "trendlife":
+            # Check explicit layout field first
+            explicit_layout = slide.get("layout")
+            if explicit_layout == "featured":
+                layout_type = (
+                    "title"  # Internal: still use "title" for backwards compat
+                )
+                is_trendlife_featured = True
+            elif explicit_layout == "content":
+                layout_type = "content"
+                is_trendlife_featured = False
+            else:
+                # Fallback to auto-detection (backwards compatibility)
+                from logo_overlay import detect_layout_type
+
+                layout_type = detect_layout_type(
+                    slide["prompt"], slide_number=slide["number"]
+                )
+                is_trendlife_featured = layout_type == "title"
+
         # Build prompt with style if specified
         prompt = slide["prompt"]
         if "style" in slide:
@@ -325,8 +356,12 @@ def generate_slide_gemini(
             elif style == "infographic":
                 prompt = f"Infographic style: {prompt}. Visual storytelling with icons and illustrations."
             elif style == "trendlife":
-                # TrendLife brand style with colors (logo added later via overlay)
-                prompt = f"{prompt}\n\nUse TrendLife brand colors for Trend Micro presentations:\n- IMPORTANT: Title text and all headings MUST be in Trend Red (#D71920)\n- Primary accents and highlights: Trend Red (#D71920)\n- Guardian Red (#6F0000) for supporting elements and depth\n- Neutral palette: Dark gray (#57585B), medium gray (#808285), light gray (#E7E6E6)\n- Black (#000000) for body text, white (#FFFFFF) for backgrounds\nKeep the design clean, professional, and suitable for corporate presentations.\nDO NOT include any logos or brand text - these will be added separately."
+                if is_trendlife_featured:
+                    # Title slide: logo will be included as reference image
+                    prompt = f"{prompt}\n\nThis is a title/cover slide for TrendLife (Trend Micro presentations).\nCreate a professional cover design that incorporates the TrendLife logo provided as reference image.\nUse TrendLife brand colors:\n- Trend Red (#D71920) for title and accents\n- Supporting colors: Guardian Red (#6F0000), Dark gray (#57585B), Medium gray (#808285), Light gray (#E7E6E6)\n- Black (#000000) for text, white (#FFFFFF) for backgrounds\nIMPORTANT: Use the exact logo from the reference image - DO NOT modify, redraw, or stylize the logo.\nPosition it prominently (typically center or upper area).\nKeep the design clean and professional."
+                else:
+                    # Content slide: logo will be overlaid later
+                    prompt = f"{prompt}\n\nUse TrendLife brand colors for Trend Micro presentations:\n- IMPORTANT: Title text and all headings MUST be in Trend Red (#D71920)\n- Primary accents and highlights: Trend Red (#D71920)\n- Guardian Red (#6F0000) for supporting elements and depth\n- Neutral palette: Dark gray (#57585B), medium gray (#808285), light gray (#E7E6E6)\n- Black (#000000) for body text, white (#FFFFFF) for backgrounds\nKeep the design clean, professional, and suitable for corporate presentations.\nDO NOT include any logos or brand text - these will be added separately."
 
         # Determine if lossless is needed (for slides/diagrams)
         use_lossless = output_format == "webp" and slide.get("style") in [
@@ -362,11 +397,55 @@ def generate_slide_gemini(
             "seed": seed,
         }
 
+        # Prepare contents array (with reference image for title slides)
+        if is_trendlife_featured:
+            # Load logo as reference image for title slides
+            logo_path = (
+                Path(__file__).parent.parent
+                / "assets/logos/trendlife-2026-logo-light.png"
+            )
+
+            try:
+                logo_image = PILImage.open(logo_path)
+            except Exception as e:
+                # Check if file is a Git LFS pointer (common issue)
+                try:
+                    with open(logo_path, "r", encoding="utf-8") as f:
+                        first_line = f.readline()
+                        if "version https://git-lfs.github.com" in first_line:
+                            print(
+                                "Error: Logo file is a Git LFS pointer, not the actual image.",
+                                file=sys.stderr,
+                            )
+                            print(
+                                "Please install Git LFS and run: git lfs pull",
+                                file=sys.stderr,
+                            )
+                            print(
+                                "Git LFS install: https://git-lfs.com/", file=sys.stderr
+                            )
+                            return (
+                                False,
+                                None,
+                                "Logo file is Git LFS pointer - run git lfs pull",
+                                None,
+                                None,
+                            )
+                except Exception:
+                    pass
+                # Re-raise original error if not LFS issue
+                print(f"Error: Failed to load logo image: {e}", file=sys.stderr)
+                return False, None, f"Failed to load logo: {e}", None, None
+
+            contents = [prompt, logo_image]
+        else:
+            contents = [prompt]
+
         # Generate image
         config = types.GenerateContentConfig(**config_kwargs)
 
         response = client.models.generate_content(
-            model=model, contents=[prompt], config=config
+            model=model, contents=contents, config=config
         )
 
         # Save image
@@ -395,38 +474,83 @@ def generate_slide_gemini(
         else:
             return False, None, f"Unsupported format: {output_format}", None, None
 
-        # TrendLife Logo Overlay (MANDATORY for trendlife style)
+        # TrendLife Logo Overlay (skip for featured slides as logo is already in generated image)
         if slide.get("style") == "trendlife":
             from logo_overlay import overlay_logo, detect_layout_type
 
-            # Detect layout type from prompt
-            layout_type = detect_layout_type(
-                slide["prompt"], slide_number=slide["number"]
-            )
+            # Check explicit layout field first, then fallback to auto-detection
+            explicit_layout = slide.get("layout")
+            should_overlay = True  # Default: apply overlay
 
-            # Logo path
-            logo_path = Path(__file__).parent / "assets/logos/trendlife-logo.png"
+            if explicit_layout == "featured":
+                # Featured slides (title/divider/end): skip overlay
+                should_overlay = False
+            elif explicit_layout == "content":
+                # Content slides: apply overlay
+                should_overlay = True
+            else:
+                # No explicit layout: fallback to auto-detection (backwards compatibility)
+                if layout_type is None:
+                    layout_type = detect_layout_type(
+                        slide["prompt"], slide_number=slide["number"]
+                    )
+                # Skip overlay for title slides (logo already included in generation)
+                should_overlay = layout_type != "title"
 
-            # Create temporary path for overlay
-            temp_output = output_path.with_stem(output_path.stem + "_with_logo")
-
-            try:
-                # Apply logo overlay
-                overlay_logo(
-                    background_path=output_path,
-                    logo_path=logo_path,
-                    output_path=temp_output,
-                    layout_type=layout_type,
+            if should_overlay:
+                # Logo path
+                logo_path = (
+                    Path(__file__).parent.parent
+                    / "assets/logos/trendlife-2026-logo-light.png"
                 )
 
-                # Replace original with logo version
-                temp_output.replace(output_path)
-            except Exception as e:
-                # Log warning but don't fail the slide generation
-                print(
-                    f"Warning: Logo overlay failed for slide {slide['number']}: {e}",
-                    file=sys.stderr,
-                )
+                # Create temporary path for overlay
+                temp_output = output_path.with_stem(output_path.stem + "_with_logo")
+
+                try:
+                    # Apply logo overlay
+                    overlay_logo(
+                        background_path=output_path,
+                        logo_path=logo_path,
+                        output_path=temp_output,
+                        layout_type=layout_type,
+                    )
+
+                    # Replace original with logo version
+                    temp_output.replace(output_path)
+                except Exception as e:
+                    # Check if error is due to Git LFS pointer
+                    try:
+                        with open(logo_path, "r", encoding="utf-8") as f:
+                            first_line = f.readline()
+                            if "version https://git-lfs.github.com" in first_line:
+                                print(
+                                    "Error: Logo file is a Git LFS pointer, not the actual image.",
+                                    file=sys.stderr,
+                                )
+                                print(
+                                    "Please install Git LFS and run: git lfs pull",
+                                    file=sys.stderr,
+                                )
+                                print(
+                                    "Git LFS install: https://git-lfs.com/",
+                                    file=sys.stderr,
+                                )
+                                return (
+                                    False,
+                                    None,
+                                    "Logo file is Git LFS pointer - run git lfs pull",
+                                    None,
+                                    None,
+                                )
+                    except Exception:
+                        pass
+
+                    # Log warning but don't fail the slide generation
+                    print(
+                        f"Warning: Logo overlay failed for slide {slide['number']}: {e}",
+                        file=sys.stderr,
+                    )
 
         return True, str(output_path), None, seed, temperature
 
@@ -456,6 +580,32 @@ def generate_slide_imagen(
         Tuple of (success, output_path, error_message)
     """
     try:
+        # Check if this is a TrendLife featured slide (Imagen doesn't support reference images)
+        if slide.get("style") == "trendlife":
+            explicit_layout = slide.get("layout")
+            is_featured = False
+
+            if explicit_layout == "featured":
+                is_featured = True
+            elif explicit_layout is None:
+                # Fallback to auto-detection (backwards compatibility)
+                from logo_overlay import detect_layout_type
+
+                layout_type = detect_layout_type(
+                    slide["prompt"], slide_number=slide["number"]
+                )
+                is_featured = layout_type == "title"
+
+            if is_featured:
+                print(
+                    "Warning: Imagen API does not support reference images for TrendLife featured slides.",
+                    file=sys.stderr,
+                )
+                print(
+                    "Featured slide will be generated without logo reference. Logo will be added via overlay.",
+                    file=sys.stderr,
+                )
+
         # Build prompt with style if specified
         prompt = slide["prompt"]
         if "style" in slide:
@@ -513,17 +663,27 @@ def generate_slide_imagen(
         else:
             return False, None, f"Unsupported format: {output_format}"
 
-        # TrendLife Logo Overlay (MANDATORY for trendlife style)
+        # TrendLife Logo Overlay (MANDATORY for trendlife style with Imagen)
         if slide.get("style") == "trendlife":
             from logo_overlay import overlay_logo, detect_layout_type
 
-            # Detect layout type from prompt
-            layout_type = detect_layout_type(
-                slide["prompt"], slide_number=slide["number"]
-            )
+            # Check explicit layout field first, then fallback to auto-detection
+            explicit_layout = slide.get("layout")
+            if explicit_layout == "featured":
+                layout_type = "title"  # Internal: map featured -> title for positioning
+            elif explicit_layout == "content":
+                layout_type = "content"
+            else:
+                # Fallback to auto-detection (backwards compatibility)
+                layout_type = detect_layout_type(
+                    slide["prompt"], slide_number=slide["number"]
+                )
 
             # Logo path
-            logo_path = Path(__file__).parent / "assets/logos/trendlife-logo.png"
+            logo_path = (
+                Path(__file__).parent.parent
+                / "assets/logos/trendlife-2026-logo-light.png"
+            )
 
             # Create temporary path for overlay
             temp_output = output_path.with_stem(output_path.stem + "_with_logo")
@@ -552,8 +712,36 @@ def generate_slide_imagen(
         return False, None, str(e)
 
 
+def check_environment():
+    """Check execution environment Python version."""
+    import sys
+
+    # Check Python version
+    if sys.version_info < (3, 9):
+        print(
+            f"Error: Python 3.9+ required for fallback support, but running {sys.version_info.major}.{sys.version_info.minor}",
+            file=sys.stderr,
+        )
+        print(
+            "Hint: This script should be run with 'uv run --managed-python' to automatically use Python 3.14+",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    elif sys.version_info < (3, 14):
+        print(
+            f"Warning: Python {sys.version_info.major}.{sys.version_info.minor} detected. Python 3.14+ is recommended.",
+            file=sys.stderr,
+        )
+        print(
+            "Hint: Use 'uv run --managed-python' for optimal compatibility",
+            file=sys.stderr,
+        )
+
+
 def main():
     """Main batch generation entry point."""
+    check_environment()
+
     # Parse arguments
     if len(sys.argv) != 3 or sys.argv[1] != "--config":
         print("Usage: uv run generate_batch.py --config <config_file>", file=sys.stderr)

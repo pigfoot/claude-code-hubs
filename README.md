@@ -286,7 +286,7 @@ Install plugins from [pigfoot/claude-code-hubs](https://github.com/pigfoot/claud
 
 ```bash
 # Add marketplace
-claude plugin marketplace add pigfoot/claude-code-hubs
+claude plugin marketplace add https://github.com/pigfoot/claude-code-hubs
 
 # Install plugins from pigfoot marketplace
 claude plugin install --scope user commit@pigfoot-marketplace
@@ -509,17 +509,21 @@ claude plugin install --scope user nano-banana@pigfoot-marketplace
 **What it does:**
 Generates and edits images using Google's Gemini or Imagen models with Python scripting powered by uv.
 
-**Recent Improvements (v0.0.8):**
+**Recent Improvements (v0.1.0):**
 
-- ✅ **uv compatibility enhancement** - PEP 723 inline metadata for library modules (logo_overlay.py)
-- ✅ **Fixed intermittent failures** - Logo overlay works when Claude creates temporary scripts
-- ✅ **Automatic dependency resolution** - uv correctly installs Pillow even when importing modules
+- ✅ **Logo update** - Upgraded to TrendLife 2026 logo design with transparent background
+- ✅ **Smart cover pages** - Logo as reference image (Gemini API) for professional branding
+- ✅ **Layout detection fix** - Word boundary check prevents false positives (e.g., "smart cover pages" ≠ "cover
+  page")
+- ✅ **Logo space optimization** - Removed excessive blank space; logos overlay content directly
+- ✅ **Python compatibility** - Fallback support for Python 3.9+ (3.14+ recommended)
+- ✅ **Git LFS error detection** - Automatic pointer file detection with installation instructions
+- ✅ **Better error messages** - Pre-flight environment checks with helpful hints
 
-**Previous Improvements (v0.0.7):**
+**Previous Improvements (v0.0.9):**
 
-- ✅ **Zero hallucination rate** - Fixed Python script approach eliminates AI code generation errors
-- ✅ **Unified workflow** - Same process for 1-100 images (no more dual paths)
-- ✅ **Cross-platform support** - Windows UTF-8 encoding fix, system temp directory handling
+- ✅ **Seed parameter** - Reproducible image generation with automatic seed tracking
+- ✅ **Temperature parameter** - Experimental control over generation randomness (0.0-2.0)
 
 **Benefits:**
 
@@ -780,7 +784,7 @@ Once configured, Claude will:
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
 | [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads | 0.1.0 |
-| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.0.9 |
+| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.1.0 |
 | [taiwan-calendar](./plugins/taiwan-calendar/) | Taiwan working day/holiday calendar queries | 0.0.1 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
@@ -826,7 +830,7 @@ claude plugin marketplace list
 
 # Try removing and re-adding marketplace
 claude plugin marketplace remove pigfoot-marketplace
-claude plugin marketplace add pigfoot/claude-code-hubs
+claude plugin marketplace add https://github.com/pigfoot/claude-code-hubs
 ```
 
 ### Tools Not Found

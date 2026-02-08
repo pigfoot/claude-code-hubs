@@ -48,12 +48,11 @@ DO NOT include any logos or brand text - these will be added separately.
 
 **Logo Asset:**
 
-- Path: `assets/logos/trendlife-logo.png`
-- Source: Extracted and cropped from TrendLife PowerPoint template (image3.png)
+- Path: `assets/logos/trendlife-2026-logo-light.png`
+- Source: TrendLife 2026 logo design
 - Format: PNG with transparency (RGBA)
-- Dimensions: 4768×1490 pixels (3.2:1 aspect ratio)
-- Size: Pre-cropped to match PowerPoint's display aspect ratio
-- Note: Original image3.png (12532×1490) was cropped to remove tagline
+- Dimensions: 2780×511 pixels (5.44:1 aspect ratio)
+- Usage: Used as reference image for AI generation (title slides) and overlay (content slides)
 
 **Logo Positioning (All Layouts):**
 
