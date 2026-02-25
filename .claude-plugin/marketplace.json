@@ -70,6 +70,16 @@
       }
     },
     {
+      "name": "taiwan-mrt-fareastern-empty-train",
+      "source": "./plugins/taiwan-mrt-fareastern-empty-train",
+      "description": "Find empty trains (空車) at 亞東醫院 MRT station on the Bannan line. Identifies trains originating at the station vs arriving from 海山, helping riders catch less crowded trains. Supports all day types with automatic holiday detection via taiwan-calendar plugin.",
+      "version": "0.0.1",
+      "author": {
+        "name": "pigfoot",
+        "email": "pigfoot@gmail.com"
+      }
+    },
+    {
       "name": "superpowers",
       "source": {
         "source": "url",

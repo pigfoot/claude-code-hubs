@@ -786,6 +786,7 @@ Once configured, Claude will:
 | [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads | 0.1.0 |
 | [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.1.0 |
 | [taiwan-calendar](./plugins/taiwan-calendar/) | Taiwan working day/holiday calendar queries | 0.0.1 |
+| [taiwan-mrt-fareastern-empty-train](./plugins/taiwan-mrt-fareastern-empty-train/) | Find empty trains (空車) at 亞東醫院 MRT station | 0.0.1 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
 
@@ -877,6 +878,8 @@ claude plugin install --scope user <plugin-name>@pigfoot-marketplace
 | [secure-container-build](./plugins/secure-container-build/) | pigfoot | Secure container images with Wolfi runtime | `secure-container-build:secure-container-build` |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | pigfoot | Multi-arch container builds in GitHub Actions | `github-actions-container-build:github-actions-container-build` |
 | [context7](https://github.com/upstash/context7) | official (@claude-plugins-official) | Library documentation via Context7 MCP | MCP server |
+| [taiwan-calendar](./plugins/taiwan-calendar/) | pigfoot | Taiwan working day/holiday calendar queries | `taiwan-calendar:taiwan-calendar` |
+| [taiwan-mrt-fareastern-empty-train](./plugins/taiwan-mrt-fareastern-empty-train/) | pigfoot | Find empty trains (空車) at 亞東醫院 MRT station | `taiwan-mrt-fareastern-empty-train:taiwan-mrt-fareastern-empty-train` |
 | [superpowers](https://github.com/obra/superpowers) | 3rd-party (obra) | Proven development workflows (TDD, debugging, review) | 17+ skills (brainstorming, TDD, systematic-debugging, etc.) |
 
 **Installation:**

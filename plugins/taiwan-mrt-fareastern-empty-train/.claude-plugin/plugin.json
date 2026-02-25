@@ -1,0 +1,12 @@
+{
+  "name": "taiwan-mrt-fareastern-empty-train",
+  "description": "Find empty trains (空車) at 亞東醫院 MRT station. Identifies trains that originate at the station vs those arriving from 海山, helping riders catch less crowded trains.",
+  "version": "0.0.1",
+  "author": {
+    "name": "pigfoot",
+    "email": "pigfoot@gmail.com"
+  },
+  "skills": [
+    "./skills/taiwan-mrt-fareastern-empty-train"
+  ]
+}
