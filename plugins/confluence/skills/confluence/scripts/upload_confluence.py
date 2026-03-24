@@ -50,9 +50,15 @@ from confluence_router import ConfluenceRouter, OperationType
 class ConfluenceStorageRenderer(mistune.HTMLRenderer):
     """Renderer that outputs Confluence Storage Format (XHTML)."""
 
-    def __init__(self):
+    # Reference width for proportional column calculations
+    COLWIDTH_BASE_PX = 1280
+
+    def __init__(self, table_layout="full-width", colwidths=None):
         super().__init__()
         self.attachments = []
+        self.table_layout = table_layout
+        self.colwidths = colwidths  # list of ratio values, e.g. [12, 10, 40, 38]
+        self._current_table_col_count = 0
 
     def image(self, alt, url, title=None):
         """Handle image references and track attachments."""
@@ -83,11 +89,36 @@ class ConfluenceStorageRenderer(mistune.HTMLRenderer):
 
     # Table support
     def table(self, text):
-        """Render table with proper HTML structure."""
-        return f"<table>\n{text}</table>\n"
+        """Render table with data-layout and optional colgroup."""
+        layout_attr = f' data-layout="{self.table_layout}"'
+        colgroup = self._build_colgroup()
+        self._current_table_col_count = 0  # reset for next table
+        return f"<table{layout_attr}>\n{colgroup}{text}</table>\n"
+
+    def _build_colgroup(self):
+        """Build <colgroup> from colwidths ratios if column count matches."""
+        if not self.colwidths:
+            return ""
+        if len(self.colwidths) != self._current_table_col_count:
+            if self._current_table_col_count > 0:
+                print(
+                    f"WARNING: colwidths has {len(self.colwidths)} values "
+                    f"but table has {self._current_table_col_count} columns, "
+                    f"skipping colgroup",
+                    file=sys.stderr,
+                )
+            return ""
+        total = sum(self.colwidths)
+        cols = "".join(
+            f'<col style="width: {r / total * self.COLWIDTH_BASE_PX:.1f}px;" />'
+            for r in self.colwidths
+        )
+        return f"<colgroup>{cols}</colgroup>\n"
 
     def table_head(self, text):
         """Render table header with proper tr wrapper."""
+        # Count columns from header cells
+        self._current_table_col_count = text.count("<th")
         return f"<thead><tr>\n{text}</tr>\n</thead>\n"
 
     def table_body(self, text):
@@ -172,7 +203,11 @@ def parse_markdown_file(file_path: Path) -> Tuple[Dict, str, Optional[str]]:
     return frontmatter, markdown_content, title
 
 
-def convert_markdown_to_storage(markdown_content: str) -> Tuple[str, List[str]]:
+def convert_markdown_to_storage(
+    markdown_content: str,
+    table_layout: str = "full-width",
+    colwidths: Optional[List[int]] = None,
+) -> Tuple[str, List[str]]:
     """
     Convert markdown to Confluence storage format using mistune 3.x.
 
@@ -182,7 +217,7 @@ def convert_markdown_to_storage(markdown_content: str) -> Tuple[str, List[str]]:
     Returns:
         Tuple of (storage_html, attachments_list)
     """
-    renderer = ConfluenceStorageRenderer()
+    renderer = ConfluenceStorageRenderer(table_layout=table_layout, colwidths=colwidths)
     # Enable table plugin
     parser = mistune.create_markdown(
         renderer=renderer, plugins=["table", "strikethrough", "url"]
@@ -201,6 +236,7 @@ def upload_to_confluence(
     space_key: Optional[str] = None,
     parent_id: Optional[str] = None,
     skip_existing_attachments: bool = True,
+    full_width: bool = True,
 ) -> Dict:
     """Upload page content and attachments to Confluence via REST API."""
 
@@ -214,6 +250,7 @@ def upload_to_confluence(
         print(f"   Current version: {current_version} → {new_version}")
         print(f"   Content length: {len(storage_html)} characters")
         print(f"   Attachments: {len(attachments)}")
+        print(f"   Page width: {'full' if full_width else 'narrow'}")
 
         result = confluence.update_page(
             page_id=page_id,
@@ -224,6 +261,7 @@ def upload_to_confluence(
             representation="storage",
             minor_edit=False,
             version_comment=f"Updated with images (v{current_version} → v{new_version})",
+            full_width=full_width,
         )
         print("✅ Page updated successfully")
 
@@ -235,6 +273,7 @@ def upload_to_confluence(
         print(f"📄 Creating new page in space {space_key}")
         print(f"   Content length: {len(storage_html)} characters")
         print(f"   Attachments: {len(attachments)}")
+        print(f"   Page width: {'full' if full_width else 'narrow'}")
 
         result = confluence.create_page(
             space=space_key,
@@ -243,6 +282,7 @@ def upload_to_confluence(
             parent_id=parent_id,
             type="page",
             representation="storage",
+            full_width=full_width,
         )
         page_id = result["id"]
         print(f"✅ Page created (ID: {page_id})")
@@ -388,6 +428,18 @@ IMPORTANT:
         action="store_true",
         help="Re-upload all attachments even if they exist",
     )
+    parser.add_argument(
+        "--width",
+        type=str,
+        choices=["full", "narrow"],
+        help="Page width layout (default: full, overrides frontmatter)",
+    )
+    parser.add_argument(
+        "--table-layout",
+        type=str,
+        choices=["full-width", "default"],
+        help="Table layout mode (default: full-width, overrides frontmatter)",
+    )
 
     args = parser.parse_args()
 
@@ -435,6 +487,27 @@ IMPORTANT:
 
     parent_id = args.parent_id or frontmatter.get("parent", {}).get("id")
 
+    # Page width: CLI > frontmatter > default (full)
+    confluence_conf = frontmatter.get("confluence", {})
+    if args.width:
+        full_width = args.width == "full"
+    elif confluence_conf.get("width"):
+        full_width = confluence_conf["width"] != "narrow"
+    else:
+        full_width = True
+
+    # Table layout: CLI > frontmatter > default (full-width)
+    table_conf = confluence_conf.get("table", {})
+    if args.table_layout:
+        table_layout = args.table_layout
+    elif table_conf.get("layout"):
+        table_layout = table_conf["layout"]
+    else:
+        table_layout = "full-width"
+
+    # Column widths from frontmatter only
+    colwidths = table_conf.get("colwidths")
+
     # Validate
     if not page_id and not space_key:
         print(
@@ -445,7 +518,9 @@ IMPORTANT:
     # Convert to storage format
     try:
         print("\n🔄 Converting to Confluence storage format...")
-        storage_content, attachments = convert_markdown_to_storage(markdown_content)
+        storage_content, attachments = convert_markdown_to_storage(
+            markdown_content, table_layout=table_layout, colwidths=colwidths
+        )
         print(f"   Storage HTML: {len(storage_content)} characters")
         print(f"   Images found: {len(attachments)}")
         for att in attachments:
@@ -482,6 +557,7 @@ IMPORTANT:
             space_key=space_key,
             parent_id=parent_id,
             skip_existing_attachments=not args.force_reupload,
+            full_width=full_width,
         )
 
         print("=" * 70)

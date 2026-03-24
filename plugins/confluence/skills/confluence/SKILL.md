@@ -71,8 +71,8 @@ processing overhead**.
 | | Add date | `add_date.py` | ~1s | Deadlines and timestamps |
 | | Add emoji | `add_emoji.py` | ~1s | Visual expressions |
 | | Add inline card | `add_inline_card.py` | ~1s | Rich URL preview card |
-| **Document Ops** | Upload large files (>10KB) | `upload_confluence.py` | ~5-10s | No size limits |
-| | Upload with images | `upload_confluence.py` | ~5-10s | Handles attachments |
+| **Document Ops** | Upload large files (>10KB) | `upload_confluence.py` | ~5-10s | No size limits, full-width default |
+| | Upload with images | `upload_confluence.py` | ~5-10s | Attachments + table formatting |
 | | Download to Markdown | `download_confluence.py` | ~5-10s | Converts macros |
 | **Reading** | Search/read pages | MCP tools | Fast | ✅ OK for reading |
 | **Small Changes** | Text-only (<10KB) | MCP create/update | Slow | ⚠️ Size limited |
@@ -228,7 +228,33 @@ uv run --managed-python scripts/upload_confluence.py document.md --id 780369923 
 
 # Override title
 uv run --managed-python scripts/upload_confluence.py document.md --id 780369923 --title "New Title"
+
+# Page width: full (default) or narrow
+uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID --width narrow
+
+# Table layout: full-width (default) or default
+uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID --table-layout default
 ```
+
+#### Frontmatter Formatting Options
+
+Control page width and table formatting via YAML frontmatter:
+
+```yaml
+---
+title: "My Page"
+confluence:
+  id: "123456"
+  width: full              # Page width: full (default) or narrow
+  table:
+    layout: full-width     # Table layout: full-width (default) or default
+    colwidths: [12, 10, 40, 38]  # Column width ratios (proportional)
+---
+```
+
+CLI flags (`--width`, `--table-layout`) override frontmatter values.
+Column widths are only applied to tables whose column count matches the
+`colwidths` array length; mismatched tables use auto-distribution.
 
 ### Structural Modifications (Fast Method) 🚀
 
@@ -389,7 +415,7 @@ for full list.
 | `scripts/add_nested_expand.py` | 📂 Add nested expand panel | `uv run --managed-python scripts/add_nested_expand.py PAGE_ID --parent-expand "Details" --title "More" --content "..."` |
 | `scripts/add_inline_card.py` | 🔗 Add inline card (URL preview) | `uv run --managed-python scripts/add_inline_card.py PAGE_ID --search-text "..." --url "https://..."` |
 | `scripts/upload_attachment.py` | 📎 Upload any file (auto: images inline, others as cards) | `uv run --managed-python scripts/upload_attachment.py PAGE_ID --file "./report.pdf" --at-end` |
-| `scripts/upload_confluence.py` | 📝 Upload Markdown (supports large files, images) | `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID` |
+| `scripts/upload_confluence.py` | 📝 Upload Markdown (large files, images, full-width, table colwidths) | `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID` |
 | `scripts/download_confluence.py` | 📥 Download as Markdown (with attachments) | `uv run --managed-python scripts/download_confluence.py PAGE_ID` |
 | `scripts/convert_markdown_to_wiki.py` | 🔄 Markdown ↔ Wiki Markup conversion | `uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki` |
 | `scripts/mcp_json_diff_roundtrip.py` | ✏️ Intelligent text editing (preserves macros) | Used by Method 6, see above |

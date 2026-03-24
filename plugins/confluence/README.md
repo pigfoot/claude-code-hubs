@@ -193,6 +193,13 @@ handling.
 - Mermaid and PlantUML diagram support (convert to PNG/SVG first)
 - Correct Media UUID (`fileId`) handling for ADF media nodes
 
+### 📐 Page Formatting Control
+
+- Default **full-width page layout** for all created/updated pages (override with `--width narrow`)
+- Tables render with `data-layout="full-width"` by default (override with `--table-layout default`)
+- **Column width ratios** via frontmatter `confluence.table.colwidths` for precise table proportions
+- All formatting options configurable via CLI flags or YAML frontmatter
+
 ### ⬆️⬇️ Bidirectional Sync
 
 - **Upload**: Markdown → Confluence with full formatting preservation
@@ -449,11 +456,38 @@ uv run scripts/upload_confluence.py document.md --space DEV --title "API Guide"
 uv run scripts/upload_confluence.py document.md --space DEV --parent-id 123456
 ```
 
+**Page width and table formatting:**
+
+```bash
+# Full-width page (default) - tables and content use full browser width
+uv run scripts/upload_confluence.py document.md --id 780369923
+
+# Narrow page layout
+uv run scripts/upload_confluence.py document.md --id 780369923 --width narrow
+
+# Default table layout (narrower tables)
+uv run scripts/upload_confluence.py document.md --id 780369923 --table-layout default
+```
+
+**Frontmatter for formatting control:**
+
+```yaml
+---
+confluence:
+  id: "780369923"
+  width: full                        # full (default) or narrow
+  table:
+    layout: full-width               # full-width (default) or default
+    colwidths: [12, 10, 40, 38]      # column width ratios
+---
+```
+
 **Tips:**
 
 - Images: Use Markdown syntax `![alt](path/to/image.png)` - script handles uploads automatically
 - Mermaid/PlantUML: Convert to PNG/SVG first, then reference as images
 - Frontmatter: Add YAML frontmatter for metadata (title, space, parent-id)
+- Column widths: Applied to tables matching the colwidths array length; others auto-distribute
 
 ---
 

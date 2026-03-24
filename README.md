@@ -15,7 +15,8 @@ marketplaces.
 - **[confluence](./plugins/confluence/)** - Professional Confluence document management with **intelligent roundtrip
   editing** (preserves macros while Claude edits content), **smart routing** (auto-selects between MCP and REST API
   for 25x faster writes), short URL resolution, search quality detection, markdown-first workflows, unlimited file
-  sizes, and any-file attachment upload with auto image/document detection
+  sizes, any-file attachment upload with auto image/document detection, and full-width page layout with table
+  column width control
 - **[nano-banana](./plugins/nano-banana/)** - AI image generation with Gemini models. Direct generation or interactive
   prompting with brand style support
 - **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime,
@@ -783,7 +784,7 @@ Once configured, Claude will:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
-| [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads and attachment support | 0.1.0 |
+| [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads, attachment support, and page formatting control | 0.1.0 |
 | [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.1.0 |
 | [taiwan-calendar](./plugins/taiwan-calendar/) | Taiwan working day/holiday calendar queries | 0.0.1 |
 | [taiwan-mrt-fareastern-empty-train](./plugins/taiwan-mrt-fareastern-empty-train/) | Find empty trains (空車) at 亞東醫院 MRT station | 0.0.1 |
@@ -873,7 +874,7 @@ claude plugin install --scope user <plugin-name>@pigfoot-marketplace
 | Plugin | Origin | Description | Skills Included |
 |--------|--------|-------------|-----------------|
 | [commit](./plugins/commit/) | pigfoot | Conventional commits with emoji and GPG signing | `commit:commit` |
-| [confluence](./plugins/confluence/) | pigfoot | Confluence document management with unlimited uploads and attachment support | `confluence:confluence` |
+| [confluence](./plugins/confluence/) | pigfoot | Confluence document management with unlimited uploads, attachment support, and page formatting control | `confluence:confluence` |
 | [nano-banana](./plugins/nano-banana/) | pigfoot | Python scripting and Gemini image generation with dual-mode operation | `nano-banana:nano-banana` |
 | [secure-container-build](./plugins/secure-container-build/) | pigfoot | Secure container images with Wolfi runtime | `secure-container-build:secure-container-build` |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | pigfoot | Multi-arch container builds in GitHub Actions | `github-actions-container-build:github-actions-container-build` |
