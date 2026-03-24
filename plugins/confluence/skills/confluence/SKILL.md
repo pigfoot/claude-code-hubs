@@ -64,6 +64,7 @@ processing overhead**.
 | | Add horizontal rule | `add_rule.py` | ~1s | Section divider |
 | | Add image | `add_media.py` | ~2-5s | Uploads and embeds image |
 | | Add image group | `add_media_group.py` | ~3-8s | Multiple images in row/grid |
+| | Upload attachment | `upload_attachment.py` | ~2-8s | Any file type, 3 display modes |
 | | Add nested expand | `add_nested_expand.py` | ~1s | Expand inside expand |
 | **Inline Elements** | Add status label | `add_status.py` | ~1s | TODO/DONE/IN PROGRESS |
 | | Add @mention | `add_mention.py` | ~1s | Notify users |
@@ -387,6 +388,7 @@ for full list.
 | `scripts/add_media_group.py` | 🖼️🖼️ Add image group (multiple images) | `uv run --managed-python scripts/add_media_group.py PAGE_ID --images "./img1.png" "./img2.png" [--after-heading "..."\|--at-end]` |
 | `scripts/add_nested_expand.py` | 📂 Add nested expand panel | `uv run --managed-python scripts/add_nested_expand.py PAGE_ID --parent-expand "Details" --title "More" --content "..."` |
 | `scripts/add_inline_card.py` | 🔗 Add inline card (URL preview) | `uv run --managed-python scripts/add_inline_card.py PAGE_ID --search-text "..." --url "https://..."` |
+| `scripts/upload_attachment.py` | 📎 Upload any file (auto: images inline, others as cards) | `uv run --managed-python scripts/upload_attachment.py PAGE_ID --file "./report.pdf" --at-end` |
 | `scripts/upload_confluence.py` | 📝 Upload Markdown (supports large files, images) | `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID` |
 | `scripts/download_confluence.py` | 📥 Download as Markdown (with attachments) | `uv run --managed-python scripts/download_confluence.py PAGE_ID` |
 | `scripts/convert_markdown_to_wiki.py` | 🔄 Markdown ↔ Wiki Markup conversion | `uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki` |

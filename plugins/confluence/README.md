@@ -7,7 +7,8 @@
 
 See [docs/plans/005-confluence-smart-routing/](../../docs/plans/005-confluence-smart-routing/) for:
 
-- **[design.md](../../docs/plans/005-confluence-smart-routing/design.md)** - Smart routing architecture (MCP ↔ REST API)
+- **[design.md](../../docs/plans/005-confluence-smart-routing/design.md)** -
+  Smart routing architecture (MCP ↔ REST API)
 - **[research.md](../../docs/plans/005-confluence-smart-routing/research.md)** - Performance testing & technical
   decisions
 
@@ -184,12 +185,13 @@ prefer Git-based workflows and want to maintain a single source of truth.
 Upload documents of any size without MCP's 10-20KB limitation. Uses Confluence REST API directly for reliable large file
 handling.
 
-### 🖼️ Complete Image Support
+### 📎 Attachment & Image Support
 
+- Upload any file type (images, PDF, Word, Excel, ZIP, etc.) as Confluence attachments
+- Display attachments inline as mediaSingle blocks or mediaGroup file cards
 - Automatic Markdown image conversion (`![alt](path)` → Confluence attachments)
 - Mermaid and PlantUML diagram support (convert to PNG/SVG first)
-- Batch attachment uploads with retry logic
-- Preserves image quality and metadata
+- Correct Media UUID (`fileId`) handling for ADF media nodes
 
 ### ⬆️⬇️ Bidirectional Sync
 
@@ -395,6 +397,30 @@ uv run scripts/rollback_confluence.py --restore 123456 2026-01-23T10-30-15
 - ✅ Macro structure never modified
 - ✅ Version history preserved
 - ✅ 10 backups kept per page (configurable)
+
+---
+
+### Upload Attachments (Any File Type)
+
+```bash
+# Auto mode (default) - images display inline, non-images as file cards
+uv run scripts/upload_attachment.py PAGE_ID --file ./screenshot.png --at-end
+uv run scripts/upload_attachment.py PAGE_ID --files ./photo.jpg ./report.pdf --at-end
+
+# Attach only (no page body modification)
+uv run scripts/upload_attachment.py PAGE_ID --file ./report.pdf --attach-only
+
+# Force specific display mode
+uv run scripts/upload_attachment.py PAGE_ID --file ./diagram.pdf --media-single --at-end
+uv run scripts/upload_attachment.py PAGE_ID --files ./a.png ./b.png --media-group --at-end
+
+# Dry run
+uv run scripts/upload_attachment.py PAGE_ID --file ./doc.pdf --at-end --dry-run
+```
+
+Auto mode detects file type: images (png/jpg/gif/svg/webp) → inline
+display, non-images (pdf/docx/pptx/zip/txt/...) → file cards. Override
+with `--media-single` or `--media-group`.
 
 ---
 

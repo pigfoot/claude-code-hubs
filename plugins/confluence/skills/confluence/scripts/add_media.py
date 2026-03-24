@@ -17,81 +17,38 @@ Usage:
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
-import requests
 
 # Import from confluence_adf_utils.py
 sys.path.insert(0, str(Path(__file__).parent))
 from confluence_adf_utils import (
     find_heading_index,
     get_auth,
+    upload_attachment_file,
 )
 
 
-def upload_attachment(base_url, auth, page_id, image_path):
+def add_media(adf, upload_result, width=None, after_heading=None):
     """
-    Upload image as attachment to Confluence page.
-
-    Args:
-        base_url: Confluence base URL
-        auth: Authentication tuple
-        page_id: Confluence page ID
-        image_path: Path to image file
-
-    Returns:
-        Attachment ID or None if failed
-    """
-    # Prepare upload
-    api_base = base_url.rstrip("/").replace("/wiki", "")
-    url = f"{api_base}/wiki/rest/api/content/{page_id}/child/attachment"
-
-    # Read file
-    with open(image_path, "rb") as f:
-        files = {"file": (Path(image_path).name, f, "image/png")}
-
-        # Upload
-        response = requests.post(
-            url, auth=auth, files=files, headers={"X-Atlassian-Token": "no-check"}
-        )
-
-    if response.ok:
-        result = response.json()
-        # Get attachment ID from results
-        if "results" in result and len(result["results"]) > 0:
-            attachment_id = result["results"][0]["id"]
-            print(
-                f"   Uploaded attachment: {Path(image_path).name} (ID: {attachment_id})"
-            )
-            return attachment_id
-
-    print(f"   ⚠️ Upload failed: {response.status_code} - {response.text}")
-    return None
-
-
-def add_media(adf, attachment_id, image_filename, width=None, after_heading=None):
-    """
-    Add mediaSingle (image) to page.
+    Add mediaSingle (image/file) to page.
 
     Args:
         adf: ADF document
-        attachment_id: Attachment ID from upload
-        image_filename: Image filename
+        upload_result: Dict from upload_attachment_file() with fileId, collectionName, filename
         width: Optional width in pixels
-        after_heading: Heading text to add image after (None = add at end)
+        after_heading: Heading text to add after (None = add at end)
 
     Returns:
         True if successful, False otherwise
     """
     content = adf.get("content", [])
 
-    # Create mediaSingle node
+    # Create mediaSingle node using correct fileId and collectionName
     media_attrs = {
-        "id": attachment_id,
+        "id": upload_result["fileId"],
         "type": "file",
-        "collection": "",
-        "localId": f"media-{os.urandom(4).hex()}",
+        "collection": upload_result["collectionName"],
     }
 
     if width:
@@ -99,7 +56,7 @@ def add_media(adf, attachment_id, image_filename, width=None, after_heading=None
 
     media_single_node = {
         "type": "mediaSingle",
-        "attrs": {"layout": "center", "localId": f"mediasingle-{os.urandom(4).hex()}"},
+        "attrs": {"layout": "center"},
         "content": [{"type": "media", "attrs": media_attrs}],
     }
 
@@ -112,11 +69,11 @@ def add_media(adf, attachment_id, image_filename, width=None, after_heading=None
 
         # Insert after heading
         content.insert(heading_idx + 1, media_single_node)
-        print(f"✅ Added image '{image_filename}' after heading '{after_heading}'")
+        print(f"✅ Added '{upload_result['filename']}' after heading '{after_heading}'")
     else:
         # Add at end
         content.append(media_single_node)
-        print(f"✅ Added image '{image_filename}' at end of page")
+        print(f"✅ Added '{upload_result['filename']}' at end of page")
 
     return True
 
@@ -182,19 +139,20 @@ def main():
         base_url, auth = get_auth()
 
         # Upload attachment
-        print(f"📤 Uploading image {Path(args.image_path).name}...")
-        attachment_id = upload_attachment(base_url, auth, args.page_id, args.image_path)
+        print(f"📤 Uploading {Path(args.image_path).name}...")
+        upload_result = upload_attachment_file(
+            base_url, auth, args.page_id, args.image_path
+        )
 
-        if not attachment_id:
-            print("❌ Failed to upload image", file=sys.stderr)
+        if not upload_result:
+            print("❌ Failed to upload file", file=sys.stderr)
             sys.exit(1)
 
         # Now modify page to add media reference
         def modify(adf):
             return add_media(
                 adf,
-                attachment_id,
-                Path(args.image_path).name,
+                upload_result,
                 args.width,
                 args.after_heading,
             )
@@ -205,7 +163,7 @@ def main():
             args.page_id,
             modify,
             dry_run=False,  # Already handled dry-run above
-            version_message=f"Added image '{Path(args.image_path).name}' via Python REST API",
+            version_message=f"Added '{Path(args.image_path).name}' via Python REST API",
         )
 
     except Exception as e:

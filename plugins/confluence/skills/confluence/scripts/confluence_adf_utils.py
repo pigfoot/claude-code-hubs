@@ -526,6 +526,146 @@ def save_modified_page(
     return result
 
 
+# ============================================================================
+# Attachment upload utilities
+# ============================================================================
+
+# Content-type detection map
+CONTENT_TYPE_MAP = {
+    # Images
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+    ".bmp": "image/bmp",
+    ".ico": "image/x-icon",
+    # Documents
+    ".pdf": "application/pdf",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".ppt": "application/vnd.ms-powerpoint",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    # Data / text
+    ".txt": "text/plain",
+    ".csv": "text/csv",
+    ".json": "application/json",
+    ".xml": "application/xml",
+    ".html": "text/html",
+    ".md": "text/markdown",
+    # Archives
+    ".zip": "application/zip",
+    ".gz": "application/gzip",
+    ".tar": "application/x-tar",
+    # Media
+    ".mp4": "video/mp4",
+    ".mp3": "audio/mpeg",
+}
+
+IMAGE_CONTENT_TYPES = {
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/svg+xml",
+    "image/webp",
+    "image/bmp",
+    "image/x-icon",
+}
+
+
+def detect_content_type(filename: str) -> str:
+    """Detect MIME content type from file extension."""
+    ext = os.path.splitext(filename)[1].lower()
+    return CONTENT_TYPE_MAP.get(ext, "application/octet-stream")
+
+
+def is_image_file(filename: str) -> bool:
+    """Check if a file is an image based on its extension."""
+    return detect_content_type(filename) in IMAGE_CONTENT_TYPES
+
+
+def upload_attachment_file(
+    base_url: str,
+    auth: Tuple[str, str],
+    page_id: str,
+    file_path: str,
+) -> Optional[Dict[str, str]]:
+    """
+    Upload a file as attachment to a Confluence page via v1 REST API.
+
+    Extracts fileId and collectionName from the response for correct ADF
+    media node construction. See docs/plans/007-confluence-attachment-upload/research.md.
+
+    Args:
+        base_url: Confluence base URL
+        auth: Authentication tuple (username, api_token)
+        page_id: Confluence page ID
+        file_path: Path to the file to upload
+
+    Returns:
+        Dict with keys: fileId, collectionName, attachmentId, filename, mediaType
+        or None if upload failed
+    """
+    from pathlib import Path
+
+    filename = Path(file_path).name
+    content_type = detect_content_type(filename)
+
+    api_base = base_url.rstrip("/").replace("/wiki", "")
+    url = f"{api_base}/wiki/rest/api/content/{page_id}/child/attachment"
+
+    with open(file_path, "rb") as f:
+        files = {"file": (filename, f, content_type)}
+        response = requests.post(
+            url, auth=auth, files=files, headers={"X-Atlassian-Token": "no-check"}
+        )
+
+    if not response.ok:
+        print(
+            f"   ⚠️ Upload failed: {response.status_code} - {response.text}",
+            file=sys.stderr,
+        )
+        return None
+
+    result = response.json()
+    if "results" not in result or len(result["results"]) == 0:
+        print("   ⚠️ Upload response missing results", file=sys.stderr)
+        return None
+
+    att = result["results"][0]
+    attachment_id = att["id"]
+    extensions = att.get("extensions", {})
+
+    # Extract fileId from v1 response extensions
+    file_id = extensions.get("fileId")
+    collection_name = extensions.get("collectionName", f"contentId-{page_id}")
+    media_type = extensions.get("mediaType", content_type)
+
+    # Fallback: query v2 API if fileId missing from v1 response
+    if not file_id:
+        print("   ⚠️ fileId missing from v1 response, falling back to v2 API...")
+        v2_url = f"{api_base}/wiki/api/v2/attachments/{attachment_id}"
+        v2_resp = requests.get(v2_url, auth=auth)
+        if v2_resp.ok:
+            file_id = v2_resp.json().get("fileId")
+        if not file_id:
+            print(f"   ❌ Could not obtain fileId for {filename}", file=sys.stderr)
+            return None
+
+    print(f"   ✅ Uploaded: {filename} (fileId: {file_id})")
+
+    return {
+        "fileId": file_id,
+        "collectionName": collection_name,
+        "attachmentId": attachment_id,
+        "filename": filename,
+        "mediaType": media_type,
+    }
+
+
 def execute_modification(
     page_id: str,
     modify_fn,

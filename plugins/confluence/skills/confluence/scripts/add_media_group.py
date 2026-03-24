@@ -17,66 +17,26 @@ Usage:
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
-import requests
 
 # Import from confluence_adf_utils.py
 sys.path.insert(0, str(Path(__file__).parent))
 from confluence_adf_utils import (
     find_heading_index,
     get_auth,
+    upload_attachment_file,
 )
 
 
-def upload_attachment(base_url, auth, page_id, image_path):
+def add_media_group(adf, upload_results, after_heading=None):
     """
-    Upload image as attachment to Confluence page.
-
-    Args:
-        base_url: Confluence base URL
-        auth: Authentication tuple
-        page_id: Confluence page ID
-        image_path: Path to image file
-
-    Returns:
-        Attachment ID or None if failed
-    """
-    # Prepare upload
-    api_base = base_url.rstrip("/").replace("/wiki", "")
-    url = f"{api_base}/wiki/rest/api/content/{page_id}/child/attachment"
-
-    # Read file
-    with open(image_path, "rb") as f:
-        files = {"file": (Path(image_path).name, f, "image/png")}
-
-        # Upload
-        response = requests.post(
-            url, auth=auth, files=files, headers={"X-Atlassian-Token": "no-check"}
-        )
-
-    if response.ok:
-        result = response.json()
-        # Get attachment ID from results
-        if "results" in result and len(result["results"]) > 0:
-            attachment_id = result["results"][0]["id"]
-            print(f"   Uploaded: {Path(image_path).name} (ID: {attachment_id})")
-            return attachment_id
-
-    print(f"   ⚠️ Upload failed: {response.status_code}")
-    return None
-
-
-def add_media_group(adf, attachment_ids, image_filenames, after_heading=None):
-    """
-    Add mediaGroup (multiple images) to page.
+    Add mediaGroup (multiple files/images) to page.
 
     Args:
         adf: ADF document
-        attachment_ids: List of attachment IDs
-        image_filenames: List of image filenames (for logging)
-        after_heading: Heading text to add images after (None = add at end)
+        upload_results: List of dicts from upload_attachment_file()
+        after_heading: Heading text to add after (None = add at end)
 
     Returns:
         True if successful, False otherwise
@@ -85,21 +45,19 @@ def add_media_group(adf, attachment_ids, image_filenames, after_heading=None):
 
     # Create mediaGroup node with multiple media children
     media_children = []
-    for att_id in attachment_ids:
+    for result in upload_results:
         media_node = {
             "type": "media",
             "attrs": {
-                "id": att_id,
+                "id": result["fileId"],
                 "type": "file",
-                "collection": "",
-                "localId": f"media-{os.urandom(4).hex()}",
+                "collection": result["collectionName"],
             },
         }
         media_children.append(media_node)
 
     media_group_node = {
         "type": "mediaGroup",
-        "attrs": {"localId": f"mediagroup-{os.urandom(4).hex()}"},
         "content": media_children,
     }
 
@@ -113,12 +71,12 @@ def add_media_group(adf, attachment_ids, image_filenames, after_heading=None):
         # Insert after heading
         content.insert(heading_idx + 1, media_group_node)
         print(
-            f"✅ Added image group ({len(attachment_ids)} images) after heading '{after_heading}'"
+            f"✅ Added media group ({len(upload_results)} files) after heading '{after_heading}'"
         )
     else:
         # Add at end
         content.append(media_group_node)
-        print(f"✅ Added image group ({len(attachment_ids)} images) at end of page")
+        print(f"✅ Added media group ({len(upload_results)} files) at end of page")
 
     return True
 
@@ -182,18 +140,18 @@ def main():
         base_url, auth = get_auth()
 
         # Upload all attachments
-        print(f"📤 Uploading {len(args.images)} images...")
-        attachment_ids = []
+        print(f"📤 Uploading {len(args.images)} files...")
+        upload_results = []
         for img_path in args.images:
-            att_id = upload_attachment(base_url, auth, args.page_id, img_path)
-            if not att_id:
+            result = upload_attachment_file(base_url, auth, args.page_id, img_path)
+            if not result:
                 print(f"❌ Failed to upload {img_path}", file=sys.stderr)
                 sys.exit(1)
-            attachment_ids.append(att_id)
+            upload_results.append(result)
 
         # Now modify page to add media group reference
         def modify(adf):
-            return add_media_group(adf, attachment_ids, image_names, args.after_heading)
+            return add_media_group(adf, upload_results, args.after_heading)
 
         from confluence_adf_utils import execute_modification
 
@@ -201,7 +159,7 @@ def main():
             args.page_id,
             modify,
             dry_run=False,
-            version_message=f"Added image group ({len(args.images)} images) via Python REST API",
+            version_message=f"Added media group ({len(args.images)} files) via Python REST API",
         )
 
     except Exception as e:
