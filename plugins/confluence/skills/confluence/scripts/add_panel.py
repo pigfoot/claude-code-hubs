@@ -54,17 +54,25 @@ def add_panel(adf, after_heading, panel_type, content_text):
         print(f"❌ Could not find heading: {after_heading}")
         return False
 
+    # Process \n escape sequences into actual newlines, then split into paragraphs
+    content_text = content_text.replace("\\n", "\n")
+    paragraphs = [p for p in content_text.split("\n") if p.strip()]
+
+    panel_content = []
+    for p in paragraphs:
+        panel_content.append(
+            {
+                "type": "paragraph",
+                "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
+                "content": [{"type": "text", "text": p}],
+            }
+        )
+
     # Create panel node
     panel = {
         "type": "panel",
         "attrs": {"panelType": panel_type, "localId": f"panel-{os.urandom(4).hex()}"},
-        "content": [
-            {
-                "type": "paragraph",
-                "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-                "content": [{"type": "text", "text": content_text}],
-            }
-        ],
+        "content": panel_content,
     }
 
     # Insert after heading

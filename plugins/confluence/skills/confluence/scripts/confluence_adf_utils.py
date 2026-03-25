@@ -15,6 +15,36 @@ Usage:
     from confluence_adf_utils import get_auth, get_page_adf, update_page_adf
 """
 
+__all__ = [
+    # Auth
+    "get_auth",
+    # Page CRUD
+    "get_page_adf",
+    "update_page_adf",
+    "create_page_adf",
+    # Page layout
+    "_set_page_width",
+    # High-level workflows (recommended)
+    "quick_update_page",
+    "load_page_for_modification",
+    "save_modified_page",
+    "execute_modification",
+    # Search helpers
+    "find_heading_index",
+    "find_node_recursive",
+    "find_table_recursive",
+    "find_list_recursive",
+    "find_table_after_heading",
+    "find_row_containing_text",
+    # Table operations
+    "create_table_row",
+    "insert_table_row",
+    # Attachment utilities
+    "upload_attachment_file",
+    "detect_content_type",
+    "is_image_file",
+]
+
 import json
 import os
 import sys
@@ -131,6 +161,80 @@ def update_page_adf(
     response.raise_for_status()
 
     return response.json()
+
+
+def create_page_adf(
+    base_url: str,
+    auth: Tuple[str, str],
+    space_id: str,
+    title: str,
+    body: Dict[str, Any],
+    parent_id: Optional[str] = None,
+    full_width: bool = True,
+) -> Dict[str, Any]:
+    """
+    Create a new page in ADF format via REST API v2.
+
+    Args:
+        base_url: Confluence base URL
+        auth: Tuple of (username, api_token)
+        space_id: Confluence space ID
+        title: Page title
+        body: Page content in ADF format (dict)
+        parent_id: Parent page ID (optional)
+        full_width: Set page to full-width layout (default: True)
+
+    Returns:
+        Created page object
+
+    Raises:
+        requests.HTTPError: If API request fails
+    """
+    api_base = base_url.rstrip("/").replace("/wiki", "")
+    url = f"{api_base}/wiki/api/v2/pages"
+
+    payload = {
+        "spaceId": space_id,
+        "status": "current",
+        "title": title,
+        "body": {"representation": "atlas_doc_format", "value": json.dumps(body)},
+    }
+    if parent_id:
+        payload["parentId"] = parent_id
+
+    response = requests.post(url, auth=auth, json=payload)
+
+    if not response.ok:
+        print(f"❌ API Error Response: {response.text}", file=sys.stderr)
+
+    response.raise_for_status()
+
+    result = response.json()
+
+    # Set page width via v1 content property API
+    # (v2 API does not support page width setting)
+    if full_width:
+        page_id = result.get("id", "")
+        _set_page_width(api_base, auth, page_id, "full-width")
+
+    return result
+
+
+def _set_page_width(
+    api_base: str, auth: Tuple[str, str], page_id: str, appearance: str
+) -> None:
+    """Set page width via v1 content-appearance property."""
+    for prop_key in [
+        "content-appearance-published",
+        "content-appearance-draft",
+    ]:
+        url = f"{api_base}/wiki/rest/api/content/{page_id}/property/{prop_key}"
+        payload = {"key": prop_key, "value": appearance}
+        r = requests.put(url, auth=auth, json=payload)
+        if r.status_code == 404:
+            # Property doesn't exist yet, create it
+            url = f"{api_base}/wiki/rest/api/content/{page_id}/property"
+            requests.post(url, auth=auth, json=payload)
 
 
 def find_heading_index(content: List[Dict], heading_text: str) -> Optional[int]:

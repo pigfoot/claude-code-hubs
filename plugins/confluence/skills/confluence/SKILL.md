@@ -73,7 +73,7 @@ processing overhead**.
 | | Add inline card | `add_inline_card.py` | ~1s | Rich URL preview card |
 | **Document Ops** | Upload large files (>10KB) | `upload_confluence.py` | ~5-10s | No size limits, full-width default |
 | | Upload with images | `upload_confluence.py` | ~5-10s | Attachments + table formatting |
-| | Download to Markdown | `download_confluence.py` | ~5-10s | Converts macros |
+| | Download to Markdown | `download_confluence.py` | ~5-10s | v2 ADF preserves all elements |
 | **Reading** | Search/read pages | MCP tools | Fast | ✅ OK for reading |
 | **Small Changes** | Text-only (<10KB) | MCP create/update | Slow | ⚠️ Size limited |
 | **CI/CD** | Git-to-Confluence sync | `mark` CLI | Fast | Best for automation |
@@ -291,8 +291,12 @@ uv run --managed-python scripts/add_table_row.py 2117534137 \
 
 ### Download Confluence to Markdown
 
+Downloads use **v2 ADF format** by default, preserving all Confluence-specific elements
+(expand panels, emoji, mentions, inline cards, panels, status, date)
+using custom markers in the markdown output.
+
 ```bash
-# Single page
+# Single page (v2 ADF, preserves all elements)
 uv run --managed-python scripts/download_confluence.py 123456789
 
 # With child pages
@@ -300,7 +304,22 @@ uv run --managed-python scripts/download_confluence.py --download-children 12345
 
 # Custom output directory
 uv run --managed-python scripts/download_confluence.py --output-dir ./docs 123456789
+
+# Legacy mode (v1 Storage format, old behavior)
+uv run --managed-python scripts/download_confluence.py --legacy 123456789
 ```
+
+**Custom markers in downloaded markdown** (round-trippable):
+
+- `<!-- EXPAND: "title" --> ... <!-- /EXPAND -->` — expand panels
+- `<!-- PANEL: type --> ... <!-- /PANEL -->` — info/note/warning panels
+- `:shortname:` — emoji (e.g., `:ms_teams:`)
+- `<!-- MENTION: id "name" -->` — @mentions
+- `<!-- CARD: url -->` — inline cards
+- `<!-- STATUS: "text" color -->` — status labels
+- `<!-- DATE: timestamp -->` — dates
+
+Upload detects these markers automatically and uses the v2 ADF API to restore all elements.
 
 ### Convert Markdown to Wiki Markup
 
@@ -415,8 +434,10 @@ for full list.
 | `scripts/add_nested_expand.py` | 📂 Add nested expand panel | `uv run --managed-python scripts/add_nested_expand.py PAGE_ID --parent-expand "Details" --title "More" --content "..."` |
 | `scripts/add_inline_card.py` | 🔗 Add inline card (URL preview) | `uv run --managed-python scripts/add_inline_card.py PAGE_ID --search-text "..." --url "https://..."` |
 | `scripts/upload_attachment.py` | 📎 Upload any file (auto: images inline, others as cards) | `uv run --managed-python scripts/upload_attachment.py PAGE_ID --file "./report.pdf" --at-end` |
-| `scripts/upload_confluence.py` | 📝 Upload Markdown (large files, images, full-width, table colwidths) | `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID` |
-| `scripts/download_confluence.py` | 📥 Download as Markdown (with attachments) | `uv run --managed-python scripts/download_confluence.py PAGE_ID` |
+| `scripts/adf_to_markdown.py` | 🔄 ADF→Markdown converter (preserves expand, emoji, mention, card, panel) | Import by download_confluence.py |
+| `scripts/markdown_to_adf.py` | 🔄 Markdown→ADF converter (restores markers to ADF nodes) | Import by upload_confluence.py |
+| `scripts/upload_confluence.py` | 📝 Upload Markdown (auto-detects ADF markers, falls back to Storage) | `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID` |
+| `scripts/download_confluence.py` | 📥 Download as Markdown (v2 ADF, preserves all elements) | `uv run --managed-python scripts/download_confluence.py PAGE_ID` |
 | `scripts/convert_markdown_to_wiki.py` | 🔄 Markdown ↔ Wiki Markup conversion | `uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki` |
 | `scripts/mcp_json_diff_roundtrip.py` | ✏️ Intelligent text editing (preserves macros) | Used by Method 6, see above |
 

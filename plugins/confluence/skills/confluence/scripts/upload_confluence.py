@@ -45,6 +45,13 @@ from atlassian import Confluence
 # Import router for API selection transparency
 sys.path.insert(0, str(Path(__file__).parent))
 from confluence_router import ConfluenceRouter, OperationType
+from confluence_adf_utils import (
+    get_page_adf,
+    update_page_adf,
+    create_page_adf,
+    _set_page_width,
+)
+from markdown_to_adf import markdown_to_adf, has_custom_markers
 
 
 class ConfluenceStorageRenderer(mistune.HTMLRenderer):
@@ -350,6 +357,111 @@ def _upload_attachments(
             print(f"❌ Error: {e}")
 
 
+def upload_to_confluence_adf(
+    page_id: Optional[str],
+    title: str,
+    adf_body: dict,
+    attachments: List[str],
+    space_key: Optional[str] = None,
+    parent_id: Optional[str] = None,
+    skip_existing_attachments: bool = True,
+    confluence: Optional[Confluence] = None,
+    full_width: bool = True,
+) -> Dict:
+    """Upload page content via v2 API using ADF format.
+
+    Supports both update (page_id) and create (space_key) modes.
+    """
+    base_url = os.getenv("CONFLUENCE_URL", "")
+    auth = (os.getenv("CONFLUENCE_USER", ""), os.getenv("CONFLUENCE_API_TOKEN", ""))
+
+    if page_id:
+        # UPDATE MODE via v2 API
+        page_info = get_page_adf(base_url, auth, page_id)
+        current_version = page_info.get("version", {}).get("number", 1)
+        current_title = page_info.get("title", title)
+        use_title = title or current_title
+
+        print(f"📄 Updating page {page_id} via v2 API (ADF)")
+        print(f"   Current version: {current_version} → {current_version + 1}")
+
+        result = update_page_adf(
+            base_url,
+            auth,
+            page_id,
+            use_title,
+            adf_body,
+            current_version,
+            version_message="Updated via upload_confluence.py (ADF)",
+        )
+
+        # Set page width (v2 API doesn't support this directly)
+        api_base = base_url.rstrip("/").replace("/wiki", "")
+        appearance = "full-width" if full_width else "fixed-width"
+        _set_page_width(api_base, auth, page_id, appearance)
+
+        page_links = result.get("_links", {})
+        base = page_links.get("base", base_url)
+        web_url = page_links.get("webui", "")
+        full_url = (
+            f"{base}{web_url}"
+            if web_url and not web_url.startswith("http")
+            else web_url
+        )
+
+        print("✅ Page updated successfully")
+
+    else:
+        # CREATE MODE via v2 API
+        if not space_key:
+            raise ValueError("space_key is required to create new page")
+
+        # Resolve space key to space ID (v2 API requires spaceId)
+        if confluence:
+            try:
+                space_info = confluence.get_space(space_key)
+                space_id = str(space_info.get("id", ""))
+            except Exception:
+                space_id = space_key  # Fallback: try using key as ID
+        else:
+            space_id = space_key
+
+        print(f"📄 Creating new page in space {space_key} via v2 API (ADF)")
+
+        result = create_page_adf(
+            base_url,
+            auth,
+            space_id,
+            title,
+            adf_body,
+            parent_id=parent_id,
+        )
+
+        page_id = result.get("id", "")
+        page_links = result.get("_links", {})
+        base = page_links.get("base", base_url)
+        web_url = page_links.get("webui", "")
+        full_url = (
+            f"{base}{web_url}"
+            if web_url and not web_url.startswith("http")
+            else web_url
+        )
+
+        print(f"✅ Page created (ID: {page_id})")
+
+    # Upload attachments via v1 API (v2 attachment API is the same)
+    if attachments and confluence:
+        print(f"\n📎 Uploading {len(attachments)} attachments...")
+        _upload_attachments(confluence, page_id, attachments, skip_existing_attachments)
+
+    return {
+        "id": result.get("id", page_id),
+        "title": result.get("title", title),
+        "version": result.get("version", {}).get("number", "unknown"),
+        "url": full_url,
+    }
+
+
 def dry_run_preview(
     title: str,
     content: str,
@@ -440,6 +552,11 @@ IMPORTANT:
         choices=["full-width", "default"],
         help="Table layout mode (default: full-width, overrides frontmatter)",
     )
+    parser.add_argument(
+        "--legacy",
+        action="store_true",
+        help="Force v1 Storage format upload (ignore ADF markers)",
+    )
 
     args = parser.parse_args()
 
@@ -515,64 +632,149 @@ IMPORTANT:
         )
         sys.exit(1)
 
-    # Convert to storage format
-    try:
-        print("\n🔄 Converting to Confluence storage format...")
-        storage_content, attachments = convert_markdown_to_storage(
-            markdown_content, table_layout=table_layout, colwidths=colwidths
-        )
-        print(f"   Storage HTML: {len(storage_content)} characters")
-        print(f"   Images found: {len(attachments)}")
-        for att in attachments:
-            print(f"      - {att}")
-    except Exception as e:
-        print(f"ERROR: Conversion failed: {e}", file=sys.stderr)
-        sys.exit(1)
+    # Determine upload path: ADF (v2) or Storage (v1)
+    # Auto-detect unless --legacy forces Storage format
+    use_adf = not args.legacy and has_custom_markers(markdown_content)
+    # Also check frontmatter for format hint
+    if not args.legacy and frontmatter.get("confluence", {}).get("format") == "adf":
+        use_adf = True
 
-    # Dry-run mode
-    if args.dry_run:
-        dry_run_preview(
-            title, storage_content, space_key, page_id, parent_id, attachments
-        )
-        return
+    if use_adf:
+        # ── ADF path (v2 API) ─────────────────────────────────────
+        try:
+            print("\n🔄 Converting to ADF format (v2 API)...")
+            adf_body = markdown_to_adf(markdown_content)
+            adf_content = adf_body.get("content", [])
+            print(f"   ADF nodes: {len(adf_content)}")
+            # Track image references for attachment upload
+            import json as _json
 
-    # Get Confluence client
-    try:
-        confluence = get_confluence_client(env_file=args.env_file)
-    except Exception as e:
-        print(f"ERROR: {e}", file=sys.stderr)
-        sys.exit(1)
+            adf_str = _json.dumps(adf_body)
+            attachments = re.findall(r'"__fileName":\s*"([^"]+)"', adf_str)
+            if attachments:
+                print(f"   Images found: {len(attachments)}")
+                for att in attachments:
+                    print(f"      - {att}")
+        except Exception as e:
+            print(f"ERROR: ADF conversion failed: {e}", file=sys.stderr)
+            sys.exit(1)
 
-    # Upload
-    print("\n📤 Uploading to Confluence...")
-    print("=" * 70)
+        # Dry-run mode
+        if args.dry_run:
+            import json as _json
 
-    try:
-        result = upload_to_confluence(
-            confluence=confluence,
-            page_id=page_id,
-            title=title,
-            storage_html=storage_content,
-            attachments=attachments,
-            space_key=space_key,
-            parent_id=parent_id,
-            skip_existing_attachments=not args.force_reupload,
-            full_width=full_width,
-        )
+            dry_run_preview(
+                title,
+                _json.dumps(adf_body, indent=2)[:2000],
+                space_key,
+                page_id,
+                parent_id,
+                attachments,
+            )
+            return
 
+        # Get Confluence client (for attachments and space resolution)
+        try:
+            confluence = get_confluence_client(env_file=args.env_file)
+        except Exception as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            sys.exit(1)
+
+        # Upload via v2 API
+        print("\n📤 Uploading to Confluence (ADF v2)...")
         print("=" * 70)
-        print("✅ UPLOAD COMPLETE!")
-        print(f"   Title: {result['title']}")
-        print(f"   ID: {result['id']}")
-        print(f"   Version: {result['version']}")
-        print(f"   URL: {result['url']}")
+
+        try:
+            result = upload_to_confluence_adf(
+                page_id=page_id,
+                title=title,
+                adf_body=adf_body,
+                attachments=attachments,
+                space_key=space_key,
+                parent_id=parent_id,
+                skip_existing_attachments=not args.force_reupload,
+                confluence=confluence,
+                full_width=full_width,
+            )
+
+            print("=" * 70)
+            print("✅ UPLOAD COMPLETE! (ADF v2)")
+            print(f"   Title: {result['title']}")
+            print(f"   ID: {result['id']}")
+            print(f"   Version: {result['version']}")
+            print(f"   URL: {result['url']}")
+            print("=" * 70)
+
+        except Exception as e:
+            print("=" * 70)
+            print(f"❌ ERROR: {e}", file=sys.stderr)
+            print("=" * 70)
+            sys.exit(1)
+
+    else:
+        # ── Storage path (v1 API, legacy/fallback) ────────────────
+        try:
+            format_label = (
+                "Storage format (v1 legacy)"
+                if args.legacy
+                else "Storage format (no markers detected)"
+            )
+            print(f"\n🔄 Converting to Confluence {format_label}...")
+            storage_content, attachments = convert_markdown_to_storage(
+                markdown_content, table_layout=table_layout, colwidths=colwidths
+            )
+            print(f"   Storage HTML: {len(storage_content)} characters")
+            print(f"   Images found: {len(attachments)}")
+            for att in attachments:
+                print(f"      - {att}")
+        except Exception as e:
+            print(f"ERROR: Conversion failed: {e}", file=sys.stderr)
+            sys.exit(1)
+
+        # Dry-run mode
+        if args.dry_run:
+            dry_run_preview(
+                title, storage_content, space_key, page_id, parent_id, attachments
+            )
+            return
+
+        # Get Confluence client
+        try:
+            confluence = get_confluence_client(env_file=args.env_file)
+        except Exception as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            sys.exit(1)
+
+        # Upload via v1 API
+        print("\n📤 Uploading to Confluence (Storage v1)...")
         print("=" * 70)
 
-    except Exception as e:
-        print("=" * 70)
-        print(f"❌ ERROR: {e}", file=sys.stderr)
-        print("=" * 70)
-        sys.exit(1)
+        try:
+            result = upload_to_confluence(
+                confluence=confluence,
+                page_id=page_id,
+                title=title,
+                storage_html=storage_content,
+                attachments=attachments,
+                space_key=space_key,
+                parent_id=parent_id,
+                skip_existing_attachments=not args.force_reupload,
+                full_width=full_width,
+            )
+
+            print("=" * 70)
+            print("✅ UPLOAD COMPLETE!")
+            print(f"   Title: {result['title']}")
+            print(f"   ID: {result['id']}")
+            print(f"   Version: {result['version']}")
+            print(f"   URL: {result['url']}")
+            print("=" * 70)
+
+        except Exception as e:
+            print("=" * 70)
+            print(f"❌ ERROR: {e}", file=sys.stderr)
+            print("=" * 70)
+            sys.exit(1)
 
 
 if __name__ == "__main__":

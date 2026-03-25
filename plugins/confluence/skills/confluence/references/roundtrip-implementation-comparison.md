@@ -14,6 +14,7 @@ In-depth comparison of implementation methods for Confluence bidirectional editi
 | **Method 4: Direct XML/JSON Edit** | Python + lxml/json | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Fully preserved** | ⚠️ No Claude intelligent editing |
 | **Method 5: Hybrid Strategy** | Auto-detection + Method 1/4 | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⚠️ Smart preservation | ✅ Auto-selection |
 | **Method 6: MCP + JSON Diff** | MCP + ADF + JSON Diff + Interactive | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Preserved + Optional Body Edit** | ⭐ **Recommended** |
+| **Method 7: ADF-Native Roundtrip** | v2 API + ADF + Custom Markers | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Full preservation + Editable** | ✅ Implemented |
 
 ⚠️ **Important: Methods 1-3 all lose Confluence macros** because they go through Markdown conversion. Method 4
 preserves macros but cannot use Claude. **Method 6 is the recommended approach** - it preserves macros while allowing
@@ -2208,6 +2209,111 @@ See: [Macro Preservation Guide](./macro-preservation-guide.md)
 3. Poor performance (subprocess overhead)
 4. Difficult debugging
 5. No clear advantage (still loses macros)
+
+---
+
+## Method 7: ADF-Native Roundtrip (Implemented)
+
+> **Status**: Implemented and tested.
+> Files: `adf_to_markdown.py`, `markdown_to_adf.py`
+> Integrated into `download_confluence.py` (default) and `upload_confluence.py` (auto-detect).
+> Use `--legacy` flag on either script to fall back to v1 Storage format.
+
+### Overview
+
+Method 7 replaces the current v1 API Storage format roundtrip with a v2 API ADF-native approach.
+It uses custom markdown syntax (HTML comment markers) to preserve Confluence-specific elements
+during the download → edit → upload cycle.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Confluence Page                                            │
+│  (ADF: Atlassian Document Format JSON)                     │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+                   │ REST API v2: GET /wiki/api/v2/pages/{id}
+                   │ ?body-format=atlas_doc_format
+                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│  ADF JSON (all node types visible)                          │
+│  expand, emoji, mention, inlineCard, panel, ...             │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+                   │ adf_to_markdown.py (custom ADF walker)
+                   │ Preserves special elements as markers:
+                   │   <!-- EXPAND: "title" --> ... <!-- /EXPAND -->
+                   │   :emoji_shortname:
+                   │   <!-- MENTION: id "name" -->
+                   │   <!-- CARD: url -->
+                   │   <!-- PANEL: type --> ... <!-- /PANEL -->
+                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Markdown with markers                                      │
+│  Standard markdown + HTML comment markers for               │
+│  Confluence-specific elements                               │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+                   │ User / Claude edits markdown
+                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Edited Markdown with markers                               │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+                   │ markdown_to_adf.py (mistune + marker parser)
+                   │ Converts markers back to ADF nodes
+                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│  ADF JSON (all elements restored)                           │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+                   │ REST API v2: PUT /wiki/api/v2/pages/{id}
+                   │ body-format=atlas_doc_format
+                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Confluence Page (Updated, all structures preserved)        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Why v2 API?
+
+The v1 API returns Storage format (XML/HTML), which:
+
+- Does **not** contain `inlineCard` nodes (they only exist in ADF)
+- Wraps new ADF panels in `ac:adf-extension` (unrecognized by current handlers)
+- Uses `ac:emoticon` for emojis (not handled by markdownify)
+- Uses `ac:link > ri:user` for mentions (not handled by markdownify)
+
+The v2 API returns ADF JSON, where all elements are clean typed nodes.
+
+### Comparison with existing methods
+
+| Aspect | Method 1 (current) | Method 6 (JSON Diff) | Method 7 (ADF-native) |
+|--------|-------------------|---------------------|----------------------|
+| **API** | v1 (Storage) | v2 (ADF) via MCP | v2 (ADF) via REST |
+| **Format** | XML/HTML → Markdown | ADF → text extraction | ADF → Markdown with markers |
+| **Expand** | ❌ Lost | ✅ Preserved (not editable) | ✅ Preserved + editable |
+| **Emoji** | ❌ Lost | ✅ Preserved (not editable) | ✅ Preserved + editable |
+| **Mention** | ❌ Lost | ✅ Preserved (not editable) | ✅ Preserved + editable |
+| **InlineCard** | ❌ Lost (not in v1) | ✅ Preserved (not editable) | ✅ Preserved + editable |
+| **Panel** | ⚠️ Partial (old only) | ✅ Preserved | ✅ Preserved + editable |
+| **Use case** | Upload new docs | In-place text editing | Full document roundtrip |
+
+### Pros
+
+✅ All Confluence elements preserved via markers
+✅ Markers are human-readable and editable
+✅ Uses v2 API end-to-end (ADF is the native format)
+✅ Pure Python, no dual-language dependencies
+✅ Compatible with Claude editing (markers are plain text)
+✅ Complements Method 6 (different use case)
+
+### Cons
+
+❌ Custom markdown dialect (non-standard markers)
+❌ Markers could be accidentally broken during editing
+❌ Need to maintain ADF ↔ Markdown mapping for each node type
 
 ---
 
