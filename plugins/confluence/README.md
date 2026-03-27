@@ -202,8 +202,9 @@ handling.
 
 ### ⬆️⬇️ Bidirectional Sync
 
-- **Upload**: Markdown → Confluence with full formatting preservation
-- **Download**: Confluence → Markdown with attachments and frontmatter
+- **New page upload**: Markdown → ADF (via mistune) → Confluence v2 REST API
+- **Roundtrip editing**: Confluence v2 ADF → Method 6 (JSON diff/patch) → Confluence v2 ADF
+- **Download (display)**: Confluence v2 ADF → readable Markdown for viewing
 - Git integration via mark CLI for automated CI/CD publishing
 
 ### 🔍 Advanced Search (CQL)
@@ -322,13 +323,16 @@ uv run scripts/download_confluence.py --download-children 456789
 
 ✅ Preserves page structure
 ✅ Includes attachments
-✅ Converts to clean Markdown
+✅ Renders as readable Markdown for viewing and backup
 
 ## 🔧 Core Workflows
 
 ### Intelligent Roundtrip Editing (Method 6)
 
-**Edit existing pages with Claude while preserving macros:**
+**Edit existing pages with Claude while preserving macros.** Method 6 operates
+**directly on ADF JSON** — fetching ADF from the v2 REST API, computing a JSON
+diff/patch, and writing ADF back. Any Markdown shown to Claude is display-only
+(for readability), not a conversion step.
 
 ```python
 # Natural language editing - Claude understands your intent
@@ -431,7 +435,11 @@ with `--media-single` or `--media-group`.
 
 ---
 
-### Upload Markdown to Confluence (Markdown-First)
+### Upload Markdown to Confluence (New Page / Full Replacement)
+
+Converts Markdown to ADF via `markdown_to_adf.py` (mistune) and uploads via v2 REST API.
+Use this for **creating new pages** or **fully replacing** page content. For editing
+existing pages while preserving macros, use **Method 6** instead.
 
 **Update existing page:**
 
@@ -491,7 +499,10 @@ confluence:
 
 ---
 
-### Download Confluence to Markdown
+### Download Confluence to Markdown (Display Utility)
+
+Downloads pages via v2 ADF API and converts to readable Markdown for **viewing purposes**.
+For roundtrip editing of existing pages, use Method 6 (JSON diff) instead.
 
 **Single page:**
 
@@ -512,9 +523,9 @@ uv run scripts/download_confluence.py --download-children 123456789
 
 **Output:**
 
-- Markdown file with frontmatter (page ID, title, space)
+- Readable Markdown file with frontmatter (page ID, title, space)
 - Attachments in `{PageTitle}_attachments/` directory
-- Macros converted to Markdown equivalents
+- ADF elements rendered as readable Markdown with custom markers
 
 ---
 
@@ -1050,8 +1061,9 @@ Contributions welcome! Please see the main [repository](https://github.com/pigfo
 
 If you're developing skills or contributing to this plugin, see **[DEVELOPMENT.md](DEVELOPMENT.md)** for:
 
-- Technical decisions and architecture
-- Markdown conversion engine details (mistune 3.x vs md2cf)
+- Architecture decision: ADF v2 + Method 6 (JSON diff)
+- Markdown conversion engine details (mistune 3.x for new page upload)
+- Component role clarifications (upload vs download vs roundtrip)
 - Output compatibility analysis
 - Testing and validation procedures
 

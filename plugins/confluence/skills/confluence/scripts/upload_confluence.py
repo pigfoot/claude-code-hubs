@@ -38,7 +38,6 @@ from pathlib import Path
 from typing import Dict, Optional, List, Tuple
 
 import yaml
-import mistune
 from dotenv import load_dotenv
 from atlassian import Confluence
 
@@ -51,96 +50,7 @@ from confluence_adf_utils import (
     create_page_adf,
     _set_page_width,
 )
-from markdown_to_adf import markdown_to_adf, has_custom_markers
-
-
-class ConfluenceStorageRenderer(mistune.HTMLRenderer):
-    """Renderer that outputs Confluence Storage Format (XHTML)."""
-
-    # Reference width for proportional column calculations
-    COLWIDTH_BASE_PX = 1280
-
-    def __init__(self, table_layout="full-width", colwidths=None):
-        super().__init__()
-        self.attachments = []
-        self.table_layout = table_layout
-        self.colwidths = colwidths  # list of ratio values, e.g. [12, 10, 40, 38]
-        self._current_table_col_count = 0
-
-    def image(self, alt, url, title=None):
-        """Handle image references and track attachments."""
-        # Build alt attribute if present
-        alt_attr = f' ac:alt="{alt}"' if alt else ""
-
-        # Track local images as attachments
-        if not url.startswith(("http://", "https://", "data:")):
-            self.attachments.append(url)
-            # Use just the filename for Confluence attachment reference
-            filename = os.path.basename(url)
-            return f'<ac:image{alt_attr}><ri:attachment ri:filename="{filename}" /></ac:image>'
-
-        # External URLs
-        return f'<ac:image{alt_attr}><ri:url ri:value="{url}" /></ac:image>'
-
-    def block_code(self, code, info=None):
-        """Render code blocks as Confluence code macros."""
-        # Strip trailing newline that mistune adds
-        code = code.rstrip("\n")
-        if info:
-            return f'<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">{info}</ac:parameter><ac:parameter ac:name="linenumbers">true</ac:parameter><ac:plain-text-body><![CDATA[{code}]]></ac:plain-text-body></ac:structured-macro>\n'
-        return f'<ac:structured-macro ac:name="code"><ac:parameter ac:name="linenumbers">true</ac:parameter><ac:plain-text-body><![CDATA[{code}]]></ac:plain-text-body></ac:structured-macro>\n'
-
-    def block_quote(self, text):
-        """Render blockquotes as HTML blockquote tags (quote macro causes errors)."""
-        return f"<blockquote>{text}</blockquote>\n"
-
-    # Table support
-    def table(self, text):
-        """Render table with data-layout and optional colgroup."""
-        layout_attr = f' data-layout="{self.table_layout}"'
-        colgroup = self._build_colgroup()
-        self._current_table_col_count = 0  # reset for next table
-        return f"<table{layout_attr}>\n{colgroup}{text}</table>\n"
-
-    def _build_colgroup(self):
-        """Build <colgroup> from colwidths ratios if column count matches."""
-        if not self.colwidths:
-            return ""
-        if len(self.colwidths) != self._current_table_col_count:
-            if self._current_table_col_count > 0:
-                print(
-                    f"WARNING: colwidths has {len(self.colwidths)} values "
-                    f"but table has {self._current_table_col_count} columns, "
-                    f"skipping colgroup",
-                    file=sys.stderr,
-                )
-            return ""
-        total = sum(self.colwidths)
-        cols = "".join(
-            f'<col style="width: {r / total * self.COLWIDTH_BASE_PX:.1f}px;" />'
-            for r in self.colwidths
-        )
-        return f"<colgroup>{cols}</colgroup>\n"
-
-    def table_head(self, text):
-        """Render table header with proper tr wrapper."""
-        # Count columns from header cells
-        self._current_table_col_count = text.count("<th")
-        return f"<thead><tr>\n{text}</tr>\n</thead>\n"
-
-    def table_body(self, text):
-        """Render table body."""
-        return f"<tbody>\n{text}</tbody>\n"
-
-    def table_row(self, text):
-        """Render table row."""
-        return f"<tr>\n{text}</tr>\n"
-
-    def table_cell(self, text, align=None, head=False):
-        """Render table cell."""
-        tag = "th" if head else "td"
-        align_attr = f' align="{align}"' if align else ""
-        return f"<{tag}{align_attr}>{text}</{tag}>\n"
+from markdown_to_adf import markdown_to_adf
 
 
 def get_confluence_client(env_file: Optional[str] = None) -> Confluence:
@@ -208,103 +118,6 @@ def parse_markdown_file(file_path: Path) -> Tuple[Dict, str, Optional[str]]:
         title = file_path.stem.replace("_", " ")
 
     return frontmatter, markdown_content, title
-
-
-def convert_markdown_to_storage(
-    markdown_content: str,
-    table_layout: str = "full-width",
-    colwidths: Optional[List[int]] = None,
-) -> Tuple[str, List[str]]:
-    """
-    Convert markdown to Confluence storage format using mistune 3.x.
-
-    For Mermaid/PlantUML diagrams: Convert them to PNG/SVG files BEFORE
-    calling this function, then use markdown image syntax: ![alt](path/to/image.png)
-
-    Returns:
-        Tuple of (storage_html, attachments_list)
-    """
-    renderer = ConfluenceStorageRenderer(table_layout=table_layout, colwidths=colwidths)
-    # Enable table plugin
-    parser = mistune.create_markdown(
-        renderer=renderer, plugins=["table", "strikethrough", "url"]
-    )
-    storage_html = parser(markdown_content)
-    attachments = renderer.attachments
-    return storage_html, attachments
-
-
-def upload_to_confluence(
-    confluence: Confluence,
-    page_id: Optional[str],
-    title: str,
-    storage_html: str,
-    attachments: List[str],
-    space_key: Optional[str] = None,
-    parent_id: Optional[str] = None,
-    skip_existing_attachments: bool = True,
-    full_width: bool = True,
-) -> Dict:
-    """Upload page content and attachments to Confluence via REST API."""
-
-    if page_id:
-        # UPDATE MODE
-        page_info = confluence.get_page_by_id(page_id, expand="version")
-        current_version = page_info["version"]["number"]
-        new_version = current_version + 1
-
-        print(f"📄 Updating page {page_id}")
-        print(f"   Current version: {current_version} → {new_version}")
-        print(f"   Content length: {len(storage_html)} characters")
-        print(f"   Attachments: {len(attachments)}")
-        print(f"   Page width: {'full' if full_width else 'narrow'}")
-
-        result = confluence.update_page(
-            page_id=page_id,
-            title=title,
-            body=storage_html,
-            parent_id=parent_id,
-            type="page",
-            representation="storage",
-            minor_edit=False,
-            version_comment=f"Updated with images (v{current_version} → v{new_version})",
-            full_width=full_width,
-        )
-        print("✅ Page updated successfully")
-
-    else:
-        # CREATE MODE
-        if not space_key:
-            raise ValueError("space_key is required to create new page")
-
-        print(f"📄 Creating new page in space {space_key}")
-        print(f"   Content length: {len(storage_html)} characters")
-        print(f"   Attachments: {len(attachments)}")
-        print(f"   Page width: {'full' if full_width else 'narrow'}")
-
-        result = confluence.create_page(
-            space=space_key,
-            title=title,
-            body=storage_html,
-            parent_id=parent_id,
-            type="page",
-            representation="storage",
-            full_width=full_width,
-        )
-        page_id = result["id"]
-        print(f"✅ Page created (ID: {page_id})")
-
-    # Upload attachments
-    if attachments:
-        print(f"\n📎 Uploading {len(attachments)} attachments...")
-        _upload_attachments(confluence, page_id, attachments, skip_existing_attachments)
-
-    return {
-        "id": result["id"],
-        "title": result["title"],
-        "version": result.get("version", {}).get("number", "unknown"),
-        "url": confluence.url + result["_links"]["webui"],
-    }
 
 
 def _upload_attachments(
@@ -546,18 +359,6 @@ IMPORTANT:
         choices=["full", "narrow"],
         help="Page width layout (default: full, overrides frontmatter)",
     )
-    parser.add_argument(
-        "--table-layout",
-        type=str,
-        choices=["full-width", "default"],
-        help="Table layout mode (default: full-width, overrides frontmatter)",
-    )
-    parser.add_argument(
-        "--legacy",
-        action="store_true",
-        help="Force v1 Storage format upload (ignore ADF markers)",
-    )
-
     args = parser.parse_args()
 
     # Display routing decision for transparency
@@ -613,18 +414,6 @@ IMPORTANT:
     else:
         full_width = True
 
-    # Table layout: CLI > frontmatter > default (full-width)
-    table_conf = confluence_conf.get("table", {})
-    if args.table_layout:
-        table_layout = args.table_layout
-    elif table_conf.get("layout"):
-        table_layout = table_conf["layout"]
-    else:
-        table_layout = "full-width"
-
-    # Column widths from frontmatter only
-    colwidths = table_conf.get("colwidths")
-
     # Validate
     if not page_id and not space_key:
         print(
@@ -632,149 +421,76 @@ IMPORTANT:
         )
         sys.exit(1)
 
-    # Determine upload path: ADF (v2) or Storage (v1)
-    # Auto-detect unless --legacy forces Storage format
-    use_adf = not args.legacy and has_custom_markers(markdown_content)
-    # Also check frontmatter for format hint
-    if not args.legacy and frontmatter.get("confluence", {}).get("format") == "adf":
-        use_adf = True
+    # Convert Markdown to ADF
+    try:
+        print("\n🔄 Converting to ADF format (v2 API)...")
+        adf_body = markdown_to_adf(markdown_content)
+        adf_content = adf_body.get("content", [])
+        print(f"   ADF nodes: {len(adf_content)}")
+        # Track image references for attachment upload
+        import json as _json
 
-    if use_adf:
-        # ── ADF path (v2 API) ─────────────────────────────────────
-        try:
-            print("\n🔄 Converting to ADF format (v2 API)...")
-            adf_body = markdown_to_adf(markdown_content)
-            adf_content = adf_body.get("content", [])
-            print(f"   ADF nodes: {len(adf_content)}")
-            # Track image references for attachment upload
-            import json as _json
-
-            adf_str = _json.dumps(adf_body)
-            attachments = re.findall(r'"__fileName":\s*"([^"]+)"', adf_str)
-            if attachments:
-                print(f"   Images found: {len(attachments)}")
-                for att in attachments:
-                    print(f"      - {att}")
-        except Exception as e:
-            print(f"ERROR: ADF conversion failed: {e}", file=sys.stderr)
-            sys.exit(1)
-
-        # Dry-run mode
-        if args.dry_run:
-            import json as _json
-
-            dry_run_preview(
-                title,
-                _json.dumps(adf_body, indent=2)[:2000],
-                space_key,
-                page_id,
-                parent_id,
-                attachments,
-            )
-            return
-
-        # Get Confluence client (for attachments and space resolution)
-        try:
-            confluence = get_confluence_client(env_file=args.env_file)
-        except Exception as e:
-            print(f"ERROR: {e}", file=sys.stderr)
-            sys.exit(1)
-
-        # Upload via v2 API
-        print("\n📤 Uploading to Confluence (ADF v2)...")
-        print("=" * 70)
-
-        try:
-            result = upload_to_confluence_adf(
-                page_id=page_id,
-                title=title,
-                adf_body=adf_body,
-                attachments=attachments,
-                space_key=space_key,
-                parent_id=parent_id,
-                skip_existing_attachments=not args.force_reupload,
-                confluence=confluence,
-                full_width=full_width,
-            )
-
-            print("=" * 70)
-            print("✅ UPLOAD COMPLETE! (ADF v2)")
-            print(f"   Title: {result['title']}")
-            print(f"   ID: {result['id']}")
-            print(f"   Version: {result['version']}")
-            print(f"   URL: {result['url']}")
-            print("=" * 70)
-
-        except Exception as e:
-            print("=" * 70)
-            print(f"❌ ERROR: {e}", file=sys.stderr)
-            print("=" * 70)
-            sys.exit(1)
-
-    else:
-        # ── Storage path (v1 API, legacy/fallback) ────────────────
-        try:
-            format_label = (
-                "Storage format (v1 legacy)"
-                if args.legacy
-                else "Storage format (no markers detected)"
-            )
-            print(f"\n🔄 Converting to Confluence {format_label}...")
-            storage_content, attachments = convert_markdown_to_storage(
-                markdown_content, table_layout=table_layout, colwidths=colwidths
-            )
-            print(f"   Storage HTML: {len(storage_content)} characters")
+        adf_str = _json.dumps(adf_body)
+        attachments = re.findall(r'"__fileName":\s*"([^"]+)"', adf_str)
+        if attachments:
             print(f"   Images found: {len(attachments)}")
             for att in attachments:
                 print(f"      - {att}")
-        except Exception as e:
-            print(f"ERROR: Conversion failed: {e}", file=sys.stderr)
-            sys.exit(1)
+    except Exception as e:
+        print(f"ERROR: ADF conversion failed: {e}", file=sys.stderr)
+        sys.exit(1)
 
-        # Dry-run mode
-        if args.dry_run:
-            dry_run_preview(
-                title, storage_content, space_key, page_id, parent_id, attachments
-            )
-            return
+    # Dry-run mode
+    if args.dry_run:
+        import json as _json
 
-        # Get Confluence client
-        try:
-            confluence = get_confluence_client(env_file=args.env_file)
-        except Exception as e:
-            print(f"ERROR: {e}", file=sys.stderr)
-            sys.exit(1)
+        dry_run_preview(
+            title,
+            _json.dumps(adf_body, indent=2)[:2000],
+            space_key,
+            page_id,
+            parent_id,
+            attachments,
+        )
+        return
 
-        # Upload via v1 API
-        print("\n📤 Uploading to Confluence (Storage v1)...")
+    # Get Confluence client (for attachments and space resolution)
+    try:
+        confluence = get_confluence_client(env_file=args.env_file)
+    except Exception as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Upload via v2 API
+    print("\n📤 Uploading to Confluence (ADF v2)...")
+    print("=" * 70)
+
+    try:
+        result = upload_to_confluence_adf(
+            page_id=page_id,
+            title=title,
+            adf_body=adf_body,
+            attachments=attachments,
+            space_key=space_key,
+            parent_id=parent_id,
+            skip_existing_attachments=not args.force_reupload,
+            confluence=confluence,
+            full_width=full_width,
+        )
+
+        print("=" * 70)
+        print("✅ UPLOAD COMPLETE! (ADF v2)")
+        print(f"   Title: {result['title']}")
+        print(f"   ID: {result['id']}")
+        print(f"   Version: {result['version']}")
+        print(f"   URL: {result['url']}")
         print("=" * 70)
 
-        try:
-            result = upload_to_confluence(
-                confluence=confluence,
-                page_id=page_id,
-                title=title,
-                storage_html=storage_content,
-                attachments=attachments,
-                space_key=space_key,
-                parent_id=parent_id,
-                skip_existing_attachments=not args.force_reupload,
-                full_width=full_width,
-            )
-
-            print("=" * 70)
-            print("✅ UPLOAD COMPLETE!")
-            print(f"   Title: {result['title']}")
-            print(f"   ID: {result['id']}")
-            print(f"   Version: {result['version']}")
-            print(f"   URL: {result['url']}")
-            print("=" * 70)
-
-        except Exception as e:
-            print("=" * 70)
-            print(f"❌ ERROR: {e}", file=sys.stderr)
-            print("=" * 70)
-            sys.exit(1)
+    except Exception as e:
+        print("=" * 70)
+        print(f"❌ ERROR: {e}", file=sys.stderr)
+        print("=" * 70)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

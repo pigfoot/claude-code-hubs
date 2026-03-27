@@ -1,0 +1,1893 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "Confluence Macro Integration Test (Safe Layer)",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "text": "Same 37 elements as the raw API demo — this time through ",
+          "type": "text"
+        },
+        {
+          "text": "safe.pages.create()",
+          "type": "text",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "text": ". Auto-validation, receipts, conflict handling.",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "1. Code Block",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 5
+      },
+      "content": [
+        {
+          "text": "This page was created with:",
+          "type": "text",
+          "marks": [
+            {
+              "type": "strong"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": {
+        "language": "typescript"
+      },
+      "content": [
+        {
+          "text": "import { v1 } from './apis/confluence/index.js';\nconst receipt = await v1.safe.pages.create({\n  spaceKey: 'DEMO',\n  title: 'Macro Integration Test',\n  body: storageHtml  // 37 elements, one API call\n});\nconsole.log(receipt); // { success: true, ... }",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "2. Info Panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "attrs": {
+        "panelType": "info"
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "Info panel",
+              "type": "text",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ]
+            },
+            {
+              "text": " — all 4 panel types preserved.",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "3. Note Panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "attrs": {
+        "panelType": "warning"
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "Note panel",
+              "type": "text",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ]
+            },
+            {
+              "text": " with ",
+              "type": "text"
+            },
+            {
+              "text": "rich formatting",
+              "type": "text",
+              "marks": [
+                {
+                  "type": "em"
+                }
+              ]
+            },
+            {
+              "text": ".",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "4. Warning Panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "attrs": {
+        "panelType": "error"
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "Warning panel",
+              "type": "text",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ]
+            },
+            {
+              "text": ".",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "5. Tip Panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "attrs": {
+        "panelType": "success"
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "Tip panel",
+              "type": "text",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ]
+            },
+            {
+              "text": ".",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "6. Panel (Custom)",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "bodiedExtension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "panel",
+        "parameters": {
+          "macroParams": {
+            "bgColor": {
+              "value": "#f5f5f5"
+            },
+            "title": {
+              "value": "Custom Panel"
+            }
+          },
+          "macroMetadata": {
+            "macroId": {
+              "value": "cc819611-0e98-44c0-b155-6266669bff8c"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Panel"
+          }
+        }
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "Custom title + background.",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "7. Expand",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "expand",
+      "attrs": {
+        "title": "Click to expand"
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "Hidden content. ADF drops this entirely.",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "8. TOC",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "toc",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "7b6fc6e3-2d96-48dc-8e82-cb43dd974eb2"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Table of Contents"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "9. TOC Zone",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "bodiedExtension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "toc-zone",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "ccb5cd90-dcff-4cd7-bd39-90a486a7342a"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Table of Content Zone"
+          }
+        }
+      },
+      "content": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 3
+          },
+          "content": [
+            {
+              "text": "Scoped A",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "Only these headings.",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 3
+          },
+          "content": [
+            {
+              "text": "Scoped B",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "10. Status (5 colours)",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "status",
+          "attrs": {
+            "color": "green",
+            "style": "bold",
+            "text": "VERIFIED",
+            "localId": "659f68f8-ade4-43cb-bef6-8e4785813080"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "status",
+          "attrs": {
+            "color": "yellow",
+            "style": "bold",
+            "text": "IN PROGRESS",
+            "localId": "d5ad5690-09de-4324-956f-0f23afec834a"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "status",
+          "attrs": {
+            "color": "red",
+            "style": "bold",
+            "text": "BLOCKED",
+            "localId": "ae95b39f-48f0-4531-821a-89c6886f3775"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "status",
+          "attrs": {
+            "color": "blue",
+            "style": "bold",
+            "text": "NEW",
+            "localId": "db31fa7f-161f-44da-94a8-e73e4eba13ca"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "status",
+          "attrs": {
+            "color": "purple",
+            "style": "bold",
+            "text": "REVIEW",
+            "localId": "c1cc6d98-2952-4be8-b25a-3ed347734125"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "11. Excerpt",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "bodiedExtension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "excerpt",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "7b97ec18-efdd-4297-89d2-f44b185fac04"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Excerpt"
+          }
+        }
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "Reusable excerpt content.",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "12. Anchor",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "inlineExtension",
+          "attrs": {
+            "extensionType": "com.atlassian.confluence.macro.core",
+            "extensionKey": "anchor",
+            "parameters": {
+              "macroParams": {
+                "": {
+                  "value": "target"
+                },
+                "legacyAnchorId": {
+                  "value": "MacroIntegrationTest—SafeLayer(37Elements)-target"
+                }
+              },
+              "macroMetadata": {
+                "macroId": {
+                  "value": "f9aee41e-6de3-47c0-ba87-11d2fbeb3166"
+                },
+                "schemaVersion": {
+                  "value": "1"
+                },
+                "title": "Anchor"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "text": "Deep-link anchor.",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "13. Children",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "children",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "28b60038-efd0-4fe1-98b6-e68ae1da9cd6"
+            },
+            "schemaVersion": {
+              "value": "2"
+            },
+            "title": "Child pages"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "14. Page Tree",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "inlineExtension",
+          "attrs": {
+            "extensionType": "com.atlassian.confluence.macro.core",
+            "extensionKey": "pagetree",
+            "parameters": {
+              "macroParams": {},
+              "macroMetadata": {
+                "macroId": {
+                  "value": "3ef5dd68-23dc-4918-95ca-c140a388358b"
+                },
+                "schemaVersion": {
+                  "value": "1"
+                },
+                "title": "Page Tree"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "15. Content by Label",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "contentbylabel",
+        "parameters": {
+          "macroParams": {
+            "cql": {
+              "value": "label = \"test\""
+            }
+          },
+          "macroMetadata": {
+            "macroId": {
+              "value": "a9cef0e0-deaf-48b6-aef7-5b26e0eb2945"
+            },
+            "schemaVersion": {
+              "value": "4"
+            },
+            "title": "Filter by label"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "16. Recently Updated",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "recently-updated",
+        "parameters": {
+          "macroParams": {
+            "max": {
+              "value": "5"
+            }
+          },
+          "macroMetadata": {
+            "macroId": {
+              "value": "64e68181-7c32-4a66-8a31-ce58c150d4dc"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Recent updates"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "17. Jira Issue",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "inlineExtension",
+          "attrs": {
+            "extensionType": "com.atlassian.confluence.macro.core",
+            "extensionKey": "jira",
+            "parameters": {
+              "macroParams": {
+                "server": {
+                  "value": "Trend Micro Jira"
+                },
+                "serverId": {
+                  "value": "e75ef112-e7b0-3f68-ab6f-7002c0fa7059"
+                },
+                "key": {
+                  "value": "CXT-1857"
+                }
+              },
+              "macroMetadata": {
+                "macroId": {
+                  "value": "a821aefe-59fd-4567-843a-8181cff676af"
+                },
+                "schemaVersion": {
+                  "value": "1"
+                },
+                "placeholder": [
+                  {
+                    "type": "image",
+                    "data": {
+                      "url": "/plugins/servlet/confluence/placeholder/macro?definition=e2ppcmE6a2V5PUNYVC0xODU3fQ==&locale=en_GB"
+                    }
+                  }
+                ],
+                "title": "Jira Legacy"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "18. Noformat",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "content": [
+        {
+          "text": "Preformatted text.\n  Whitespace preserved.\n    Indentation matters.",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "19. Livesearch",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "inlineExtension",
+          "attrs": {
+            "extensionType": "com.atlassian.confluence.macro.core",
+            "extensionKey": "livesearch",
+            "parameters": {
+              "macroParams": {},
+              "macroMetadata": {
+                "macroId": {
+                  "value": "ca6aee93-571a-4f35-82b2-2ce076f95663"
+                },
+                "schemaVersion": {
+                  "value": "1"
+                },
+                "placeholder": [
+                  {
+                    "type": "icon",
+                    "data": {
+                      "url": "https://trendmicro.atlassian.net/wiki/download/resources/confluence.extra.livesearch/images/search.png"
+                    }
+                  }
+                ],
+                "title": "Live Search"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "20. Create from Template",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "inlineExtension",
+          "attrs": {
+            "extensionType": "com.atlassian.confluence.macro.core",
+            "extensionKey": "create-from-template",
+            "parameters": {
+              "macroParams": {
+                "buttonLabel": {
+                  "value": "Create"
+                }
+              },
+              "macroMetadata": {
+                "macroId": {
+                  "value": "135f3029-dc4f-499a-9a2d-83357fcbc35a"
+                },
+                "schemaVersion": {
+                  "value": "1"
+                },
+                "placeholder": [
+                  {
+                    "type": "icon",
+                    "data": {
+                      "url": "https://trendmicro.atlassian.net/wiki/download/resources/com.atlassian.confluence.plugins.confluence-create-content-plugin/images/icon-macro-createfromtemplate-80.png"
+                    }
+                  }
+                ],
+                "title": "Create from Template"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "21. Attachments",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "layout": "wide",
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "attachments",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "6c4a2d6c-4916-4322-b919-b6194c95d3eb"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "placeholder": [
+              {
+                "type": "icon",
+                "data": {
+                  "url": "https://trendmicro.atlassian.net/wiki/download/resources/confluence.extra.attachments/icons/icon-attachments.png"
+                }
+              }
+            ],
+            "title": "Attachments"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "22. Blog Posts",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "blog-posts",
+        "parameters": {
+          "macroParams": {
+            "max": {
+              "value": "3"
+            }
+          },
+          "macroMetadata": {
+            "macroId": {
+              "value": "3034fadc-cee4-4651-b3a9-c049c1498171"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Blog Posts"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "23. Change History",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "change-history",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "e06d71ab-e011-42e6-8fa8-4f4aac82395b"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Change History"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "24. Content Report",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "content-report-table",
+        "parameters": {
+          "macroParams": {
+            "labels": {
+              "value": "test"
+            }
+          },
+          "macroMetadata": {
+            "macroId": {
+              "value": "bfe46e18-7967-433a-9d23-db093e8b1ab5"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Content Report Table"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "25. Contributors",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "contributors",
+        "parameters": {
+          "macroParams": {
+            "mode": {
+              "value": "list"
+            }
+          },
+          "macroMetadata": {
+            "macroId": {
+              "value": "cdbb9664-2524-4a0b-b531-0dcfc0c7236c"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Contributors"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "26. Labels List",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "labels-list",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "8ad6c21d-fad3-49d7-85c9-3f67202c1089"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "labels-list"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "27. Page Index",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "index",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "f949c0df-c8ad-492f-8a94-831ff95ef560"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Page Index (Deprecated)"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "28. Spaces List",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "spaces-list",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "0d6d8de0-414e-4b3d-a42b-ed9c0cbb743b"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "spaces-list"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "29. Section + Columns",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "bodiedExtension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "section",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "8ad06df5-811a-4b1c-9d90-8d5a9170ee12"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Section"
+          }
+        }
+      },
+      "content": [
+        {
+          "type": "extension",
+          "attrs": {
+            "extensionType": "com.atlassian.confluence.migration",
+            "extensionKey": "legacy-content",
+            "text": "",
+            "parameters": {
+              "reason": "A column macro in a rich body macro can't be created or edited in the new editor.",
+              "nestedContent": {
+                "type": "doc",
+                "content": [
+                  {
+                    "type": "bodiedExtension",
+                    "attrs": {
+                      "extensionType": "com.atlassian.confluence.macro.core",
+                      "extensionKey": "column",
+                      "parameters": {
+                        "macroParams": {
+                          "width": {
+                            "value": "50%"
+                          }
+                        },
+                        "macroMetadata": {
+                          "macroId": {
+                            "value": "51042901-5c84-4e6d-b220-3d804adc752d"
+                          },
+                          "schemaVersion": {
+                            "value": "1"
+                          },
+                          "title": "Column"
+                        }
+                      }
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "text": "Left",
+                            "type": "text",
+                            "marks": [
+                              {
+                                "type": "strong"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "version": 1
+              },
+              "cxhtml": "<ac:structured-macro ac:name=\"column\" ac:schema-version=\"1\" ac:macro-id=\"51042901-5c84-4e6d-b220-3d804adc752d\"><ac:parameter ac:name=\"width\">50%</ac:parameter><ac:rich-text-body><p><strong>Left</strong></p></ac:rich-text-body></ac:structured-macro>"
+            }
+          }
+        },
+        {
+          "type": "extension",
+          "attrs": {
+            "extensionType": "com.atlassian.confluence.migration",
+            "extensionKey": "legacy-content",
+            "text": "",
+            "parameters": {
+              "reason": "A column macro in a rich body macro can't be created or edited in the new editor.",
+              "nestedContent": {
+                "type": "doc",
+                "content": [
+                  {
+                    "type": "bodiedExtension",
+                    "attrs": {
+                      "extensionType": "com.atlassian.confluence.macro.core",
+                      "extensionKey": "column",
+                      "parameters": {
+                        "macroParams": {
+                          "width": {
+                            "value": "50%"
+                          }
+                        },
+                        "macroMetadata": {
+                          "macroId": {
+                            "value": "c4d355cf-7914-4200-8088-ce6d59a09ac9"
+                          },
+                          "schemaVersion": {
+                            "value": "1"
+                          },
+                          "title": "Column"
+                        }
+                      }
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "text": "Right",
+                            "type": "text",
+                            "marks": [
+                              {
+                                "type": "strong"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "version": 1
+              },
+              "cxhtml": "<ac:structured-macro ac:name=\"column\" ac:schema-version=\"1\" ac:macro-id=\"c4d355cf-7914-4200-8088-ce6d59a09ac9\"><ac:parameter ac:name=\"width\">50%</ac:parameter><ac:rich-text-body><p><strong>Right</strong></p></ac:rich-text-body></ac:structured-macro>"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "30. Task Report",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "tasks-report-macro",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "51de3c08-68d9-4fbd-a396-2e847f9977eb"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "placeholder": [
+              {
+                "type": "icon",
+                "data": {
+                  "url": "https://trendmicro.atlassian.net/wiki/download/resources/com.atlassian.confluence.plugins.confluence-inline-tasks/tasks-report-image-resources/task-report.png"
+                }
+              }
+            ],
+            "title": "Task report"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "31. Gallery",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "extension",
+      "attrs": {
+        "extensionType": "com.atlassian.confluence.macro.core",
+        "extensionKey": "gallery",
+        "parameters": {
+          "macroParams": {},
+          "macroMetadata": {
+            "macroId": {
+              "value": "4d86c49a-5bd3-428b-a26c-e82b4ccf4a79"
+            },
+            "schemaVersion": {
+              "value": "1"
+            },
+            "title": "Gallery (Deprecated)"
+          }
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "32. Blockquote",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "All knowledge is tentative. — Popper",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "33. Table + Inline Macros",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "text": "Feature",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "text": "Storage",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "text": "ADF",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "text": "Macros",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "status",
+                      "attrs": {
+                        "color": "green",
+                        "style": "bold",
+                        "text": "OK",
+                        "localId": "886c94ac-4a0e-46f7-acc7-4672a4031046"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "status",
+                      "attrs": {
+                        "color": "red",
+                        "style": "bold",
+                        "text": "LOSSY",
+                        "localId": "2443a244-ea35-4ce8-b009-9b577b69f2ff"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "34. Horizontal Rule",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "rule"
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "35. Emoticons",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "emoji",
+          "attrs": {
+            "id": "atlassian-check_mark",
+            "text": ":check_mark:",
+            "shortName": ":check_mark:"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "emoji",
+          "attrs": {
+            "id": "atlassian-cross_mark",
+            "text": ":cross_mark:",
+            "shortName": ":cross_mark:"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "emoji",
+          "attrs": {
+            "id": "atlassian-warning",
+            "text": ":warning:",
+            "shortName": ":warning:"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "emoji",
+          "attrs": {
+            "id": "atlassian-info",
+            "text": ":info:",
+            "shortName": ":info:"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "emoji",
+          "attrs": {
+            "id": "1f642",
+            "text": "🙂",
+            "shortName": ":slight_smile:"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "emoji",
+          "attrs": {
+            "id": "1f641",
+            "text": "🙁",
+            "shortName": ":slight_frown:"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "emoji",
+          "attrs": {
+            "id": "1f44d",
+            "text": "👍",
+            "shortName": ":thumbsup:"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "emoji",
+          "attrs": {
+            "id": "2764",
+            "text": "❤️",
+            "shortName": ":heart:"
+          }
+        },
+        {
+          "text": " ",
+          "type": "text"
+        },
+        {
+          "type": "emoji",
+          "attrs": {
+            "id": "atlassian-light_bulb_on",
+            "text": ":light_bulb_on:",
+            "shortName": ":light_bulb_on:"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "36. Nested Lists",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "text": "Top",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "text": "Nested",
+                          "type": "text"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "bulletList",
+                      "content": [
+                        {
+                          "type": "listItem",
+                          "content": [
+                            {
+                              "type": "paragraph",
+                              "content": [
+                                {
+                                  "text": "Deep",
+                                  "type": "text"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "text": "Mixed",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "orderedList",
+              "attrs": {
+                "order": 1
+              },
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "text": "Ordered",
+                          "type": "text"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "37. Task List",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "taskList",
+      "attrs": {
+        "localId": ""
+      },
+      "content": [
+        {
+          "type": "taskItem",
+          "attrs": {
+            "state": "DONE",
+            "localId": "1"
+          },
+          "content": [
+            {
+              "text": "Done",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "type": "taskItem",
+          "attrs": {
+            "state": "TODO",
+            "localId": "2"
+          },
+          "content": [
+            {
+              "text": "Todo",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "Summary",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "attrs": {
+        "panelType": "info"
+      },
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "37 elements via safe.pages.create()",
+              "type": "text",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ]
+            },
+            {
+              "text": " — receipts, validation, conflict handling. Same Storage Format, production-grade wrapper.",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "text": "Generated by Kael — 2026-03-27",
+              "type": "text",
+              "marks": [
+                {
+                  "type": "em"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "version": 1
+}

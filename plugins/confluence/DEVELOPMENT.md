@@ -4,6 +4,7 @@ Technical documentation for skill developers and contributors.
 
 ## Table of Contents
 
+- [Architecture Decision: ADF v2 + Method 6](#architecture-decision-adf-v2--method-6)
 - [Markdown Conversion Engine](#markdown-conversion-engine)
 - [Technical Decisions](#technical-decisions)
 - [Output Compatibility](#output-compatibility)
@@ -11,12 +12,84 @@ Technical documentation for skill developers and contributors.
 
 ---
 
+## Architecture Decision: ADF v2 + Method 6
+
+### Why ADF v2 as the Single Format Path
+
+This plugin standardizes on **Atlassian Document Format (ADF)** via the **v2 REST API** for all
+page content operations. Storage Format (XHTML) is **not deprecated** by Atlassian (the v2 API
+supports both), but this plugin exclusively uses ADF for simplicity and consistency.
+
+**Rationale:**
+
+- ADF is Atlassian's modern, structured document format (JSON-based)
+- The v2 REST API treats ADF as a first-class citizen
+- JSON is easier to diff, patch, and programmatically manipulate than XHTML
+- Eliminates the need to maintain dual format paths
+
+### Component Roles
+
+| Component | Role | When Used |
+|-----------|------|-----------|
+| `markdown_to_adf.py` | Markdown → ADF converter (mistune) | **New page upload only** |
+| `upload_confluence.py` | Uploads ADF to Confluence via v2 REST API | Creating new pages or full page replacement |
+| `adf_to_markdown.py` | ADF → readable Markdown renderer | **Display utility only** (showing ADF as readable text for Claude/humans) |
+| `download_confluence.py` | Fetches ADF from v2 REST API, renders as Markdown | Viewing/reading page content |
+| `mcp_json_diff_roundtrip.py` | ADF JSON diff/patch engine | **Roundtrip editing** (Method 6) |
+
+### Why Method 6 (JSON Diff) Doesn't Need Markdown Intermediate
+
+Method 6 roundtrip editing works as follows:
+
+1. **GET** ADF JSON from v2 REST API
+2. Claude reads a Markdown **display rendering** of the ADF (for human readability)
+3. Claude's edits are applied as **JSON diff/patch operations** directly on the ADF structure
+4. **PUT** modified ADF JSON back via v2 REST API
+
+The Markdown shown to Claude in step 2 is **display-only** — it is not parsed back into ADF.
+The actual data flow is ADF JSON in, ADF JSON out. This design preserves all macros, formatting,
+and structural elements that would be lost in a Markdown round-trip conversion.
+
+### What v1 API Endpoints Are Still Needed
+
+While page content operations use the v2 REST API exclusively, two operations still require
+**v1 REST API** endpoints because no v2 equivalents exist:
+
+| Operation | v1 Endpoint | Why No v2 |
+|-----------|------------|-----------|
+| **Attachment upload** | `POST /rest/api/content/{id}/child/attachment` | v2 API does not support attachment upload |
+| **Page width (full-width layout)** | `PUT /rest/api/content/{id}/property/content-appearance-published` | v2 API does not expose page properties |
+
+### MCP Upload: Use ADF, Not Markdown
+
+When uploading via MCP (no API token), always use `contentFormat: "adf"` with
+ADF JSON produced by `markdown_to_adf()`. Do **not** use `contentFormat: "markdown"`.
+
+MCP's built-in Markdown→ADF conversion has rendering issues:
+
+- Emoji lines (✅/❌/⚠️) are merged into a single paragraph instead of list items
+- The `markdown_to_adf.py` pre-processor fixes this by converting emoji lines to
+  list items and bare `[ ]` checkboxes to task lists before parsing
+
+**Upload priority**: REST API v2 ADF (primary) → MCP ADF (fallback, no API token).
+
+### What Was Removed
+
+The following were removed as part of the ADF-only simplification:
+
+- **`--legacy` flag** on `download_confluence.py` (v1 Storage Format download)
+- **Storage Format upload path** (v1 `PUT` with XHTML body)
+- **`ConfluenceStorageRenderer`** class (mistune renderer that produced XHTML Storage Format)
+- **Dual upload path logic** (auto-detection between Storage v1 and ADF v2)
+
+---
+
 ## Markdown Conversion Engine
 
 ### Why mistune 3.x instead of md2cf?
 
-This plugin uses **mistune 3.x** (latest stable release) with a custom `ConfluenceStorageRenderer` instead of the older
-`md2cf` library.
+This plugin uses **mistune 3.x** (latest stable release) for the `markdown_to_adf.py` converter (used by
+`upload_confluence.py` for **new page uploads**) instead of the older `md2cf` library.
 
 **Key Reasons:**
 
@@ -30,23 +103,11 @@ This plugin uses **mistune 3.x** (latest stable release) with a custom `Confluen
 
 ### Implementation
 
-Our custom renderer extends `mistune.HTMLRenderer`:
+The `markdown_to_adf.py` module uses mistune to parse Markdown and produce ADF JSON nodes.
+It is used exclusively by `upload_confluence.py` for new page creation / full page replacement.
 
-```python
-class ConfluenceStorageRenderer(mistune.HTMLRenderer):
-    def image(self, alt, url, title=None):
-        # Handles both local attachments and external URLs
-        # Tracks local images for upload
-
-    def block_code(self, code, info=None):
-        # Renders as Confluence code macro with language syntax highlighting
-
-    def block_quote(self, text):
-        # Renders as Confluence quote macro (better UI rendering)
-
-    def table(self, text):
-        # Full table support with alignment
-```
+**Note**: The legacy `ConfluenceStorageRenderer` (which produced XHTML Storage Format) has been
+removed. All new page uploads now go through the ADF path.
 
 **Plugins enabled:**
 
@@ -144,49 +205,47 @@ We conducted side-by-side comparison tests between md2cf (mistune 0.8.4) and our
 
 ## Testing
 
-### Running Comparison Tests
+### Test Suite
 
-If you want to verify compatibility yourself:
+Tests live in `plugins/confluence/tests/` with three modules:
 
 ```bash
-# Install md2cf in a virtual environment
-python3 -m venv test_env
-source test_env/bin/activate
-pip install md2cf
+# Unit tests (offline, no credentials needed) — 75 tests
+uv run --python 3.14 --with "pytest>=8.0" --with "mistune>=3.0.0" \
+  pytest plugins/confluence/tests/test_adf_to_markdown.py plugins/confluence/tests/test_roundtrip.py -v
 
-# Test with md2cf
-python << 'EOF'
-from md2cf.confluence_renderer import ConfluenceRenderer
-import mistune
+# Integration tests (requires API credentials, creates/deletes real pages) — 5 tests
+uv run --python 3.14 --with "pytest>=8.0" --with "mistune>=3.0.0" \
+  --with "requests>=2.31.0" --with "python-dotenv>=1.0.0" \
+  pytest plugins/confluence/tests/test_integration.py -v
 
-renderer = ConfluenceRenderer()
-parser = mistune.Markdown(renderer=renderer)
-print(parser(open('test.md').read()))
-EOF
-
-# Test with our implementation
-uv run plugins/confluence/skills/confluence/scripts/upload_confluence.py test.md --dry-run
+# All tests together
+uv run --python 3.14 --with "pytest>=8.0" --with "mistune>=3.0.0" \
+  --with "requests>=2.31.0" --with "python-dotenv>=1.0.0" \
+  pytest plugins/confluence/tests/ -v
 ```
 
-### Comprehensive Test Coverage
+| Module | Tests | Requires API | What it covers |
+|--------|-------|--------------|----------------|
+| `test_adf_to_markdown.py` | 44 | No | ADF → Markdown for all node types, marks, real 37-element fixture |
+| `test_roundtrip.py` | 31 | No | ADF → MD → ADF fidelity, marker-free markdown, multiple-status regression |
+| `test_integration.py` | 5 | Yes | Upload → Confluence → download → compare, page update, cleanup |
 
-Our test suite verifies:
+### Integration Test Details
 
-1. ✅ Special character escaping (`<script>`, `&`, quotes)
-2. ✅ Nested lists (3+ levels deep)
-3. ✅ Multiple images (local attachments tracked)
-4. ✅ External image URLs
-5. ✅ Code blocks with language syntax highlighting
-6. ✅ Tables with column alignment
-7. ✅ Strikethrough text
-8. ✅ Blockquotes with Confluence macros
-9. ✅ Auto-link detection
-10. ✅ Unicode characters (emoji, CJK)
+Integration tests create child pages under
+[SIP (Special Interest Projects)](https://trendmicro.atlassian.net/wiki/x/glWyAg)
+and delete them after each test. They are automatically skipped when
+`CONFLUENCE_URL`, `CONFLUENCE_USER`, or `CONFLUENCE_API_TOKEN` are missing.
 
-See test files:
+### Test Fixture
 
-- `/tmp/test_comprehensive.md` - Edge case test document
-- `/tmp/test_full_conversion.py` - Automated validation
+The real ADF fixture (`tests/fixtures/macro_integration_test.json`) was captured
+from a 37-element Confluence page (ID: 2354807244). To recapture:
+
+```bash
+uv run plugins/confluence/tests/capture_fixture.py
+```
 
 ---
 
@@ -194,45 +253,25 @@ See test files:
 
 ### Adding New Markdown Features
 
-To add support for new markdown features:
+To add support for new Markdown features in `markdown_to_adf.py`:
 
-1. **Add renderer method** in `ConfluenceStorageRenderer`:
-
-   ```python
-   def new_feature(self, text):
-       # Convert to Confluence storage format
-       return f'<confluence-markup>{text}</confluence-markup>\n'
-   ```
-
-2. **Enable plugin** if needed:
-
-   ```python
-   parser = mistune.create_markdown(
-       renderer=renderer,
-       plugins=['table', 'strikethrough', 'url', 'new-plugin']
-   )
-   ```
-
-3. **Add test case** in comprehensive test suite
-
+1. **Add ADF node generation** in `markdown_to_adf.py`
+2. **Enable mistune plugin** if needed for parsing
+3. **Add unit tests** in `tests/test_adf_to_markdown.py` and `tests/test_roundtrip.py`
 4. **Update documentation** in README.md
 
-### Confluence Storage Format Reference
+### ADF and Confluence Format References
 
 Official documentation:
 
-- [Confluence Storage Format](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html)
-- [Structured
-  Macros](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html#ConfluenceStorageFormat-StructuredMacros)
-- [Rich Text
-  Editor](https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html#ConfluenceStorageFormat-RichTextEditor)
+- [Atlassian Document Format (ADF)][adf] - JSON document structure
+- [Confluence REST API v2][v2api] - API documentation
+- [Confluence Storage Format][storage] - XHTML format reference
+  (not used by this plugin, but useful for understanding Confluence internals)
 
-Common macros used:
-
-- `ac:structured-macro ac:name="code"` - Code blocks with syntax highlighting
-- `ac:structured-macro ac:name="quote"` - Blockquotes
-- `ac:image` + `ri:attachment` - Image attachments
-- `ac:image` + `ri:url` - External images
+[adf]: https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/
+[v2api]: https://developer.atlassian.com/cloud/confluence/rest/v2/intro/
+[storage]: https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html
 
 ---
 
@@ -240,8 +279,8 @@ Common macros used:
 
 **Q: Why not use the Confluence REST API's built-in markdown conversion?**
 
-A: The REST API doesn't have a markdown conversion endpoint. We must convert to storage format client-side before
-uploading.
+A: The REST API doesn't have a markdown conversion endpoint. For new page uploads, we convert Markdown to ADF JSON
+client-side via `markdown_to_adf.py` (mistune) before uploading via the v2 REST API.
 
 **Q: Can I use other markdown parsers like markdown-it or CommonMark?**
 

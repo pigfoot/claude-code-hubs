@@ -16,8 +16,11 @@ Status: **Implementation complete** (38/38 tasks done)
 ## Problem Statement
 
 The current `download_confluence.py` / `upload_confluence.py` markdown roundtrip
-destroys page structures because it uses the v1 API (Storage format) and goes through
-lossy markdown conversion. Specifically, these elements are lost:
+destroys page structures because it goes through lossy Markdown conversion (markdownify
+drops `ac:*` tags and other Confluence-specific elements). The v1 API and Storage Format
+themselves are **not** the cause of the loss -- Storage Format faithfully represents all
+macros. The loss occurs in the **Markdown intermediate conversion step**. Specifically,
+these elements are lost during Markdown conversion:
 
 | Element | Storage format representation | ADF representation | Download handler | Upload handler |
 |---------|-------------------------------|-------------------|-----------------|----------------|
@@ -30,18 +33,33 @@ lossy markdown conversion. Specifically, these elements are lost:
 
 ### Root cause
 
+The root cause is the **Markdown intermediate conversion step**, not the Storage Format
+or API version. Storage Format itself faithfully represents all Confluence macros.
+A direct Storage XML roundtrip (read XML, edit XML, write XML) would be lossless.
+The loss happens because markdownify cannot handle Confluence-specific XML tags.
+
+> **Note:** Storage Format is NOT deprecated. The v2 API fully supports
+> `representation: storage` for GET/PUT/POST operations. Only the v1 API
+> *endpoints* (`/rest/api/content/...`) are being deprecated, not the Storage
+> Format itself. The MCP Gateway only supports ADF, but direct REST API v2
+> supports both Storage Format and ADF.
+
 ```
-Current flow (v1 API + Storage format):
+Current flow (v1 API + Markdown conversion):
 
   v1 API ──► Storage XML/HTML ──► BeautifulSoup ──► markdownify ──► .md
   .md ──► mistune ──► Storage XML/HTML ──► v1 API
 
-  Problems:
-  1. Storage format lacks some ADF nodes (inlineCard not present at all)
-  2. markdownify doesn't know Confluence XML (ac:emoticon, ac:link>ri:user, etc.)
-  3. Expand macros have no handler → silently dropped
-  4. New ADF panels use ac:adf-extension wrapper → not recognized
-  5. Upload has no way to recreate these elements from plain markdown
+  Problems (all in the Markdown conversion step):
+  1. markdownify doesn't know Confluence XML (ac:emoticon, ac:link>ri:user, etc.)
+  2. Expand macros have no handler → silently dropped by markdownify
+  3. New ADF panels use ac:adf-extension wrapper → not recognized by markdownify
+  4. Upload has no way to recreate these elements from plain markdown
+  5. Some ADF-only nodes (inlineCard) are not present in Storage format at all
+
+  NOT the problem:
+  - Storage Format itself (it preserves all macros faithfully)
+  - The v1/v2 API (both can read/write Storage Format correctly)
 ```
 
 ### Evidence (from page 2321482360 analysis)

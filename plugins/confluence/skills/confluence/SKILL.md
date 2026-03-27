@@ -1,468 +1,235 @@
 ---
 name: confluence
-description: Comprehensive Confluence documentation management. Use when user provides Confluence URLs (including short URLs like /wiki/x/...), or asks to "read Confluence page", "view Confluence page", "upload to Confluence", "download Confluence pages", "convert Markdown to Wiki Markup", "sync documentation to Confluence", "search Confluence", "create Confluence page", "update Confluence page", "export Confluence", or "Confluence CQL query". Handles Wiki Markup conversion, Mermaid/PlantUML diagrams, image handling, large document uploads without size limits, Git-to-Confluence sync with mark CLI, and automatic short URL decoding.
+description: Confluence documentation management. Use when user provides Confluence URLs (including /wiki/x/... short URLs), or asks to read/upload/download/search/create/update Confluence pages, convert Markdown to Wiki Markup, or sync docs to Confluence.
 allowed-tools: ["mcp__plugin_confluence_atlassian__*"]
 version: 0.1.0
 ---
 
-# Confluence Management Skill
+# Confluence Skill
 
-Version: 0.1.0 (Testing Phase)
+## Critical Rules
 
-## 🚨 Critical Constraints
+- **DO NOT use MCP for page uploads** — size limit ~10-20KB. Use `upload_confluence.py` instead.
+- **DO NOT use MCP for structural modifications** — AI tool delays cause 650x slowdown (~13min vs ~1s). Use REST API scripts.
+- **DO NOT create temporary analysis scripts** (`/tmp/analyze_*.py`). Use existing `analyze_page.py`.
+- **DO NOT use raw XML/HTML** for images. Use markdown syntax: `![alt](path.png)`.
+- **DO NOT forget diagram conversion** — pre-convert Mermaid/PlantUML to PNG/SVG before upload.
+- MCP is fine for **reading pages** and **simple text edits** (Method 6).
 
-**DO NOT USE MCP FOR PAGE UPLOADS** - Size limits apply (~10-20KB max)
+## Architecture
 
-**DO NOT USE MCP FOR STRUCTURAL MODIFICATIONS** - AI tool delays cause 650x slowdown
-
-```bash
-# Use REST API scripts instead:
-# For uploading documents:
-uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID
-
-# For structural modifications (adding table rows, etc.):
-uv run --managed-python scripts/add_table_row.py PAGE_ID --table-heading "..." --after-row-containing "..." --cells "..." "..." "..."
+```
+New page:     Markdown → markdown_to_adf.py (pre-processor + mistune) → ADF JSON → REST API v2
+Edit page:    REST API v2 GET ADF → Method 6 JSON diff/patch → REST API v2 PUT ADF
+Download:     REST API v2 GET ADF → adf_to_markdown.py → readable Markdown (display only)
+Structural:   Direct REST API scripts (add_table_row.py, add_panel.py, etc.) → ~1s each
+Attachment:   v1 REST API (no v2 equivalent)
+Page width:   v1 REST API property (no v2 equivalent)
+MCP fallback: markdown_to_adf() → ADF JSON → MCP createPage(contentFormat="adf")
 ```
 
-**DO NOT CREATE TEMPORARY ANALYSIS SCRIPTS** - Use existing `analyze_page.py` tool
+Key points:
 
-```bash
-# DON'T create one-off scripts like:
-/tmp/analyze_gemini_page.py
-/tmp/show_all_blocks.py
+- **Method 6 roundtrip** never goes through Markdown — ADF in, ADF out
+- `adf_to_markdown.py` is display-only (for Claude to read), not a data conversion step
+- `markdown_to_adf.py` includes a pre-processor that fixes emoji lines (✅/❌) and `[ ]` checkboxes
+- MCP upload: always use `contentFormat: "adf"`, NOT `"markdown"` (MCP markdown merges emoji lines)
+- Upload priority: REST API v2 ADF (primary) → MCP ADF (fallback, no API token)
 
-# DO use the existing tool:
-uv run --managed-python scripts/analyze_page.py PAGE_ID
-uv run --managed-python scripts/analyze_page.py PAGE_ID --type codeBlock
-```
+## Decision Matrix
 
-**Performance Reality**:
+All `.py` scripts run with: `uv run --managed-python scripts/SCRIPT_NAME.py`
 
-- MCP roundtrip for structural changes: ~13 minutes (91% is AI processing delays)
-- Python REST API direct: ~1.2 seconds (650x faster)
-- Bottleneck: AI tool invocation intervals, NOT MCP network I/O
+| Task | Tool | Speed | Notes |
+|------|------|-------|-------|
+| Analyze page structure | `analyze_page.py` | <1s | Shows all components |
+| Edit text (preserve macros) | MCP Method 6 | Interactive | Recommended for existing pages |
+| Add table row | `add_table_row.py` | ~1s | 650x faster than MCP |
+| Add list item | `add_list_item.py` | ~1s | Bullet or numbered |
+| Add panel | `add_panel.py` | ~1s | info/note/warning/success |
+| Insert section | `insert_section.py` | ~1s | Heading + content |
+| Add code line | `add_to_codeblock.py` | ~1s | Insert into code block |
+| Add blockquote | `add_blockquote.py` | ~1s | Citations |
+| Add horizontal rule | `add_rule.py` | ~1s | Section divider |
+| Add image | `add_media.py` | ~2-5s | Upload + embed |
+| Add image group | `add_media_group.py` | ~3-8s | Multiple images |
+| Upload attachment | `upload_attachment.py` | ~2-8s | Any file type |
+| Add nested expand | `add_nested_expand.py` | ~1s | Expand inside expand |
+| Add status label | `add_status.py` | ~1s | TODO/DONE/IN PROGRESS |
+| Add @mention | `add_mention.py` | ~1s | Notify users |
+| Add date | `add_date.py` | ~1s | Inline timestamp |
+| Add emoji | `add_emoji.py` | ~1s | Visual expressions |
+| Add inline card | `add_inline_card.py` | ~1s | Rich URL preview |
+| Upload new/replace page | `upload_confluence.py` | ~5-10s | Markdown → ADF → v2 API |
+| Download page | `download_confluence.py` | ~5-10s | ADF → readable Markdown |
+| Read/search pages | MCP tools | Fast | OK for reading |
+| Small page create (<10KB) | MCP create (ADF) | Slow | Use contentFormat="adf" |
+| Markdown ↔ Wiki | `convert_markdown_to_wiki.py` | Fast | Format conversion |
 
-MCP tools are fine for **reading** pages and **simple text edits** but **fail for structural modifications due to AI
-processing overhead**.
+## Workflows
 
-## Quick Decision Matrix
+### Reading Pages
 
-**NOTE**: All `.py` scripts below must be run with `uv run --managed-python scripts/SCRIPT_NAME.py`
-
-### When to Use What Tool
-
-| Task Category | Specific Task | Tool | Speed | Notes |
-|---------------|---------------|------|-------|-------|
-| **Analysis** | Understand page structure | `analyze_page.py` | <1s | 🔍 Shows all components |
-| **Text Editing** | Fix typos, improve clarity | MCP Method 6 | Interactive | ✅ Preserves macros |
-| **Block Elements** | Add table row | `add_table_row.py` | ~1s | ⚡ 650x faster than MCP |
-| | Add list item | `add_list_item.py` | ~1s | Bullet or numbered lists |
-| | Add info/warning panel | `add_panel.py` | ~1s | 4 panel types available |
-| | Insert new section | `insert_section.py` | ~1s | Heading + content |
-| | Add line to code block | `add_to_codeblock.py` | ~1s | Insert commands/code lines |
-| | Add blockquote (citation) | `add_blockquote.py` | ~1s | For quotes and citations |
-| | Add horizontal rule | `add_rule.py` | ~1s | Section divider |
-| | Add image | `add_media.py` | ~2-5s | Uploads and embeds image |
-| | Add image group | `add_media_group.py` | ~3-8s | Multiple images in row/grid |
-| | Upload attachment | `upload_attachment.py` | ~2-8s | Any file type, 3 display modes |
-| | Add nested expand | `add_nested_expand.py` | ~1s | Expand inside expand |
-| **Inline Elements** | Add status label | `add_status.py` | ~1s | TODO/DONE/IN PROGRESS |
-| | Add @mention | `add_mention.py` | ~1s | Notify users |
-| | Add date | `add_date.py` | ~1s | Deadlines and timestamps |
-| | Add emoji | `add_emoji.py` | ~1s | Visual expressions |
-| | Add inline card | `add_inline_card.py` | ~1s | Rich URL preview card |
-| **Document Ops** | Upload large files (>10KB) | `upload_confluence.py` | ~5-10s | No size limits, full-width default |
-| | Upload with images | `upload_confluence.py` | ~5-10s | Attachments + table formatting |
-| | Download to Markdown | `download_confluence.py` | ~5-10s | v2 ADF preserves all elements |
-| **Reading** | Search/read pages | MCP tools | Fast | ✅ OK for reading |
-| **Small Changes** | Text-only (<10KB) | MCP create/update | Slow | ⚠️ Size limited |
-| **CI/CD** | Git-to-Confluence sync | `mark` CLI | Fast | Best for automation |
-| **Conversion** | Markdown ↔ Wiki | `convert_markdown_to_wiki.py` | Fast | Format conversion |
-
-## Core Workflows
-
-### 📖 Reading Confluence Pages from URLs
-
-**When user provides a Confluence URL**, automatically resolve and read the page:
-
-#### Workflow
-
-1. **Detect URL format**:
-   - Short URL: `https://site.atlassian.net/wiki/x/2oEBfw`
-   - Full URL: `https://site.atlassian.net/wiki/spaces/SPACE/pages/123456789/Title`
-   - Direct page ID: `123456789`
-
-2. **Resolve to page ID**:
+1. Resolve URL → page ID:
 
    ```bash
    uv run --managed-python scripts/url_resolver.py "URL"
    ```
 
-3. **Read page content** (via MCP):
+2. Read via MCP:
 
    ```javascript
    mcp__plugin_confluence_atlassian__getConfluencePage({
-     cloudId: "...",
-     pageId: "resolved_page_id",
-     contentFormat: "markdown"
+     cloudId: "site.atlassian.net", pageId: "PAGE_ID", contentFormat: "markdown"
    })
    ```
 
-#### Examples
+### Method 6: Edit Existing Pages (Recommended)
+
+Edits text while preserving all macros. Operates directly on ADF JSON — Markdown is display-only.
+
+**When to use**: Fix typos, improve clarity, update docs on pages with macros.
+**Not for**: New pages (use `upload_confluence.py`), massive restructuring.
+
+Usage — natural language:
 
 ```
-User: "https://site.atlassian.net/wiki/x/2oEBfw"
-→ Resolve: page ID 2130805210
-→ Read page and display content
-
-User: "Read https://site.atlassian.net/wiki/spaces/DEV/pages/123456/API-Docs"
-→ Extract page ID: 123456
-→ Read page and display content
+"Edit Confluence page 123456 to fix typos"
+"Update API docs on page 789012"
 ```
 
-### 🆕 Method 6: Intelligent Roundtrip Editing (Recommended for Editing Existing Pages)
+Workflow:
 
-**Revolutionary Feature**: Edit existing Confluence pages while preserving all macros (expand panels, status badges,
-page properties, etc.) and allow Claude to intelligently edit text content.
+1. Read page via MCP → auto-detect macros
+2. Safe mode (default): edit outside macros only. Advanced mode: edit inside macros (requires confirmation)
+3. Auto-backup to `.confluence_backups/{page_id}/` (keeps last 10)
+4. Write back via v2 API (auto-restore on failure)
 
-#### When to Use Method 6?
+Implementation: `scripts/mcp_json_diff_roundtrip.py`
 
-✅ **Good Use Cases**:
+### Upload Markdown (New Page / Full Replace)
 
-- Fix typos and grammar errors on pages
-- Improve clarity and readability of existing content
-- Update documentation while preserving page structure
-- Edit pages containing important macros (without losing them)
-
-❌ **Not Suitable For**:
-
-- Creating brand new pages → Use `upload_confluence.py`
-- Massive restructuring of entire page → Use `upload_confluence.py`
-- Batch updating multiple pages → Use Method 1 (download + edit + upload)
-
-#### Usage
-
-Simply use natural language commands, system handles automatically:
-
-```
-"Edit Confluence page 123456 to fix typos and improve clarity"
-"Update the API documentation on page 789012 to reflect the new endpoints"
-"Fix grammar issues in page 456789"
-```
-
-#### Workflow
-
-1. Read page via MCP
-2. Auto-detect macros
-3. Choose mode: Safe (edit outside macros) or Advanced (edit inside macros)
-4. Auto-backup to `.confluence_backups/{page_id}/`
-5. Claude edits based on instruction
-6. Write back to Confluence (auto-restore on failure)
-
-#### Two Modes
-
-**Safe Mode (default, recommended)**:
-
-- Skips macro content, only edits outside text
-- Zero risk, macro structure completely unaffected
-- Suitable for most use cases
-
-**Advanced Mode (advanced, requires confirmation)**:
-
-- Can edit text inside macros (e.g., content in expand panels)
-- Requires explicit user confirmation
-- Automatic backup + auto-restore on failure
-- Suitable when need to edit info boxes, warning panels content
-
-#### Backup/Restore
-
-- Auto-backup before each edit (keeps last 10 in `.confluence_backups/{page_id}/`)
-- Manual restore: "Rollback Confluence page 123456 to previous backup"
-- Auto-restore on write failure
-- Uses ADF JSON diff/patch, macro-preserving, OAuth auth
-- Implementation: `scripts/mcp_json_diff_roundtrip.py`
-
-### Upload Markdown to Confluence
-
-**CRITICAL**: Use absolute path to script WITHOUT `cd` command.
-
-#### User Intent Detection (Decision Tree)
-
-The script automatically detects user intent based on CLI arguments:
-
-**1. Update existing page** (explicit):
+`upload_confluence.py` converts Markdown → ADF via `markdown_to_adf.py` → uploads via REST API v2.
 
 ```bash
-uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID
-# Always updates PAGE_ID, ignores frontmatter
+# Update existing page
+uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID
+
+# Create new page
+uv run --managed-python scripts/upload_confluence.py doc.md --space SPACE_KEY --parent-id PARENT_ID
+
+# Auto-detect from frontmatter
+uv run --managed-python scripts/upload_confluence.py doc.md
+
+# Options: --dry-run, --title "...", --width narrow, --table-layout default
 ```
 
-**2. Create new page** (explicit):
+User intent mapping:
 
-```bash
-uv run --managed-python scripts/upload_confluence.py document.md --space SPACE_KEY --parent-id PARENT_ID
-# Always creates new page, even if frontmatter has id
-# Use this when cloning docs to another space or creating duplicate pages
-```
+- "Upload X under page Y" → `--space` + `--parent-id`
+- "Update page 123" → `--id 123`
+- "Upload this downloaded file" → no args (frontmatter)
 
-**3. Auto-detect from frontmatter** (no CLI args):
-
-```bash
-uv run --managed-python scripts/upload_confluence.py document.md
-# Uses frontmatter id (update) or space (create)
-# Best for downloaded files with frontmatter metadata
-```
-
-#### When User Says
-
-- "Upload X to Confluence under page Y" → Use `--space` + `--parent-id` (create new)
-- "Create a new page based on this downloaded doc" → Use `--space` + `--parent-id` (ignores frontmatter id)
-- "Update Confluence page 123" → Use `--id 123` (update existing)
-- "Upload this downloaded file" → No args (use frontmatter)
-
-#### Additional Options
-
-```bash
-# Preview before uploading (recommended)
-uv run --managed-python scripts/upload_confluence.py document.md --id 780369923 --dry-run
-
-# Override title
-uv run --managed-python scripts/upload_confluence.py document.md --id 780369923 --title "New Title"
-
-# Page width: full (default) or narrow
-uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID --width narrow
-
-# Table layout: full-width (default) or default
-uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID --table-layout default
-```
-
-#### Frontmatter Formatting Options
-
-Control page width and table formatting via YAML frontmatter:
+Frontmatter options:
 
 ```yaml
 ---
 title: "My Page"
 confluence:
   id: "123456"
-  width: full              # Page width: full (default) or narrow
+  width: full           # full (default) or narrow
   table:
-    layout: full-width     # Table layout: full-width (default) or default
-    colwidths: [12, 10, 40, 38]  # Column width ratios (proportional)
+    layout: full-width  # full-width (default) or default
+    colwidths: [12, 10, 40, 38]
 ---
 ```
 
-CLI flags (`--width`, `--table-layout`) override frontmatter values.
-Column widths are only applied to tables whose column count matches the
-`colwidths` array length; mismatched tables use auto-distribution.
+#### MCP Upload Fallback (No API Token)
 
-### Structural Modifications (Fast Method) 🚀
+Always use `contentFormat: "adf"` with pre-processed ADF. MCP's `"markdown"` mode
+merges emoji lines into one paragraph.
 
-**Performance**: Direct REST API (~1.2s) vs MCP (~13min) = 650x speedup
+```python
+from markdown_to_adf import markdown_to_adf
+import json
+adf_body = markdown_to_adf(markdown_content)
+# MCP createConfluencePage with contentFormat="adf", body=json.dumps(adf_body)
+```
 
-**Example - Add Table Row**:
+### Download Page (Display Utility)
+
+Downloads via v2 ADF API → converts to readable Markdown. **Display only** — use Method 6 for roundtrip editing.
 
 ```bash
-# Preview first (recommended)
+uv run --managed-python scripts/download_confluence.py PAGE_ID
+uv run --managed-python scripts/download_confluence.py --download-children PAGE_ID
+uv run --managed-python scripts/download_confluence.py --output-dir ./docs PAGE_ID
+```
+
+Custom markers in downloaded Markdown:
+
+- `<!-- EXPAND: "title" --> ... <!-- /EXPAND -->`, `<!-- PANEL: type --> ... <!-- /PANEL -->`
+- `:shortname:` (emoji), `<!-- MENTION: id "name" -->`, `<!-- CARD: url -->`
+- `<!-- STATUS: "text" color -->`, `<!-- DATE: timestamp -->`
+
+These markers are recognized by `upload_confluence.py` for page duplication/migration.
+
+### Structural Modifications (Direct REST API)
+
+650x faster than MCP (~1s vs ~13min). Example:
+
+```bash
 uv run --managed-python scripts/add_table_row.py PAGE_ID \
   --table-heading "Access Control Inventory" \
   --after-row-containing "GitHub" \
-  --cells "Service" "Owner" "Access" \
+  --cells "Elasticsearch Cluster" "@Data Team" "Read-Only" \
   --dry-run
-
-# Actual update
-uv run --managed-python scripts/add_table_row.py 2117534137 \
-  --table-heading "Access Control Inventory" \
-  --after-row-containing "GitHub" \
-  --cells "Elasticsearch Cluster" "@Data Team" "Read-Only"
 ```
 
-**Key Parameters**:
-
-- `PAGE_ID`: Confluence page ID (from URL or url_resolver.py)
-- `--table-heading`: Heading text before the target table
-- `--after-row-containing`: Text in first cell of row to insert after
-- `--cells`: New row's cell contents (space-separated, use quotes if contains spaces)
-- `--dry-run`: Preview mode, doesn't actually update
-
-**Prerequisites**: Set environment variables `CONFLUENCE_URL`, `CONFLUENCE_USER`, `CONFLUENCE_API_TOKEN`
-
-**All other tools** (list, panel, section, etc.) follow similar pattern. See Quick Decision Matrix table for full list.
-
-### Download Confluence to Markdown
-
-Downloads use **v2 ADF format** by default, preserving all Confluence-specific elements
-(expand panels, emoji, mentions, inline cards, panels, status, date)
-using custom markers in the markdown output.
+Common patterns for structural scripts:
 
 ```bash
-# Single page (v2 ADF, preserves all elements)
-uv run --managed-python scripts/download_confluence.py 123456789
-
-# With child pages
-uv run --managed-python scripts/download_confluence.py --download-children 123456789
-
-# Custom output directory
-uv run --managed-python scripts/download_confluence.py --output-dir ./docs 123456789
-
-# Legacy mode (v1 Storage format, old behavior)
-uv run --managed-python scripts/download_confluence.py --legacy 123456789
+# Most scripts: PAGE_ID + --after-heading or --at-end + content args + --dry-run
+uv run --managed-python scripts/add_panel.py PAGE_ID --after-heading "Setup" --panel-type info --content "Note text" --dry-run
+uv run --managed-python scripts/add_list_item.py PAGE_ID --after-heading "TODO" --item "New task" --position end
+uv run --managed-python scripts/insert_section.py PAGE_ID --new-heading "New Section" --level 2 --after-heading "Existing"
+uv run --managed-python scripts/add_media.py PAGE_ID --image-path "./img.png" --at-end --width 500
+uv run --managed-python scripts/add_status.py PAGE_ID --search-text "Status:" --status "TODO" --color blue
+uv run --managed-python scripts/add_mention.py PAGE_ID --search-text "Owner:" --user-id "557058..." --display-name "John"
+uv run --managed-python scripts/analyze_page.py PAGE_ID [--type codeBlock|table|bulletList]
 ```
 
-**Custom markers in downloaded markdown** (round-trippable):
+### Search (MCP)
 
-- `<!-- EXPAND: "title" --> ... <!-- /EXPAND -->` — expand panels
-- `<!-- PANEL: type --> ... <!-- /PANEL -->` — info/note/warning panels
-- `:shortname:` — emoji (e.g., `:ms_teams:`)
-- `<!-- MENTION: id "name" -->` — @mentions
-- `<!-- CARD: url -->` — inline cards
-- `<!-- STATUS: "text" color -->` — status labels
-- `<!-- DATE: timestamp -->` — dates
+```javascript
+mcp__plugin_confluence_atlassian__searchConfluenceUsingCql({
+  cloudId: "site.atlassian.net",
+  cql: 'space = "DEV" AND text ~ "API"',
+  limit: 10
+})
+```
 
-Upload detects these markers automatically and uses the v2 ADF API to restore all elements.
-
-### Convert Markdown to Wiki Markup
+### Convert Markdown ↔ Wiki Markup
 
 ```bash
 uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki
 ```
 
-### Search Confluence (via MCP)
-
-```javascript
-mcp__atlassian__confluence_search({
-  query: 'space = "DEV" AND text ~ "API" AND created >= startOfYear()',
-  limit: 10
-})
-```
-
-### Create/Update Pages (Small Documents Only)
-
-```javascript
-// Create page
-mcp__atlassian__confluence_create_page({
-  space_key: "DEV",
-  title: "API Documentation",
-  content: "h1. Overview\n\nContent here...",
-  content_format: "wiki"
-})
-
-// Update page
-mcp__atlassian__confluence_update_page({
-  page_id: "123456789",
-  title: "Updated Title",
-  content: "h1. New Content",
-  version_comment: "Updated via Claude Code"
-})
-```
-
 ## Image Handling
 
-### Standard Workflow
-
-1. **Convert diagrams** (if Mermaid/PlantUML):
-
-   ```bash
-   # Mermaid
-   mmdc -i diagram.mmd -o diagram.png -b transparent
-   # PlantUML
-   plantuml diagram.puml -tpng
-   ```
-
-2. **Reference in markdown** (always use markdown syntax):
-
-   ```markdown
-   ![Architecture Diagram](./diagrams/architecture.png)
-   ```
-
-3. **Upload** (script handles attachments):
-
-   ```bash
-   uv run --managed-python scripts/upload_confluence.py document.md --id PAGE_ID
-   ```
-
-### Common Mistakes
-
-| ❌ Wrong | ✅ Correct |
-|----------|-----------|
-| Creating temp scripts | Use existing: `analyze_page.py` |
-| Using raw XML | Use markdown: `![alt](path.png)` |
-| MCP for uploads | Use `upload_confluence.py` |
-| Forgetting diagram conversion | Pre-convert Mermaid/PlantUML to PNG/SVG |
-| Ignoring 401 Unauthorized | Run `/mcp` to re-authenticate |
-
-## Checklists
-
-**Upload**: Convert diagrams (Mermaid/PlantUML) → Use markdown image syntax → Dry-run test → Upload with script → Verify
-page accessible
-
-**Download**: Get page ID (use url_resolver.py for short URLs) → Configure credentials (.env) → Set output directory →
-Run download script → Verify attachments in `{Page}_attachments/`
-
-## Available MCP Tools
-
-Search, read pages, create/update (⚠️ size limited), delete, labels, comments. See `mcp__plugin_confluence_atlassian__*`
-for full list.
-
-## Utility Scripts
-
-**IMPORTANT**: All Python scripts must be run with `uv run --managed-python` to ensure correct dependency management.
-
-**ADF Coverage**: 15 structural modification tools covering 16/19 ADF node types (84% coverage, ~98% practical coverage)
-
-- ✅ All common block elements (table, list, code, panel, heading, quote, rule, images)
-- ✅ All common inline elements (status, mention, date, emoji, card)
-- ❌ Only missing: multiBodiedExtension (tabs macro), mediaInline (rare)
-
-| Script | Purpose | Usage |
-|--------|---------|-------|
-| `scripts/confluence_adf_utils.py` | **Shared Utils Library** - ADF operation core functions (auth, read, write, find nodes) | Import by other scripts |
-| `scripts/analyze_page.py` | 🔍 **Analyze Page Structure** - Show all components (tables, lists, code blocks, panels, headings) and suggest which tool to use | `uv run --managed-python scripts/analyze_page.py PAGE_ID [--type codeBlock\|table\|bulletList\|...]` |
-| `scripts/add_table_row.py` | ⚡ **Fast Add Table Row** (~1.2s vs MCP 13min) | `uv run --managed-python scripts/add_table_row.py PAGE_ID --table-heading "..." --after-row-containing "..." --cells "..." "..."` |
-| `scripts/add_list_item.py` | 📋 Add bullet/numbered list items | `uv run --managed-python scripts/add_list_item.py PAGE_ID --after-heading "..." --item "..." [--position start\|end]` |
-| `scripts/add_panel.py` | 💡 Add info/warning/note/success panels | `uv run --managed-python scripts/add_panel.py PAGE_ID --after-heading "..." --panel-type info --content "..."` |
-| `scripts/insert_section.py` | 📑 Insert new section (heading + content) | `uv run --managed-python scripts/insert_section.py PAGE_ID --new-heading "..." --level 2 [--after-heading "..."]` |
-| `scripts/add_to_codeblock.py` | 💻 Add line to code block | `uv run --managed-python scripts/add_to_codeblock.py PAGE_ID --search-text "..." --add-line "..." [--position after]` |
-| `scripts/add_blockquote.py` | 💬 Add blockquote (citation) | `uv run --managed-python scripts/add_blockquote.py PAGE_ID --quote "..." [--after-heading "..."\|--at-end]` |
-| `scripts/add_rule.py` | ➖ Add horizontal rule (divider) | `uv run --managed-python scripts/add_rule.py PAGE_ID [--after-heading "..."\|--at-end]` |
-| `scripts/add_media.py` | 🖼️ Add image (uploads and embeds) | `uv run --managed-python scripts/add_media.py PAGE_ID --image-path "./img.png" [--after-heading "..."\|--at-end] [--width 500]` |
-| `scripts/add_status.py` | 🏷️ Add status label (TODO/DONE/etc.) | `uv run --managed-python scripts/add_status.py PAGE_ID --search-text "..." --status "TODO" [--color blue]` |
-| `scripts/add_mention.py` | 👤 Add @mention (notify user) | `uv run --managed-python scripts/add_mention.py PAGE_ID --search-text "..." --user-id "557058..." [--display-name "John"]` |
-| `scripts/add_date.py` | 📅 Add date (inline timestamp) | `uv run --managed-python scripts/add_date.py PAGE_ID --search-text "..." --date "2026-03-15"` |
-| `scripts/add_emoji.py` | 😀 Add emoji | `uv run --managed-python scripts/add_emoji.py PAGE_ID --search-text "..." --emoji ":smile:"` |
-| `scripts/add_media_group.py` | 🖼️🖼️ Add image group (multiple images) | `uv run --managed-python scripts/add_media_group.py PAGE_ID --images "./img1.png" "./img2.png" [--after-heading "..."\|--at-end]` |
-| `scripts/add_nested_expand.py` | 📂 Add nested expand panel | `uv run --managed-python scripts/add_nested_expand.py PAGE_ID --parent-expand "Details" --title "More" --content "..."` |
-| `scripts/add_inline_card.py` | 🔗 Add inline card (URL preview) | `uv run --managed-python scripts/add_inline_card.py PAGE_ID --search-text "..." --url "https://..."` |
-| `scripts/upload_attachment.py` | 📎 Upload any file (auto: images inline, others as cards) | `uv run --managed-python scripts/upload_attachment.py PAGE_ID --file "./report.pdf" --at-end` |
-| `scripts/adf_to_markdown.py` | 🔄 ADF→Markdown converter (preserves expand, emoji, mention, card, panel) | Import by download_confluence.py |
-| `scripts/markdown_to_adf.py` | 🔄 Markdown→ADF converter (restores markers to ADF nodes) | Import by upload_confluence.py |
-| `scripts/upload_confluence.py` | 📝 Upload Markdown (auto-detects ADF markers, falls back to Storage) | `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID` |
-| `scripts/download_confluence.py` | 📥 Download as Markdown (v2 ADF, preserves all elements) | `uv run --managed-python scripts/download_confluence.py PAGE_ID` |
-| `scripts/convert_markdown_to_wiki.py` | 🔄 Markdown ↔ Wiki Markup conversion | `uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki` |
-| `scripts/mcp_json_diff_roundtrip.py` | ✏️ Intelligent text editing (preserves macros) | Used by Method 6, see above |
+1. Convert diagrams if needed: `mmdc -i diagram.mmd -o diagram.png` or `plantuml diagram.puml -tpng`
+2. Use markdown syntax: `![alt](./path/to/image.png)`
+3. Upload: `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID`
 
 ## Prerequisites
 
-**Required:**
-
-- **`uv` package manager** - All scripts use PEP 723 inline metadata, must run with `uv run --managed-python`
-- Atlassian MCP Server (`mcp__atlassian`) with Confluence credentials (for MCP tools)
-- Environment variables: `CONFLUENCE_URL`, `CONFLUENCE_USER`, `CONFLUENCE_API_TOKEN` (for REST API scripts)
-
-**Optional:**
-
-- `mark` CLI: Git-to-Confluence sync (`brew install kovetskiy/mark/mark`)
-- Mermaid CLI: Diagram rendering (`npm install -g @mermaid-js/mermaid-cli`)
+- **`uv`** — all scripts use PEP 723 inline metadata
+- **Env vars**: `CONFLUENCE_URL`, `CONFLUENCE_USER`, `CONFLUENCE_API_TOKEN` (for REST API scripts)
+- **MCP**: Atlassian MCP Server with Confluence credentials (for reading/Method 6)
+- Optional: `mark` CLI (Git-to-Confluence sync), Mermaid CLI (diagram rendering)
 
 ## References
 
-- [Wiki Markup Guide](references/wiki_markup_guide.md) - Complete syntax reference
-- [CQL Reference](references/cql_reference.md) - Confluence Query Language syntax
-- [Mention Account ID Lookup](references/mention-account-id-lookup.md) - How to find user account IDs for @mentions
-- [Troubleshooting](references/troubleshooting.md) - Common errors and fixes
-
-## When NOT to Use Scripts
-
-- Simple page reads → Use MCP directly
-- No images/diagrams, small content (<10KB) → MCP may work
-- Jira issues → Use Jira-specific tools
+- [CQL Reference](references/cql_reference.md)
+- [Mention Account ID Lookup](references/mention-account-id-lookup.md)
+- [Troubleshooting](references/troubleshooting.md)

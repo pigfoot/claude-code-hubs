@@ -3,22 +3,41 @@
 Complete documentation on which macros are preserved or lost during Markdown ↔ Confluence conversion, and how to
 preserve specific macros.
 
+> **Important: Macro preservation depends on the METHOD used, not the format.**
+>
+> - **Markdown-based methods** (Methods 1-3): Macros are lost because markdownify (removed)/html2text (removed)
+>   drops Confluence-specific XML tags (`ac:*`). This is a Markdown conversion limitation.
+> - **Direct Storage XML roundtrip** (Method 4): All macros are **fully preserved** because
+>   no Markdown conversion is involved.
+> - **ADF JSON diff** (Method 6): All macros are **fully preserved** because only text
+>   nodes are modified; macro structures are untouched.
+> - **ADF-native roundtrip with markers** (Method 7): Most macros are preserved via HTML
+>   comment markers in the Markdown.
+>
+> Storage Format is NOT deprecated. The v2 API fully supports `representation: storage`.
+> Only the v1 API *endpoints* are being deprecated. The MCP Gateway only supports ADF,
+> but the REST API v2 supports both formats.
+
 ---
 
 ## Quick Overview
 
-| Macro Type | Conversion Status | Preservation Method |
-|-----------|---------|---------|
-| **Code Block** | ✅ Auto-converted | Markdown fence blocks |
-| **Table of Contents** | ✅ Auto-converted | `[TOC]` or doctoc |
-| **Info/Warning/Error Panels** | ✅ Auto-converted | Blockquotes + keywords |
-| **Images (attachments)** | ✅ Auto-uploaded | Markdown images |
-| **Comments** | ✅ Auto-converted | HTML comments |
-| **Page Properties** | ❌ Lost | Requires manual raw ADF/CSF |
-| **Expand Macro** | ❌ Lost | Requires manual raw ADF/CSF |
-| **Jira Issue Macro** | ❌ Lost | Cannot convert (dynamic content) |
-| **Custom Layouts** | ❌ Lost | Cannot convert |
-| **Third-party Macros** | ❌ Lost | Cannot convert |
+The table below describes macro preservation **when using Markdown-based conversion methods**
+(Methods 1-3). For direct XML (Method 4) or ADF JSON diff (Method 6), all macros are
+fully preserved without any special handling.
+
+| Macro Type | Via Markdown Conversion | Via Direct ADF JSON Diff / Storage XML | Preservation Method (Markdown) |
+|-----------|---------|---------|---------|
+| **Code Block** | ✅ Auto-converted | ✅ Preserved | Markdown fence blocks |
+| **Table of Contents** | ✅ Auto-converted | ✅ Preserved | `[TOC]` or doctoc |
+| **Info/Warning/Error Panels** | ✅ Auto-converted | ✅ Preserved | Blockquotes + keywords |
+| **Images (attachments)** | ✅ Auto-uploaded | ✅ Preserved | Markdown images |
+| **Comments** | ✅ Auto-converted | ✅ Preserved | HTML comments |
+| **Page Properties** | ❌ Lost via Markdown conversion | ✅ Preserved | Requires manual raw ADF/CSF |
+| **Expand Macro** | ❌ Lost via Markdown conversion | ✅ Preserved | Requires manual raw ADF/CSF |
+| **Jira Issue Macro** | ❌ Lost via Markdown conversion | ✅ Preserved | Cannot convert to Markdown (dynamic content) |
+| **Custom Layouts** | ❌ Lost via Markdown conversion | ✅ Preserved | Cannot convert to Markdown |
+| **Third-party Macros** | ❌ Lost via Markdown conversion | ✅ Preserved | Cannot convert to Markdown |
 
 ---
 
@@ -228,9 +247,12 @@ Converts back to HTML comment.
 
 ---
 
-## 2. Macros That Will Be Lost
+## 2. Macros Lost via Markdown Conversion
 
-These macros **cannot** be converted through standard Markdown, roundtrip will lose them.
+These macros **cannot** be converted through standard Markdown. Roundtrip methods that go through
+Markdown (Methods 1-3) will lose them. However, they are **fully preserved** when using direct
+Storage XML roundtrip (Method 4), ADF JSON diff (Method 6), or ADF-native roundtrip with
+markers (Method 7).
 
 ### 2.1 Page Properties Macro
 
@@ -264,11 +286,11 @@ Becomes a regular table, loses page properties functionality.
 | Status | In Progress |
 ```
 
-**Preservation Level:** ❌ Lost
+**Preservation Level:** ❌ Lost via Markdown conversion (preserved via direct ADF JSON diff or Storage XML roundtrip)
 
-- ❌ Page properties functionality lost
+- ❌ Page properties functionality lost when converted to Markdown
 - ✅ Content preserved (becomes regular table)
-- ❌ Cannot be used in page properties report
+- ❌ Cannot be used in page properties report after Markdown conversion
 
 ---
 
@@ -299,10 +321,10 @@ Hidden content here...
 
 Expanded content displayed directly, loses collapse functionality.
 
-**Preservation Level:** ❌ Lost
+**Preservation Level:** ❌ Lost via Markdown conversion (preserved via direct ADF JSON diff or Storage XML roundtrip)
 
-- ✅ Content preserved
-- ❌ Collapse/expand functionality lost
+- ✅ Content preserved (but loses collapse functionality)
+- ❌ Collapse/expand functionality lost when converted to Markdown
 
 #### Alternative
 
@@ -340,10 +362,10 @@ Usually converts to plain text or link:
 [PROJ-123](https://jira.example.com/browse/PROJ-123)
 ```
 
-**Preservation Level:** ❌ Completely lost
+**Preservation Level:** ❌ Lost via Markdown conversion (preserved via direct ADF JSON diff or Storage XML roundtrip)
 
-- ❌ Dynamic content lost
-- ❌ Status display lost
+- ❌ Dynamic content lost when converted to Markdown
+- ❌ Status display lost when converted to Markdown
 - ⚠️ May convert to static link
 
 ---
@@ -379,10 +401,10 @@ Left column
 Right column
 ```
 
-**Preservation Level:** ❌ Completely lost
+**Preservation Level:** ❌ Lost via Markdown conversion (preserved via direct ADF JSON diff or Storage XML roundtrip)
 
-- ✅ Content preserved
-- ❌ Layout lost
+- ✅ Content preserved (but layout lost)
+- ❌ Layout lost when converted to Markdown
 
 ---
 
@@ -409,11 +431,11 @@ No equivalent syntax, may become:
 
 Becomes bold text, loses color and style.
 
-**Preservation Level:** ❌ Lost
+**Preservation Level:** ❌ Lost via Markdown conversion (preserved via direct ADF JSON diff or Storage XML roundtrip)
 
 - ✅ Text content preserved
-- ❌ Color lost
-- ❌ Badge style lost
+- ❌ Color lost when converted to Markdown
+- ❌ Badge style lost when converted to Markdown
 
 ---
 
@@ -436,10 +458,10 @@ Cannot create (requires Drawio data).
 - If Drawio has PNG export, may convert to image
 - Otherwise completely lost
 
-**Preservation Level:** ❌ Lost
+**Preservation Level:** ❌ Lost via Markdown conversion (preserved via direct ADF JSON diff or Storage XML roundtrip)
 
-- ⚠️ May preserve PNG (but not editable)
-- ❌ Editable XML metadata lost
+- ⚠️ May preserve PNG (but not editable) when converted to Markdown
+- ❌ Editable XML metadata lost when converted to Markdown
 
 #### Exception
 
@@ -872,7 +894,7 @@ def test_expand_macro_loss():
 
 - [Markdown Confluence Tools - Raw ADF](https://markdown-confluence.com/features/raw-adf.html)
 - [md_to_conf - Markdown Syntax](https://spydersoft-consulting.github.io/md_to_conf/markdown-syntax/)
-- [md2cf Documentation](https://pypi.org/project/md2cf/)
+- [md2cf Documentation](https://pypi.org/project/md2cf/) (removed -- no longer a dependency; Method 6 is recommended)
 
 ### Community Resources
 
@@ -896,18 +918,22 @@ def test_expand_macro_loss():
 ⚠️ Info/Warning panels
 ⚠️ Links (anchors may change)
 
-### Will Be Lost (Requires Manual Handling)
+### Lost via Markdown Conversion (preserved via direct XML/ADF methods)
 
-❌ Page properties
-❌ Expand macro
-❌ Status macro
-❌ Jira issue macro
-❌ Custom layouts
-❌ Third-party macros
+❌ Page properties -- lost via Markdown conversion only
+❌ Expand macro -- lost via Markdown conversion only
+❌ Status macro -- lost via Markdown conversion only
+❌ Jira issue macro -- lost via Markdown conversion only
+❌ Custom layouts -- lost via Markdown conversion only
+❌ Third-party macros -- lost via Markdown conversion only
+
+All of the above are **fully preserved** when using Method 4 (direct Storage XML edit),
+Method 6 (ADF JSON diff), or Method 7 (ADF-native roundtrip with markers).
 
 ### Preservation Strategies
 
-1. **Simple edits**: Use standard Markdown (accept macro loss)
-2. **Full preservation**: Use raw ADF/CSF blocks
-3. **Hybrid approach**: Use raw blocks for important macros, Markdown for rest
-4. **Avoid roundtrip**: Edit complex pages directly in Confluence
+1. **Simple edits on macro-heavy pages**: Use Method 6 (ADF JSON diff) or Method 4 (direct XML)
+2. **Full document roundtrip**: Use Method 7 (ADF-native roundtrip with markers)
+3. **Markdown-based workflow (accept macro loss)**: Use standard Markdown for new content
+4. **Hybrid approach**: Use raw ADF/CSF blocks for important macros, Markdown for rest
+5. **Complex macro-heavy pages**: Edit directly in Confluence or use Method 6

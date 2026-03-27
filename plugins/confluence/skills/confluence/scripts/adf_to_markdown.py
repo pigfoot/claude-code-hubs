@@ -297,7 +297,7 @@ class _ADFConverter:
                 parts.append(f"<!-- ADF:{node_type} {attrs_json} -->")
         return "".join(parts)
 
-    def _convert_text(self, node: dict) -> str:
+    def _convert_text(self, node: dict, depth: int = 0) -> str:
         """Convert a text node with marks to markdown inline formatting."""
         text = node.get("text", "")
         marks = node.get("marks", [])

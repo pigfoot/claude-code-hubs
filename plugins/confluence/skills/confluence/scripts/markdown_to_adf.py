@@ -65,11 +65,64 @@ def _gen_local_id() -> str:
     return str(uuid.uuid4())
 
 
+_EMOJI_PREFIXES = (
+    "✅",
+    "❌",
+    "⚠️",
+    "⚠",
+    "🔴",
+    "🟢",
+    "🟡",
+    "🔵",
+    "⭐",
+    "🚀",
+    "💡",
+    "🎯",
+    "📌",
+    "📝",
+    "🔥",
+    "✨",
+    "💥",
+    "🏆",
+    "🎉",
+    "⛔",
+    "🛑",
+)
+
+
+def _preprocess_markdown(markdown: str) -> str:
+    """Normalize markdown patterns that cause rendering issues when uploaded.
+
+    Fixes:
+    - Consecutive lines starting with emoji (✅/❌/…) that aren't list items:
+      joined into one paragraph by standard Markdown. Convert to ``- ✅ …``.
+    - ``[ ]``/``[x]`` lines without ``- `` prefix: convert to task list items.
+    """
+    lines = markdown.split("\n")
+    out: list[str] = []
+    for line in lines:
+        stripped = line.lstrip()
+        # Lines starting with emoji but NOT already a list item
+        if any(
+            stripped.startswith(e) for e in _EMOJI_PREFIXES
+        ) and not stripped.startswith("- "):
+            out.append(f"- {stripped}")
+        # Bare checkbox lines:  [ ] foo  or  [x] bar  (not already list items)
+        elif re.match(r"^\[[ xX]\]\s", stripped) and not stripped.startswith("- "):
+            out.append(f"- {stripped}")
+        else:
+            out.append(line)
+    return "\n".join(out)
+
+
 class _MarkdownToADFConverter:
     """Converts Markdown (via mistune AST) to ADF JSON nodes."""
 
     def convert(self, markdown: str) -> dict:
-        md = mistune.create_markdown(renderer="ast", plugins=["table", "strikethrough"])
+        markdown = _preprocess_markdown(markdown)
+        md = mistune.create_markdown(
+            renderer="ast", plugins=["table", "strikethrough", "task_lists"]
+        )
         tokens = md(markdown)
         content = self._convert_tokens(tokens)
 
@@ -166,6 +219,12 @@ class _MarkdownToADFConverter:
         if node is not None:
             return {"type": "paragraph", "content": [node]}, 1
 
+        # Multiple inline markers on one line
+        # e.g. <!-- STATUS: "A" green --> <!-- STATUS: "B" red -->
+        nodes = self._try_multiple_inline_markers_as_block(raw)
+        if nodes:
+            return {"type": "paragraph", "content": nodes}, 1
+
         return None, 1
 
     def _collect_block(
@@ -243,9 +302,52 @@ class _MarkdownToADFConverter:
         attrs = token.get("attrs", {})
         ordered = attrs.get("ordered", False)
         items = token.get("children", [])
+
+        # Detect task list: all children are task_list_item AND none have
+        # nested lists (ADF taskItem only supports inline content).
+        is_task = all(c.get("type") == "task_list_item" for c in items) and not any(
+            any(gc.get("type") == "list" for gc in c.get("children", [])) for c in items
+        )
+        if is_task and items:
+            content = [self._convert_task_list_item(item) for item in items]
+            return {
+                "type": "taskList",
+                "attrs": {"localId": _gen_local_id()},
+                "content": content,
+            }
+
         content = [self._convert_list_item(item) for item in items]
         return {
             "type": "orderedList" if ordered else "bulletList",
+            "content": content,
+        }
+
+    def _convert_task_list_item(self, token: dict) -> dict:
+        """Convert a mistune task_list_item token to an ADF taskItem node."""
+        checked = token.get("attrs", {}).get("checked", False)
+        state = "DONE" if checked else "TODO"
+        children = token.get("children", [])
+        content = []
+        for child in children:
+            ct = child.get("type", "")
+            if ct == "block_text":
+                inline = self._convert_inline(child.get("children", []))
+                if inline:
+                    content.extend(inline)
+            elif ct == "paragraph":
+                inline = self._convert_inline(child.get("children", []))
+                if inline:
+                    content.extend(inline)
+            else:
+                node = self._convert_token(child)
+                if node is not None:
+                    if isinstance(node, list):
+                        content.extend(node)
+                    else:
+                        content.append(node)
+        return {
+            "type": "taskItem",
+            "attrs": {"localId": _gen_local_id(), "state": state},
             "content": content,
         }
 
@@ -594,7 +696,7 @@ class _MarkdownToADFConverter:
             return {"type": "inlineCard", "attrs": {"url": m.group(1)}}
 
         # <!-- STATUS: "text" color -->
-        m = re.match(r'^<!-- STATUS: "(.+?)" (\w+) -->$', html)
+        m = re.match(r'^<!-- STATUS: "([^"]+)" (\w+) -->$', html)
         if m:
             return {
                 "type": "status",
@@ -632,6 +734,30 @@ class _MarkdownToADFConverter:
         node = self._process_inline_html(html)
         if node and node.get("type") != "text":
             return node
+        return None
+
+    def _try_multiple_inline_markers_as_block(self, html: str) -> Optional[list]:
+        """Parse block_html containing multiple inline markers.
+
+        When a paragraph contains only inline markers (e.g., several STATUS
+        nodes), mistune emits the entire line as one block_html token.
+        We split it into individual <!-- ... --> markers and process each.
+        """
+        parts = re.findall(r"<!--.*?-->", html)
+        if len(parts) < 2:
+            return None
+
+        nodes = []
+        for part in parts:
+            node = self._process_inline_html(part.strip())
+            if node is None:
+                continue
+            if nodes and node.get("type") != "text":
+                nodes.append({"type": "text", "text": " "})
+            nodes.append(node)
+
+        if any(n.get("type") != "text" for n in nodes):
+            return nodes
         return None
 
     # ── Helpers ──────────────────────────────────────────────────

@@ -1,94 +1,4 @@
-# adf-markdown-conversion Specification
-
-## Purpose
-
-Bidirectional conversion between Atlassian Document Format (ADF) JSON and Markdown,
-preserving Confluence-specific elements (expand, emoji, mention, inlineCard, panel, status, date)
-using custom HTML comment markers for roundtrip fidelity.
-
-## Requirements
-
-### Requirement: ADF to Markdown conversion
-
-The system SHALL convert Atlassian Document Format (ADF) JSON to Markdown,
-preserving Confluence-specific elements using custom markers.
-
-#### Scenario: Convert standard block elements
-
-- **WHEN** ADF contains paragraph, heading, bulletList, orderedList, codeBlock, blockquote, rule, or table nodes
-- **THEN** the system SHALL convert them to their standard Markdown equivalents
-- **AND** preserve heading levels, list nesting, code language attributes, and table structure
-
-#### Scenario: Convert text marks to inline formatting
-
-- **WHEN** ADF text nodes contain marks (strong, em, code, link, strike, underline)
-- **THEN** the system SHALL convert them to Markdown inline formatting:
-  - `strong` → `**text**`
-  - `em` → `*text*`
-  - `code` → `` `text` ``
-  - `link` → `[text](url)`
-  - `strike` → `~~text~~`
-  - `underline` → `<u>text</u>`
-
-#### Scenario: Convert expand panels with markers
-
-- **WHEN** ADF contains an `expand` node with title and content
-- **THEN** the system SHALL output `<!-- EXPAND: "title" -->` before the content
-- **AND** output `<!-- /EXPAND -->` after the content
-- **AND** preserve breakout marks as attributes: `<!-- EXPAND: "title" breakout="wide" width="1800" -->`
-- **AND** recursively convert the expand's content children
-
-#### Scenario: Convert emojis inline
-
-- **WHEN** ADF contains an `emoji` node with `shortName` attribute
-- **THEN** the system SHALL output `:shortName:` inline (e.g., `:ms_teams:`)
-
-#### Scenario: Convert mentions with markers
-
-- **WHEN** ADF contains a `mention` node with `id` and `text` attributes
-- **THEN** the system SHALL output `<!-- MENTION: id "text" -->` inline (e.g., `<!-- MENTION: 622a2c71 "@Michael Fu" -->`)
-
-#### Scenario: Convert inline cards with markers
-
-- **WHEN** ADF contains an `inlineCard` node with `url` attribute
-- **THEN** the system SHALL output `<!-- CARD: url -->` inline
-
-#### Scenario: Convert panels with markers
-
-- **WHEN** ADF contains a `panel` node with `panelType` attribute and content
-- **THEN** the system SHALL output `<!-- PANEL: panelType -->` before the content
-- **AND** output `<!-- /PANEL -->` after the content
-- **AND** recursively convert the panel's content children
-
-#### Scenario: Convert status labels with markers
-
-- **WHEN** ADF contains a `status` node with `text` and `color` attributes
-- **THEN** the system SHALL output `<!-- STATUS: "text" color -->` inline
-
-#### Scenario: Convert date nodes with markers
-
-- **WHEN** ADF contains a `date` node with `timestamp` attribute
-- **THEN** the system SHALL output `<!-- DATE: timestamp -->` inline
-
-#### Scenario: Convert media nodes
-
-- **WHEN** ADF contains a `mediaSingle` node wrapping a `media` node
-- **THEN** the system SHALL output `![alt](filename)` using the media's filename attribute
-- **AND** track the attachment reference for upload
-
-#### Scenario: Handle unknown node types gracefully
-
-- **WHEN** ADF contains a node type not explicitly handled
-- **THEN** the system SHALL output `<!-- ADF:type {...attrs} -->` as a pass-through marker
-- **AND** preserve the node's JSON attributes for roundtrip
-
-#### Scenario: Handle nested structures
-
-- **WHEN** ADF contains nested elements (e.g., expand inside panel, list inside expand)
-- **THEN** the system SHALL recursively convert all nested content
-- **AND** maintain correct marker nesting order
-
----
+## MODIFIED Requirements
 
 ### Requirement: Markdown to ADF conversion
 
@@ -137,8 +47,14 @@ This conversion is used for **new page uploads only**, not for roundtrip editing
 #### Scenario: Parse status markers into ADF status nodes
 
 - **WHEN** markdown contains `<!-- STATUS: "text" color -->` markers
-- **THEN** the system SHALL produce
-  `{"type": "status", "attrs": {"text": "...", "color": "...", "style": "bold"}}` ADF nodes
+- **THEN** the system SHALL produce `{"type": "status", "attrs": {"text": "...", "color": "...", "style": "bold"}}` ADF nodes
+
+#### Scenario: Parse multiple inline markers on one line
+
+- **WHEN** markdown contains multiple inline markers on a single line (e.g., `<!-- STATUS: "A" green --> <!-- STATUS: "B" red -->`)
+- **THEN** the system SHALL parse each marker individually
+- **AND** produce separate ADF nodes for each marker
+- **AND** SHALL NOT merge multiple markers into a single node
 
 #### Scenario: Parse date markers into ADF date nodes
 
@@ -150,21 +66,11 @@ This conversion is used for **new page uploads only**, not for roundtrip editing
 - **WHEN** markdown contains `<!-- ADF:type {...attrs} -->` pass-through markers
 - **THEN** the system SHALL reconstruct the original ADF node from the preserved JSON
 
-#### Scenario: Parse multiple inline markers on one line
-
-- **WHEN** markdown contains multiple inline markers on a single line
-  (e.g., `<!-- STATUS: "A" green --> <!-- STATUS: "B" red -->`)
-- **THEN** the system SHALL parse each marker individually
-- **AND** produce separate ADF nodes for each marker
-- **AND** SHALL NOT merge multiple markers into a single node
-
 #### Scenario: Handle marker-free markdown
 
 - **WHEN** markdown contains no custom markers (manually written markdown for new page upload)
 - **THEN** the system SHALL produce valid ADF JSON from standard markdown elements only
 - **AND** not fail or warn about missing markers
-
----
 
 ### Requirement: Roundtrip fidelity
 
@@ -193,3 +99,11 @@ directly on ADF JSON and does not use this conversion path.
   (e.g., panel inside expand, list inside panel) is converted to Markdown and back
 - **THEN** the nesting structure SHALL be preserved
 - **AND** all elements at every nesting level SHALL be present in the output
+
+## REMOVED Requirements
+
+### Requirement: Upload Markdown to ADF via v2 API
+
+**Reason**: The Storage Format fallback path (`--legacy` flag and marker-free fallback to v1 API) is being removed. All uploads SHALL use ADF v2 exclusively. The scenarios for legacy/fallback behavior are replaced by the simplified requirement below.
+
+**Migration**: Remove `--legacy` flag. All markdown uploads go through `markdown_to_adf.py` → v2 API regardless of marker presence.

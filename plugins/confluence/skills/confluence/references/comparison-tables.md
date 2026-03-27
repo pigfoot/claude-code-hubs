@@ -6,7 +6,7 @@
 |-----|---------------------|----------------|
 | **Use Case** | Creating new documents, major rewrites | Editing existing documents |
 | **Workflow** | Generate locally → Review → Publish | Read → Edit → Write back |
-| **Macro Preservation** | N/A (newly created) | ❌ Lost |
+| **Macro Preservation** | N/A (newly created) | ❌ Lost via Markdown conversion (preserved via Method 4/6 ⭐ Recommended/7 ✅ Implemented) |
 | **Conversion Quality** | ⭐⭐⭐⭐⭐ (stable one-way conversion) | ⭐⭐⭐ (may be lossy) |
 | **Human Review** | ✅ Mandatory review | ⚠️ Optional review |
 | **Version Control** | ✅ Markdown in Git | ⚠️ Can only commit after conversion |
@@ -24,7 +24,9 @@ Creating new document?
 
 Editing existing document?
   ├─→ Has macros/properties?
-  │    └─→ Yes: Edit directly in Confluence web UI
+  │    └─→ Yes: Use Method 6 (ADF JSON diff) ⭐ Recommended or Method 7 (ADF-native roundtrip) ✅ Implemented
+  │         - These preserve all macros while allowing text editing
+  │         - Confluence web UI is also an option for manual edits
   │    └─→ No: Check edit type
   │         ├─→ Simple text update: Roundtrip OK
   │         └─→ Major rewrite: Consider Markdown-First
@@ -74,16 +76,16 @@ conf_get({
 
 ## 3. Implementation Methods Comparison (Roundtrip)
 
-| Aspect | Method 1: REST API + Storage | Method 2: MCP + ADF | Method 3: Pragmatic Hybrid |
+| Aspect | Method 1: REST API + Storage (deprecated) | Method 2: MCP + ADF (deprecated) | Method 3: Pragmatic Hybrid (deprecated) |
 |-----|------------------------|----------------|---------------------|
 | **Read Method** | REST API v2 | MCP getConfluencePage | MCP getConfluencePage |
 | **Format** | Storage Format (XHTML) | ADF (JSON) | ADF (JSON, direct manipulation) |
-| **Conversion Tools** | confluence-to-markdown<br>md2cf | atlas-doc-parser (Python)<br>marklassian (JavaScript) | None (Claude understands JSON directly) |
+| **Conversion Tools** | confluence-to-markdown<br>md2cf (removed) | atlas-doc-parser (Python)<br>marklassian (JavaScript) | None (Claude understands JSON directly) |
 | **Write Method** | REST API v2 | MCP updateConfluencePage | MCP updateConfluencePage |
 | **Language Requirements** | Python | Python + JavaScript | Python (MCP wrapper) |
 | **Setup Complexity** | ⭐⭐⭐ (API token) | ⭐⭐⭐⭐ (dual-language environment) | ⭐⭐ (MCP already set up) |
 | **Conversion Quality** | ⭐⭐⭐⭐ (best) | ⭐⭐⭐ | ⭐⭐ (simple edits only) |
-| **Macro Preservation** | ❌ | ❌ | ❌ |
+| **Macro Preservation** | ❌ (Markdown step) | ❌ (Markdown step) | ❌ (JSON mishandling) |
 | **Maturity** | ⭐⭐⭐⭐⭐ (battle-tested) | ⭐⭐⭐ (newer tools) | ⭐⭐ (experimental) |
 | **Best For** | Production environment, complex edits | MCP-first architecture | Simple edits, quick prototypes |
 | **Implementation Time** | Medium | High | Low |
@@ -93,13 +95,16 @@ conf_get({
 
 ```
 Need production-grade quality?
-  └─→ Method 1 (REST API + Storage Format)
+  └─→ Method 1 (REST API + Storage Format) (deprecated)
 
 Already using MCP and don't want REST API?
-  └─→ Method 2 (MCP + ADF)
+  └─→ Method 2 (MCP + ADF) (deprecated)
 
 Just simple edit testing?
-  └─→ Method 3 (Pragmatic Hybrid)
+  └─→ Method 3 (Pragmatic Hybrid) (deprecated)
+
+Preferred: Use Method 6 (ADF JSON diff) ⭐ Recommended
+           or Method 7 (ADF-native roundtrip) ✅ Implemented
 ```
 
 ---
@@ -163,7 +168,7 @@ export CONFLUENCE_API_TOKEN="your_api_token_here"
 
 | Tool | Language | Target Format | Maturity | Features |
 |-----|------|---------|-------|------|
-| **md2cf** | Python | Storage Format | ⭐⭐⭐⭐⭐ | Battle-tested, based on mistune |
+| **md2cf** (removed) | Python | Storage Format | ⭐⭐⭐⭐⭐ | Battle-tested, based on mistune |
 | **markdown-to-confluence** | Python | Storage Format | ⭐⭐⭐⭐ | REST API v2, supports GitHub Actions |
 | **marklassian** | JavaScript | ADF | ⭐⭐⭐⭐ | Lightweight, designed for ADF |
 | **markdown-confluence** | JavaScript | ADF | ⭐⭐⭐⭐ | CLI + Library, multiple integrations |
@@ -175,14 +180,14 @@ export CONFLUENCE_API_TOKEN="your_api_token_here"
 | **confluence-to-markdown-converter** | Java/XSLT | Storage Format | ⭐⭐⭐⭐ | XSLT-based, customizable |
 | **atlas-doc-parser** | Python | ADF | ⭐⭐⭐ | Designed for AI, object-oriented API |
 | **adf-to-md** | JavaScript | ADF | ⭐⭐⭐ | Simple, lightweight |
-| **html2text** | Python | HTML/Storage | ⭐⭐⭐⭐⭐ | General HTML conversion tool |
+| **html2text** (removed) | Python | HTML/Storage | ⭐⭐⭐⭐⭐ | General HTML conversion tool |
 
 ### Bidirectional Conversion
 
 | Tool | Language | Supported Directions | Roundtrip Quality | Notes |
 |-----|------|---------|--------------|------|
 | **extended-markdown-adf-parser** | JavaScript | MD ↔ ADF | ⭐⭐⭐⭐ | Claims "complete round-trip fidelity" |
-| **md2cf + html2text** | Python | MD ↔ Storage | ⭐⭐⭐ | Combined solution, macros will be lost |
+| **md2cf + html2text** (removed) | Python | MD ↔ Storage | ⭐⭐⭐ | Combined solution, macros will be lost |
 | **@atlaskit/editor-markdown-transformer** | JavaScript | MD ↔ ADF | ⭐⭐⭐⭐ | Official Atlassian, but complex |
 
 ---
@@ -192,10 +197,21 @@ export CONFLUENCE_API_TOKEN="your_api_token_here"
 | Format | Full Name | Type | Readability | Macro Support | API Support |
 |-----|---------|------|-------|-----------|---------|
 | **Markdown** | Markdown | Plain text | ⭐⭐⭐⭐⭐ | ❌ | ❌ (requires conversion) |
-| **ADF** | Atlassian Document Format | JSON | ⭐⭐ | ✅ (partial) | ✅ (v2 API) |
-| **Storage Format** | Confluence Storage Format | XHTML-based XML | ⭐⭐⭐ | ✅ (complete) | ✅ (v1/v2 API) |
+| **ADF** | Atlassian Document Format | JSON | ⭐⭐ | ✅ (partial) | ✅ (v2 API, MCP Gateway) |
+| **Storage Format** | Confluence Storage Format | XHTML-based XML | ⭐⭐⭐ | ✅ (complete) | ✅ (**v2 API** `representation: storage` + v1 API) |
 | **View Format** | - | Rendered HTML | ⭐⭐⭐⭐ | ✅ (rendered) | ✅ (read-only) |
 | **Wiki Markup** | Confluence Wiki Markup | Plain text | ⭐⭐⭐⭐ | ✅ (legacy) | ⚠️ (deprecated) |
+
+> **Key clarifications:**
+>
+> - **Storage Format is NOT deprecated.** Only the v1 API *endpoints* (`/rest/api/content/...`)
+>   are being deprecated. The v2 API fully supports `representation: storage` for GET/PUT/POST.
+> - **Legacy Editor (UI)** is deprecated by April 2026, but this does not affect Storage Format
+>   API support.
+> - **MCP Gateway** only supports ADF format, but the REST API v2 supports both Storage Format
+>   and ADF.
+> - A direct Storage Format XML roundtrip (without Markdown conversion) is **lossless** for all
+>   macros.
 
 ### Format Examples
 
@@ -250,12 +266,12 @@ This is a paragraph with **bold** text.
 
 | Use Case | Recommended Workflow | Recommended Method | Recommended Auth |
 |---------|------------|---------|---------|
-| Create API documentation | Markdown-First | Python scripts (md2cf) | API Token |
-| Create tutorials | Markdown-First | Python scripts (md2cf) | API Token |
+| Create API documentation | Markdown-First | Python scripts (md2cf (removed)) | API Token |
+| Create tutorials | Markdown-First | Python scripts (md2cf (removed)) | API Token |
 | Update simple text | Roundtrip | Method 3 (Pragmatic) | OAuth (MCP) |
 | Batch update multiple pages | Roundtrip | Method 1 (REST API) | API Token |
 | Fix typos | Roundtrip | Method 3 (Pragmatic) | OAuth (MCP) |
-| Rewrite pages with macros | Manual (Confluence Web UI) | - | - |
+| Rewrite pages with macros | Method 6 (ADF JSON diff) ⭐ Recommended or Method 7 (ADF-native roundtrip) ✅ Implemented | Method 6/7 | OAuth (MCP) or API Token |
 | CI/CD auto-publish | Markdown-First | Python scripts + API | API Token |
 | Edit in IDE | Roundtrip | MCP | OAuth |
 | Team collaboration documents | Markdown-First + Git | Python scripts + GitHub Actions | API Token |
@@ -298,8 +314,8 @@ Roundtrip Method:
 Tools to Implement:
   - scripts/md2cf.py (Markdown → Confluence)
   - scripts/cf2md.py (Confluence → Markdown)
-  - Using md2cf library (Python)
-  - Using html2text or confluence-to-markdown-converter
+  - Using md2cf library (Python) (removed)
+  - Using html2text or confluence-to-markdown-converter (html2text removed)
 
 Authentication:
   - MCP: OAuth 2.1 (official)
@@ -314,7 +330,8 @@ Authentication:
 3. **Both authentications coexist**:
    - MCP for search, listing, metadata operations (requires interaction)
    - Scripts for batch processing, content conversion (requires stability)
-4. **Storage Format**: More mature than ADF, better conversion quality
+4. **Storage Format**: More mature than ADF for Markdown conversion quality; v2 API fully
+   supports `representation: storage`. NOT deprecated (only v1 endpoints are deprecated)
 5. **Python-based**: Fits existing ecosystem, simple dependency management
 
 ---

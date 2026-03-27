@@ -8,22 +8,37 @@ conversion challenges.
 
 ## Important Limitations
 
-⚠️ **Critical Warning:**
+⚠️ **Critical Warning -- Markdown Conversion Causes Macro Loss:**
 > "When the MCP fetches and updates pages, it loses macros (page properties, layouts, table of contents)"
 >
 > - [Confluence Community
 >   Discussion](https://community.atlassian.com/forums/Confluence-questions/Confluence-MCP-amp-page-macros/qaq-p/3073340)
 
-**What Gets Lost:**
+**Root Cause:** The macro loss happens during the **Markdown intermediate conversion step**
+(markdownify/html2text drops `ac:*` tags), NOT because of Storage Format or the API itself.
+Direct Storage Format XML roundtrip (read XML, modify XML, write XML) and direct ADF JSON
+roundtrip (Method 6) are both **lossless**.
+
+> **Clarification:** Storage Format is NOT deprecated. Only the v1 API *endpoints*
+> (`/rest/api/content/...`) are being deprecated. The v2 API fully supports
+> `representation: storage` for GET/PUT/POST. The MCP Gateway only supports ADF format,
+> but direct REST API v2 supports both Storage Format and ADF.
+
+**What Gets Lost (via Markdown conversion only):**
 
 - ❌ Confluence macros (TOC, page properties, layouts, etc.)
 - ❌ Special formatting (info panels, expand blocks)
 - ❌ Advanced table formatting
 - ❌ Embedded diagrams (except Draw.io with metadata)
 
+**These are preserved when using lossless methods (direct XML or ADF JSON diff):**
+
+- ✅ All macros preserved via Method 4 (direct XML edit) or Method 6 (ADF JSON diff)
+- ✅ Method 7 (ADF-native roundtrip with markers) preserves most elements
+
 **Conversion Quality:**
 > "Two-way conversion challenges: Tools exist for both directions, but the conversion isn't always lossless due to
-> Confluence's custom macro elements"
+> Confluence's custom macro elements" -- this applies specifically to the **Markdown conversion step**.
 >
 > - [Confluence to Markdown Converter](https://github.com/highsource/confluence-to-markdown-converter)
 
@@ -47,7 +62,7 @@ conversion challenges.
 
 ## Implementation Methods
 
-### Method 1: REST API + Storage Format (Recommended)
+### Method 1: REST API + Storage Format (Legacy -- see Method 6)
 
 **Overview:**
 Uses Confluence's native Storage Format (XHTML-based) for best preservation.
@@ -73,6 +88,10 @@ REST API v2 (write)
   [confluence-to-markdown-converter](https://github.com/highsource/confluence-to-markdown-converter)
 - **Markdown → HTML**: [md2cf](https://pypi.org/project/md2cf/) (uses mistune)
 
+> **Note:** This example uses `md2cf` and `html2text` which have been removed from this
+> plugin. For current implementation, use Method 6 (JSON Diff) or Method 7 (ADF-native
+> roundtrip).
+
 **Python Implementation:**
 
 ```python
@@ -80,10 +99,14 @@ REST API v2 (write)
 """
 scripts/confluence_roundtrip.py
 Roundtrip workflow for editing Confluence pages
+
+NOTE: This example is retained for reference only. The md2cf and html2text
+dependencies have been removed from this plugin. Use Method 6 (JSON Diff)
+or Method 7 (ADF-native roundtrip) instead.
 """
 
 import requests
-from md2cf import md2cf
+from md2cf import md2cf  # REMOVED -- no longer available in this plugin
 from confluence_to_markdown import ConfluenceToMarkdown
 
 # Configuration
@@ -173,14 +196,19 @@ if __name__ == "__main__":
 **Pros:**
 
 - ✅ Better format preservation (Storage Format is native)
-- ✅ Mature tooling (md2cf is well-tested)
+- ✅ ~~Mature tooling (md2cf is well-tested)~~ *(md2cf has been removed from this plugin)*
 - ✅ Direct API control
 
 **Cons:**
 
-- ❌ Still loses macros
-- ❌ Requires Python dependencies
+- ❌ Still loses macros **due to the Markdown conversion step** (not inherent to Storage Format)
+- ❌ ~~Requires Python dependencies~~ *(md2cf, html2text, markdownify, beautifulsoup4 have been removed)*
 - ❌ Need to manage API credentials
+
+> **Note:** A direct Storage Format XML roundtrip (without Markdown conversion) would
+> preserve all macros. The loss is caused by markdownify/html2text, not by the format.
+> The v2 API also supports `representation: storage`, so this method works on both v1
+> and v2 API endpoints.
 
 ---
 
@@ -240,7 +268,7 @@ function markdownToAdf(markdown) {
 - ❌ Requires both Python AND JavaScript
 - ❌ More complex toolchain
 - ❌ ADF conversion may be less mature than Storage Format
-- ❌ Still loses macros
+- ❌ Still loses macros **due to the Markdown conversion step**
 
 ---
 
@@ -307,7 +335,7 @@ def quick_edit_page(page_id: str, edit_instruction: str):
 
 - ❌ Claude must understand ADF structure
 - ❌ Error-prone for complex edits
-- ❌ Still loses macros
+- ❌ May accidentally corrupt or lose macro structures (not from Markdown conversion, but from Claude mishandling JSON)
 
 **Best For:**
 
@@ -322,9 +350,16 @@ def quick_edit_page(page_id: str, edit_instruction: str):
 
 | Method | Setup Complexity | Conversion Quality | Macro Preservation | Best For |
 |--------|-----------------|-------------------|-------------------|----------|
-| **REST API + Storage** | Medium | ⭐⭐⭐⭐ | ❌ | Production use, complex edits |
-| **MCP + ADF** | High | ⭐⭐⭐ | ❌ | MCP-first architecture |
-| **Pragmatic Hybrid** | Low | ⭐⭐ | ❌ | Simple edits, prototyping |
+| **REST API + Storage** | Medium | ⭐⭐⭐⭐ | ❌ Lost via Markdown step | ~~Production use~~ *(deps removed; use Method 6)* |
+| **MCP + ADF** | High | ⭐⭐⭐ | ❌ Lost via Markdown step | MCP-first architecture |
+| **Pragmatic Hybrid** | Low | ⭐⭐ | ⚠️ Risk of Claude mishandling | Simple edits, prototyping |
+
+> **Note:** All three methods above involve Markdown conversion or direct JSON editing, which
+> causes macro loss. For lossless approaches, see **Method 6 (ADF JSON diff)** -- the
+> primary recommended approach -- or Method 7 (ADF-native roundtrip with markers) in the
+> [Implementation Comparison](./roundtrip-implementation-comparison.md).
+> Method 1 relies on `md2cf` and `html2text` which have been removed from this plugin.
+> The v2 REST API supports both `representation: storage` and ADF format.
 
 ---
 
@@ -415,13 +450,18 @@ def write_page_with_comment(page_id: str, markdown: str, metadata: dict, comment
 
 ### Issue: Macros Disappear After Edit
 
-**Problem:** Page macros (TOC, info panels, etc.) are lost
+**Problem:** Page macros (TOC, info panels, etc.) are lost during Markdown conversion
+
+**Root Cause:** The Markdown conversion step (markdownify/html2text) drops Confluence-specific
+XML tags (`ac:*`). This is NOT caused by Storage Format or the API.
 
 **Solutions:**
 
-1. **Don't use roundtrip** - Edit in Confluence web UI instead
-2. **Use raw ADF blocks** in Markdown (if supported by converter)
-3. **Warn users** before editing pages with macros
+1. **Use Method 6 (ADF JSON diff)** - Preserves all macros while allowing text editing
+2. **Use Method 7 (ADF-native roundtrip)** - Preserves macros via HTML comment markers
+3. **Use Method 4 (direct XML edit)** - For programmatic edits without Markdown conversion
+4. **Edit in Confluence web UI** - For complex macro-heavy pages
+5. **Warn users** before editing pages with macros via Markdown-based methods
 
 ### Issue: Tables Lose Formatting
 
@@ -472,24 +512,28 @@ requests.post(..., json=data)  # Not data=json.dumps(data)
             Yes          No
              │           │
              ▼           ▼
-    ┌──────────────┐  ┌──────────────────┐
-    │ Use Web UI   │  │  Roundtrip OK    │
-    │ Don't script │  └────────┬─────────┘
-    └──────────────┘           │
-                               ▼
-                    ┌──────────────────────┐
-                    │  Need production-    │
-                    │  quality conversion? │
-                    └───┬──────────┬───────┘
-                       Yes        No
-                        │          │
-                        ▼          ▼
-                ┌──────────────┐  ┌──────────────┐
-                │  Method 1:   │  │  Method 3:   │
-                │  REST API +  │  │  Pragmatic   │
-                │  Storage     │  │  Hybrid      │
-                └──────────────┘  └──────────────┘
+    ┌──────────────────┐  ┌──────────────────┐
+    │ Need to preserve │  │  Roundtrip OK    │
+    │ macros?          │  └────────┬─────────┘
+    └───┬─────────┬────┘           │
+       Yes        No               ▼
+        │          │     ┌──────────────────────┐
+        ▼          ▼     │  Need production-    │
+  ┌────────────┐  Web UI │  quality conversion? │
+  │ Method 6   │         └───┬──────────┬───────┘
+  │ (ADF JSON  │            Yes        No
+  │  diff) or  │             │          │
+  │ Method 7   │             ▼          ▼
+  │ (ADF-native│     ┌──────────────┐  ┌──────────────┐
+  │  roundtrip)│     │  Method 6:   │  │  Method 3:   │
+  └────────────┘     │  MCP + JSON  │  │  Pragmatic   │
+                     │  Diff (rec.) │  │  Hybrid      │
+                     └──────────────┘  └──────────────┘
 ```
+
+> **Recommendation:** Method 6 (MCP + JSON Diff) is the primary recommended approach
+> for all roundtrip workflows. It preserves macros, uses existing MCP infrastructure,
+> and does not require removed dependencies like md2cf or html2text.
 
 ---
 
@@ -532,7 +576,7 @@ More editable text.
 ## References
 
 - [Confluence to Markdown Converter](https://github.com/highsource/confluence-to-markdown-converter)
-- [md2cf Python Package](https://pypi.org/project/md2cf/)
+- [md2cf Python Package](https://pypi.org/project/md2cf/) *(removed from this plugin -- listed for historical reference)*
 - [atlas-doc-parser Documentation](https://atlas-doc-parser.readthedocs.io/)
 - [marklassian - Markdown to ADF](https://marklassian.netlify.app/)
 - [Confluence Storage Format

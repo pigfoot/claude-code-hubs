@@ -8,21 +8,35 @@ In-depth comparison of implementation methods for Confluence bidirectional editi
 
 | Method | Core Technology | Complexity | Quality | Macro Preservation | Recommendation |
 |-----|---------|-------|------|-----------|-------|
-| **Method 1: REST API + Storage Format** | Python + Storage Format | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ❌ Lost | ✅ Production environment |
-| **Method 2: MCP + ADF Conversion** | Python + JavaScript + ADF | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ Lost | ⚠️ MCP-only architecture |
-| **Method 3: Pragmatic Hybrid** | MCP + Direct JSON Edit | ⭐⭐ | ⭐⭐ | ❌ Lost | ✅ Quick prototype/simple edits |
+| **Method 1: REST API + Storage Format (DEPRECATED)** | Python + Storage Format | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ❌ Lost (Markdown step) | ~~Production environment~~ Deprecated |
+| **Method 2: MCP + ADF Conversion (DEPRECATED)** | Python + JavaScript + ADF | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ Lost (Markdown step) | ~~MCP-only architecture~~ Deprecated |
+| **Method 3: Pragmatic Hybrid (DEPRECATED)** | MCP + Direct JSON Edit | ⭐⭐ | ⭐⭐ | ❌ Lost (JSON mishandling) | ~~Quick prototype~~ Deprecated |
 | **Method 4: Direct XML/JSON Edit** | Python + lxml/json | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Fully preserved** | ⚠️ No Claude intelligent editing |
 | **Method 5: Hybrid Strategy** | Auto-detection + Method 1/4 | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⚠️ Smart preservation | ✅ Auto-selection |
-| **Method 6: MCP + JSON Diff** | MCP + ADF + JSON Diff + Interactive | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Preserved + Optional Body Edit** | ⭐ **Recommended** |
-| **Method 7: ADF-Native Roundtrip** | v2 API + ADF + Custom Markers | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Full preservation + Editable** | ✅ Implemented |
+| **Method 6: MCP + JSON Diff (⭐ Recommended)** | MCP + ADF + JSON Diff + Interactive | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Preserved + Optional Body Edit** | ⭐ **Recommended** |
+| **Method 7: ADF-Native Roundtrip (✅ Implemented)** | v2 API + ADF + Custom Markers | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ **Full preservation + Editable** | ✅ **Implemented** |
 
-⚠️ **Important: Methods 1-3 all lose Confluence macros** because they go through Markdown conversion. Method 4
-preserves macros but cannot use Claude. **Method 6 is the recommended approach** - it preserves macros while allowing
-Claude to edit all text content (including optional macro bodies with user confirmation and automatic backup/rollback).
+⚠️ **Important: Methods 1-3 are DEPRECATED and their dependencies (`md2cf`, `html2text`, `markdownify`, `beautifulsoup4`)
+have been removed from the plugin.** These methods all lost Confluence macros because they went through a Markdown
+conversion step. The loss was caused by markdownify/html2text dropping Confluence-specific XML tags (`ac:*`) -- it was
+NOT caused by Storage Format or the API itself. A direct Storage Format XML roundtrip (Method 4) or a direct
+ADF JSON diff (Method 6) is **lossless**. Storage Format is NOT deprecated; the v2 API fully supports
+`representation: storage` for GET/PUT/POST. Only the v1 API *endpoints* are being deprecated.
+The MCP Gateway only supports ADF format, but the REST API v2 supports both Storage Format and ADF.
+**All uploads now use `markdown_to_adf.py` with the v2 ADF API (Method 7).**
+
+Method 4 preserves macros but cannot use Claude. **Method 6 is the recommended approach** - it preserves macros while
+allowing Claude to edit all text content (including optional macro bodies with user confirmation and automatic
+backup/rollback).
 
 ---
 
-## Method 1: REST API + Storage Format (Recommended)
+## Method 1: REST API + Storage Format (DEPRECATED)
+
+> **DEPRECATED:** This method used dependencies that have been removed (`md2cf`, `html2text`, `beautifulsoup4`).
+> The `ConfluenceStorageRenderer`, `convert_markdown_to_storage()`, `convert_storage_to_markdown()` functions
+> and the `--legacy` flag have been removed. Use **Method 6** or **Method 7** instead.
+> This section is kept as historical reference.
 
 ### Architecture Diagram
 
@@ -71,12 +85,12 @@ Claude to edit all text content (including optional macro bodies with user confi
 ### Required Dependencies
 
 ```python
-# requirements.txt
+# requirements.txt (DEPRECATED - these dependencies have been removed)
 requests>=2.31.0
-html2text>=2020.1.16
+html2text>=2020.1.16    # REMOVED
 mistune>=3.0.0
 # Or use md2cf
-md2cf>=2.5.0
+md2cf>=2.5.0             # REMOVED
 ```
 
 ### Complete Implementation Example
@@ -230,7 +244,7 @@ if __name__ == "__main__":
 ### Pros
 
 ✅ **Best conversion quality**: Storage Format is native to Confluence, preserves most information
-✅ **Mature and stable**: md2cf and html2text are battle-tested tools
+✅ **Mature and stable**: ~~md2cf and html2text are battle-tested tools~~ (removed from plugin)
 ✅ **Single language**: Pure Python, simple dependency management
 ✅ **Full control**: Direct REST API access, no black box
 ✅ **Suitable for automation**: Can be used in CI/CD, batch processing
@@ -239,14 +253,16 @@ if __name__ == "__main__":
 ### Cons
 
 ❌ **Requires API Token**: Users need to generate and manage tokens
-❌ **⚠️ Loses Macros**: Because of Markdown conversion, all special Confluence macros (expand, page properties, status,
-etc.) will be lost
+❌ **⚠️ Loses Macros via Markdown conversion**: The `Storage Format → Markdown → Storage Format` conversion process
+loses macros because markdownify drops `ac:*` tags. **This is a Markdown conversion limitation, NOT a Storage Format
+limitation.** A direct Storage XML roundtrip (without Markdown) would preserve all macros.
 ❌ **Requires implementing scripts**: Need to write or maintain Python scripts
 ❌ **Version conflict handling**: Need to implement conflict detection yourself
 
-**About Macro Loss:** This is not a Method 1 problem, but a Markdown limitation. Markdown doesn't support Confluence
-macros, so the `Storage Format → Markdown → Storage Format` conversion process will inevitably lose macros. See
-[Macro Preservation Guide](./macro-preservation-guide.md).
+> **Key clarification:** Storage Format is NOT deprecated. The v2 API fully supports
+> `representation: storage`. Only the v1 API *endpoints* are deprecated. The MCP Gateway
+> only supports ADF, but the REST API v2 supports both formats. See
+> [Macro Preservation Guide](./macro-preservation-guide.md).
 
 ### Use Cases
 
@@ -258,7 +274,12 @@ macros, so the `Storage Format → Markdown → Storage Format` conversion proce
 
 ---
 
-## Method 2: MCP + ADF Conversion
+## Method 2: MCP + ADF Conversion (DEPRECATED)
+
+> **DEPRECATED:** This method used dependencies that have been removed (`md2cf`, `html2text`).
+> The Markdown conversion pipeline has been replaced with ADF-native approaches.
+> Use **Method 6** or **Method 7** instead.
+> This section is kept as historical reference.
 
 ### Architecture Diagram
 
@@ -424,11 +445,9 @@ process.stdin.on('end', () => {
 ❌ **Subprocess calls**: Python calling Node.js, poor performance
 ❌ **Uncertain conversion quality**: ADF tools are newer, not as mature as Storage Format
 ❌ **Difficult debugging**: Cross-language debugging is hard
-❌ **⚠️ Loses Macros**: Because of Markdown conversion, all special macros will be lost
-❌ **MCP limitations**: Depends on MCP behavior, harder to customize
-
-**About Macro Loss:** ADF → Markdown → ADF conversion process will also lose macros because Markdown doesn't support
-Confluence-specific features. See [Macro Preservation Guide](./macro-preservation-guide.md).
+❌ **⚠️ Loses Macros via Markdown conversion**: ADF → Markdown → ADF conversion loses macros because the Markdown
+step cannot represent Confluence-specific elements. This is a Markdown limitation, not an ADF limitation.
+❌ **MCP limitations**: MCP Gateway only supports ADF format (not Storage Format). Depends on MCP behavior, harder to customize.
 
 ### Use Cases
 
@@ -439,7 +458,11 @@ Confluence-specific features. See [Macro Preservation Guide](./macro-preservatio
 
 ---
 
-## Method 3: Pragmatic Hybrid (Quick Prototype)
+## Method 3: Pragmatic Hybrid (DEPRECATED)
+
+> **DEPRECATED:** This method relied on the same Markdown conversion pipeline
+> (using `html2text`, `md2cf`) that has been removed. Use **Method 6** or **Method 7** instead.
+> This section is kept as historical reference.
 
 ### Architecture Diagram
 
@@ -614,12 +637,12 @@ ADF structure that Claude needs to understand:
 ❌ **Higher error rate**: JSON structure may be corrupted
 ❌ **Not suitable for complex edits**: Large changes are error-prone
 ❌ **Difficult debugging**: Invalid JSON is hard to detect
-❌ **⚠️ Loses Macros**: Claude editing ADF JSON may corrupt or lose macro structures
+❌ **⚠️ May corrupt macros**: Although Method 3 does NOT go through Markdown conversion, Claude directly editing ADF
+JSON may accidentally delete or corrupt macro structures because Claude might treat macros as regular content nodes.
+This is a different failure mode from Methods 1-2 (JSON mishandling vs Markdown conversion loss).
 ❌ **Not suitable for production**: Insufficient reliability
 
-**About Macro Loss:** Although Method 3 doesn't go through Markdown, Claude directly editing ADF JSON may accidentally
-delete or corrupt macro structures because Claude might treat macros as regular content nodes. See
-[Macro Preservation Guide](./macro-preservation-guide.md).
+See [Macro Preservation Guide](./macro-preservation-guide.md) for details on macro preservation across methods.
 
 ### Use Cases
 
@@ -770,7 +793,7 @@ roundtrip_direct_xml("123456789", edit_example)
 
 ---
 
-## Method 5: Hybrid Strategy with Auto-Detection (Recommended)
+## Method 5: Hybrid Strategy with Auto-Detection
 
 ### Overview
 
@@ -1718,9 +1741,9 @@ if __name__ == "__main__":
 | Add new sections (text only) | Safe | ✅ Yes (default) |
 | Edit text inside expand macro | **Advanced** | ✅ **Yes (with confirmation)** |
 | Edit text inside panel/info macros | **Advanced** | ✅ **Yes (with confirmation)** |
-| Edit page with no macros | Safe | ⚠️ OK, but Method 1 is simpler |
+| Edit page with no macros | Safe | ✅ Yes, or use Method 7 (Method 1 DEPRECATED) |
 | Major rewrite of macro-heavy page | Safe/Advanced | ✅ Yes (choose mode based on needs) |
-| Batch operations | N/A | ❌ No, use Method 1 |
+| Batch operations | N/A | ❌ No, use Method 7 (Method 1 DEPRECATED) |
 
 ### Comparison with Other Methods
 
@@ -1767,7 +1790,7 @@ Recommendation:
 |-----|--------|--------|--------|--------|--------|--------|
 | **Lines of Code** | ~150 | ~200 (Py+JS) | ~50 | ~100 | ~250 | ~200 |
 | **Languages** | 1 (Python) | 2 (Py + JS) | 1 (Python) | 1 (Python) | 1 (Python) | 1 (Python) |
-| **Dependencies** | 3 pip | 1 pip + 1 npm | 0 | 1 (lxml) | 4 | 1 (MCP) |
+| **Dependencies** | ~~3 pip~~ (removed) | 1 pip + 1 npm | 0 | 1 (lxml) | 4 | 1 (MCP) |
 | **Setup Steps** | 3 | 5 | 1 | 3 | 3 | 1 (MCP ready) |
 | **Learning Curve** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
 | **Claude Usability** | ✅ Full | ✅ Full | ✅ Full | ❌ No | ⚠️ Depends | ✅ Text only |
@@ -1857,9 +1880,10 @@ Start Roundtrip Implementation Selection
 │       - Auto-rollback if write fails
 │
 ├─→ Page has NO macros at all?
-│   └─→ Yes: Method 1 (REST API + Storage) is simpler
+│   └─→ Yes: Method 7 (ADF-native roundtrip) or Method 6
 │       ✅ Full Claude editing
 │       ✅ No macro concerns
+│       ⚠️ Method 1 is DEPRECATED (dependencies removed)
 │
 ├─→ Need programmatic batch operations (no AI)?
 │   └─→ Yes: Method 4 (Direct XML Edit)
@@ -1873,8 +1897,8 @@ Start Roundtrip Implementation Selection
 │       ⚠️ May lose macros for complex edits
 │
 ├─→ Quick prototype testing?
-│   └─→ Yes: Method 3 (Pragmatic)
-│       ❌ Macros will be lost
+│   └─→ Yes: ~~Method 3 (Pragmatic)~~ DEPRECATED
+│       ❌ Dependencies removed; use Method 6 or 7 instead
 │
 └─→ Unsure?
     └─→ Start with ⭐ Method 6 ⭐
@@ -1887,8 +1911,8 @@ Start Roundtrip Implementation Selection
 
 - **⭐ Default choice**: Method 6 (MCP + JSON Diff) - Claude editing + full macro preservation
 - **Edit macro body content**: ✅ Method 6 Advanced Mode (interactive with backup)
-- **No macros on page**: Method 1 is simpler (but Method 6 works fine too)
-- **Batch operations**: Method 1 for batch processing
+- **No macros on page**: Method 7 or Method 6 (Method 1 is DEPRECATED)
+- **Batch operations**: Method 7 for batch processing (Method 1 is DEPRECATED)
 - **Auto-detection needed**: Method 5 (but Method 6's interactive mode is clearer)
 
 ---
@@ -1900,20 +1924,23 @@ Start Roundtrip Implementation Selection
 #### Phase 1: Quick Validation (1 day)
 
 ```
-Implementation: Method 3 (Pragmatic Hybrid)
+Implementation: Method 3 (Pragmatic Hybrid) -- DEPRECATED
 Goal: Validate MCP integration, test simple edits
 Output: Proof of concept that can edit simple pages with Claude
+Note: Method 3 dependencies have been removed. Use Method 6 or 7 instead.
 ```
 
 #### Phase 2: Production Ready (3-5 days)
 
 ```
-Implementation: Method 1 (REST API + Storage)
+Implementation: Method 1 (REST API + Storage) -- DEPRECATED
 Goal: Stable and reliable roundtrip workflow
 Output:
   - scripts/cf2md.py (Confluence → Markdown)
   - scripts/md2cf.py (Markdown → Confluence)
   - Complete error handling and validation
+Note: Method 1 dependencies (md2cf, html2text) have been removed.
+      Use Method 7 (ADF-native roundtrip) for upload/download instead.
 ```
 
 #### Phase 3: Integration Optimization (Optional)
@@ -1930,22 +1957,22 @@ Optimization:
 
 | Use Case | Recommended Method | Reason |
 |---------|---------|------|
-| **Batch fix typos** | Method 1 | Need stability, batch processing |
-| **Add new paragraph** | Method 3 → Method 1 | Test with Method 3 first, confirm then use Method 1 |
-| **Update code blocks** | Method 1 | Code format important, need precise conversion |
-| **Change headings** | Method 3 | Simple task, Method 3 sufficient |
-| **Reorganize content structure** | Method 1 | Complex edit, need high-quality conversion |
-| **CI/CD auto-update** | Method 1 | Production environment, must be stable |
-| **Interactive editing (IDE)** | Method 3 | Real-time user editing, speed priority |
+| **Batch fix typos** | Method 7 | Need stability, batch processing (Method 1 DEPRECATED) |
+| **Add new paragraph** | Method 6 or 7 | Use Method 6 for interactive, Method 7 for scripts (Methods 1, 3 DEPRECATED) |
+| **Update code blocks** | Method 7 | Code format important, need precise conversion (Method 1 DEPRECATED) |
+| **Change headings** | Method 6 | Simple task, MCP-based editing (Method 3 DEPRECATED) |
+| **Reorganize content structure** | Method 6 or 7 | Complex edit, need high-quality conversion (Method 1 DEPRECATED) |
+| **CI/CD auto-update** | Method 7 | Production environment, must be stable (Method 1 DEPRECATED) |
+| **Interactive editing (IDE)** | Method 6 | Real-time user editing, MCP-based (Method 3 DEPRECATED) |
 
 ---
 
 ## Implementation Checklist
 
-### Method 1 (REST API + Storage)
+### Method 1 (REST API + Storage) -- DEPRECATED
 
-- [ ] Set up environment variables (CONFLUENCE_URL, API_TOKEN, USERNAME)
-- [ ] Install Python dependencies (`pip install requests html2text mistune`)
+- [ ] ~~Set up environment variables (CONFLUENCE_URL, API_TOKEN, USERNAME)~~
+- [ ] ~~Install Python dependencies (`pip install requests html2text mistune`)~~ (removed)
 - [ ] Implement `read_page()` function
 - [ ] Implement `write_page()` function
 - [ ] Add version number checking
@@ -1956,10 +1983,10 @@ Optimization:
 - [ ] Test complex edits (tables, lists, code)
 - [ ] Document usage
 
-### Method 2 (MCP + ADF)
+### Method 2 (MCP + ADF) -- DEPRECATED
 
-- [ ] Set up MCP OAuth authentication
-- [ ] Install Python dependencies (`pip install atlas-doc-parser`)
+- [ ] ~~Set up MCP OAuth authentication~~
+- [ ] ~~Install Python dependencies (`pip install atlas-doc-parser`)~~
 - [ ] Install Node.js dependencies (`npm install marklassian`)
 - [ ] Implement Python `adf_to_markdown()` function
 - [ ] Implement Node.js `markdown_to_adf()` script
@@ -1970,9 +1997,9 @@ Optimization:
 - [ ] Optimize performance (consider caching)
 - [ ] Document setup steps
 
-### Method 3 (Pragmatic)
+### Method 3 (Pragmatic) -- DEPRECATED
 
-- [ ] Set up MCP OAuth authentication
+- [ ] ~~Set up MCP OAuth authentication~~
 - [ ] Implement `quick_edit()` function
 - [ ] Design Claude prompt template
 - [ ] Add JSON validation
@@ -2003,7 +2030,7 @@ Optimization:
 - Implement XML structure validation
 - Start testing with simple pages
 
-### Method 5 (Hybrid Strategy) ⭐ Recommended
+### Method 5 (Hybrid Strategy)
 
 - [ ] **Prerequisites**: Complete Method 1 and Method 4 implementations first
 - [ ] Implement `MacroImportance` and `EditComplexity` enums
@@ -2070,8 +2097,8 @@ Primary Implementation:
     - Advanced Mode (optional): Edit macro bodies with confirmation and backup
 
 Alternative Options (special requirements):
-  - Page has no macros: Method 1 (simpler, full Claude access)
-  - Batch programmatic operations: Method 1 or Method 4
+  - Page has no macros: Method 7 (ADF-native, full Claude access) (Method 1 DEPRECATED)
+  - Batch programmatic operations: Method 7 or Method 4 (Method 1 DEPRECATED)
   - Need auto-detection logic: Method 5 (Hybrid)
 ```
 
@@ -2152,7 +2179,7 @@ Phase 3 - Testing & Documentation (2 days):
 
 | Method | Macro Preserved | Claude Edit | Macro Body Edit | Auth | Complexity |
 |--------|----------------|-------------|-----------------|------|------------|
-| Method 1 | ❌ Lost | ✅ Full | ❌ N/A | API Token | Low |
+| ~~Method 1~~ (DEPRECATED) | ❌ Lost | ✅ Full | ❌ N/A | API Token | Low |
 | Method 4 | ✅ Full | ❌ No | ✅ Programmatic | API Token | Medium |
 | Method 5 | ⚠️ Depends | ⚠️ Depends | ⚠️ Depends | Both | High |
 | **Method 6** | ✅ **Full** | ✅ **Text** | ❌ No | **MCP OAuth** | **Medium** |
@@ -2173,8 +2200,8 @@ Edit request comes in:
 │       (No automated method can safely do this)
 │
 └─→ Is it a page with NO macros?
-    └─→ Yes: Method 6 works, but Method 1 is simpler
-        (Consider using Method 1 for macro-free pages)
+    └─→ Yes: Method 6 works, or use Method 7 for upload/download
+        (Method 1 is DEPRECATED; dependencies removed)
 ```
 
 See: [Macro Preservation Guide](./macro-preservation-guide.md)
@@ -2212,12 +2239,11 @@ See: [Macro Preservation Guide](./macro-preservation-guide.md)
 
 ---
 
-## Method 7: ADF-Native Roundtrip (Implemented)
+## Method 7: ADF-Native Roundtrip (✅ Implemented)
 
 > **Status**: Implemented and tested.
 > Files: `adf_to_markdown.py`, `markdown_to_adf.py`
-> Integrated into `download_confluence.py` (default) and `upload_confluence.py` (auto-detect).
-> Use `--legacy` flag on either script to fall back to v1 Storage format.
+> Integrated into `download_confluence.py` and `upload_confluence.py` (ADF v2 only).
 
 ### Overview
 
@@ -2276,20 +2302,26 @@ during the download → edit → upload cycle.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Why v2 API?
+### Why v2 API with ADF?
 
-The v1 API returns Storage format (XML/HTML), which:
+> **Note:** Storage Format is NOT deprecated. The v2 API supports both
+> `representation: storage` and ADF. The choice of ADF here is for Method 7's
+> marker-based approach, not because Storage Format has a problem.
 
-- Does **not** contain `inlineCard` nodes (they only exist in ADF)
-- Wraps new ADF panels in `ac:adf-extension` (unrecognized by current handlers)
-- Uses `ac:emoticon` for emojis (not handled by markdownify)
-- Uses `ac:link > ri:user` for mentions (not handled by markdownify)
+When using **Markdown conversion** (the lossy step), the v1 Storage format path has
+additional challenges because markdownify cannot handle these elements:
 
-The v2 API returns ADF JSON, where all elements are clean typed nodes.
+- `ac:emoticon` for emojis (not handled by markdownify)
+- `ac:link > ri:user` for mentions (not handled by markdownify)
+- `ac:adf-extension` wrapper for new ADF panels (unrecognized by markdownify)
+- `inlineCard` nodes do not exist in Storage format at all (ADF-only)
+
+The v2 API with ADF JSON returns all elements as clean typed nodes, making it
+easier to build a custom walker (Method 7's approach).
 
 ### Comparison with existing methods
 
-| Aspect | Method 1 (current) | Method 6 (JSON Diff) | Method 7 (ADF-native) |
+| Aspect | Method 1 (DEPRECATED) | Method 6 (JSON Diff) | Method 7 (ADF-native) |
 |--------|-------------------|---------------------|----------------------|
 | **API** | v1 (Storage) | v2 (ADF) via MCP | v2 (ADF) via REST |
 | **Format** | XML/HTML → Markdown | ADF → text extraction | ADF → Markdown with markers |
@@ -2319,8 +2351,8 @@ The v2 API returns ADF JSON, where all elements are clean typed nodes.
 
 ## References
 
-- [md2cf Documentation](https://pypi.org/project/md2cf/)
-- [html2text](https://github.com/Alir3z4/html2text/)
+- [md2cf Documentation](https://pypi.org/project/md2cf/) (removed from plugin)
+- [html2text](https://github.com/Alir3z4/html2text/) (removed from plugin)
 - [atlas-doc-parser](https://atlas-doc-parser.readthedocs.io/)
 - [marklassian](https://marklassian.netlify.app/)
 - [Confluence REST API v2](https://developer.atlassian.com/cloud/confluence/rest/v2/)
