@@ -215,11 +215,89 @@ mcp__plugin_confluence_atlassian__searchConfluenceUsingCql({
 uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki
 ```
 
+### Create/Update Pages via MCP (Small Documents Only)
+
+```javascript
+// Create page
+mcp__plugin_confluence_atlassian__createConfluencePage({
+  cloudId: "site.atlassian.net", spaceId: "SPACE_ID",
+  title: "Page Title", contentFormat: "adf", body: JSON.stringify(adfJson)
+})
+
+// Update page
+mcp__plugin_confluence_atlassian__updateConfluencePage({
+  cloudId: "site.atlassian.net", pageId: "PAGE_ID",
+  title: "Title", contentFormat: "adf", body: JSON.stringify(adfJson)
+})
+```
+
+## Editing Existing Pages: Decision Order
+
+1. **Structural scripts** (add_table_row, insert_section, add_panel...) → precise, fast, ~1s
+2. **Method 6** (mcp_json_diff_roundtrip) → free-form text editing, fix typos, AI-driven
+3. **upload_confluence.py** → full page replacement (last resort)
+
+Always start with `analyze_page.py PAGE_ID` to understand the page structure first.
+
+## Common Mistakes
+
+| ❌ Wrong | ✅ Correct |
+|----------|-----------|
+| Creating temp scripts | Use existing: `analyze_page.py` |
+| Using raw XML | Use markdown: `![alt](path.png)` |
+| MCP for uploads | Use `upload_confluence.py` |
+| Forgetting diagram conversion | Pre-convert Mermaid/PlantUML to PNG/SVG |
+| Method 6 for structural changes | Use REST API scripts (add_table_row, etc.) |
+| MCP `contentFormat: "markdown"` | Use `contentFormat: "adf"` with pre-processed ADF |
+| Ignoring 401 Unauthorized | Run `/mcp` to re-authenticate |
+
 ## Image Handling
 
 1. Convert diagrams if needed: `mmdc -i diagram.mmd -o diagram.png` or `plantuml diagram.puml -tpng`
 2. Use markdown syntax: `![alt](./path/to/image.png)`
 3. Upload: `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID`
+
+## Checklists
+
+**Upload**: Convert diagrams → Use markdown image syntax → `--dry-run` test → Upload with script → Verify page
+
+**Download**: Get page ID (use `url_resolver.py` for short URLs) → Set output dir → Run download → Verify attachments
+
+## Script Reference
+
+All scripts: `uv run --managed-python scripts/SCRIPT_NAME.py`
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `analyze_page.py` | Analyze page structure, suggest tools | `PAGE_ID [--type codeBlock\|table\|...]` |
+| `add_table_row.py` | Add table row (~1s) | `PAGE_ID --table-heading "..." --after-row-containing "..." --cells "..." "..."` |
+| `add_list_item.py` | Add bullet/numbered list item | `PAGE_ID --after-heading "..." --item "..." [--position start\|end]` |
+| `add_panel.py` | Add info/warning/note/success panel | `PAGE_ID --after-heading "..." --panel-type info --content "..."` |
+| `insert_section.py` | Insert heading + content | `PAGE_ID --new-heading "..." --level 2 [--after-heading "..."]` |
+| `add_to_codeblock.py` | Add line to code block | `PAGE_ID --search-text "..." --add-line "..." [--position after]` |
+| `add_blockquote.py` | Add blockquote | `PAGE_ID --quote "..." [--after-heading "..."\|--at-end]` |
+| `add_rule.py` | Add horizontal rule | `PAGE_ID [--after-heading "..."\|--at-end]` |
+| `add_media.py` | Upload + embed image | `PAGE_ID --image-path "./img.png" [--after-heading "..."\|--at-end] [--width 500]` |
+| `add_media_group.py` | Multiple images in row | `PAGE_ID --images "./img1.png" "./img2.png" [--after-heading "..."\|--at-end]` |
+| `upload_attachment.py` | Upload any file type | `PAGE_ID --file "./report.pdf" --at-end` |
+| `add_nested_expand.py` | Nested expand panel | `PAGE_ID --parent-expand "Details" --title "More" --content "..."` |
+| `add_status.py` | Add status label | `PAGE_ID --search-text "..." --status "TODO" [--color blue]` |
+| `add_mention.py` | Add @mention | `PAGE_ID --search-text "..." --user-id "557058..." [--display-name "John"]` |
+| `add_date.py` | Add inline date | `PAGE_ID --search-text "..." --date "2026-03-15"` |
+| `add_emoji.py` | Add emoji | `PAGE_ID --search-text "..." --emoji ":smile:"` |
+| `add_inline_card.py` | Add URL preview card | `PAGE_ID --search-text "..." --url "https://..."` |
+| `upload_confluence.py` | Upload Markdown as page | `doc.md --id PAGE_ID` or `doc.md --space KEY --parent-id ID` |
+| `download_confluence.py` | Download page as Markdown | `PAGE_ID [--download-children] [--output-dir ./docs]` |
+| `convert_markdown_to_wiki.py` | Markdown ↔ Wiki Markup | `input.md output.wiki` |
+| `mcp_json_diff_roundtrip.py` | Method 6 text editing | Used internally by Method 6 workflow |
+
+All structural scripts support `--dry-run` for preview.
+
+## When NOT to Use Scripts
+
+- Simple page reads → MCP directly
+- Small content, no images (<10KB) → MCP may work
+- Jira issues → Use Jira-specific tools
 
 ## Prerequisites
 
@@ -230,6 +308,7 @@ uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki
 
 ## References
 
-- [CQL Reference](references/cql_reference.md)
-- [Mention Account ID Lookup](references/mention-account-id-lookup.md)
-- [Troubleshooting](references/troubleshooting.md)
+- [Wiki Markup Guide](references/wiki_markup_guide.md) - Syntax reference
+- [CQL Reference](references/cql_reference.md) - Query language
+- [Mention Account ID Lookup](references/mention-account-id-lookup.md) - Find user IDs
+- [Troubleshooting](references/troubleshooting.md) - Common errors and fixes
