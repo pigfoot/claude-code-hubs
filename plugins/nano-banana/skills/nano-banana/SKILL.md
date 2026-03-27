@@ -12,6 +12,8 @@ allowed-tools: Bash Write Read AskUserQuestion
 metadata:
   short-description: Unified image generation workflow with Gemini/Imagen models
   version: "0.1.0"
+  openclaw:
+    primaryEnv: GOOGLE_API_KEY
 
 # === GitHub Copilot ===
 
