@@ -1,8 +1,6 @@
 ---
 name: confluence
 description: Confluence documentation management. Use when user provides Confluence URLs (including /wiki/x/... short URLs), or asks to read/upload/download/search/create/update Confluence pages, convert Markdown to Wiki Markup, or sync docs to Confluence.
-allowed-tools: ["mcp__plugin_confluence_atlassian__*"]
-version: 0.1.0
 ---
 
 # Confluence Skill
@@ -12,6 +10,7 @@ version: 0.1.0
 - **DO NOT use MCP for page uploads** — size limit ~10-20KB. Use `upload_confluence.py` instead.
 - **DO NOT use MCP for structural modifications** — AI tool delays cause 650x slowdown (~13min vs ~1s). Use REST API scripts.
 - **DO NOT create temporary analysis scripts** (`/tmp/analyze_*.py`). Use existing `analyze_page.py`.
+- **DO NOT write inline scripts to manipulate ADF JSON** — use the structural scripts which handle ADF marks correctly.
 - **DO NOT use raw XML/HTML** for images. Use markdown syntax: `![alt](path.png)`.
 - **DO NOT forget diagram conversion** — pre-convert Mermaid/PlantUML to PNG/SVG before upload.
 - MCP is fine for **reading pages** and **simple text edits** (Method 6).
@@ -292,6 +291,13 @@ All scripts: `uv run --managed-python scripts/SCRIPT_NAME.py`
 | `mcp_json_diff_roundtrip.py` | Method 6 text editing | Used internally by Method 6 workflow |
 
 All structural scripts support `--dry-run` for preview.
+
+Scripts that accept text input (`add_list_item`, `add_panel`, `add_blockquote`, `insert_section`,
+`add_nested_expand`) support **markdown inline syntax** which is auto-converted to ADF marks:
+
+- `` `code` `` → code mark, `**bold**` → strong mark, `*italic*` → em mark, `~~strike~~` → strike mark
+
+Example: `--item '`"compat"`- **REQUIRED** for all models'` correctly renders as code + bold in Confluence.
 
 ## When NOT to Use Scripts
 

@@ -30,6 +30,7 @@ from confluence_adf_utils import (
     get_page_adf,
     update_page_adf,
     find_list_recursive,
+    parse_inline_marks,
 )
 
 
@@ -66,7 +67,7 @@ def add_list_item(
             {
                 "type": "paragraph",
                 "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-                "content": [{"type": "text", "text": item_text}],
+                "content": parse_inline_marks(item_text),
             }
         ],
     }

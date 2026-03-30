@@ -338,6 +338,63 @@ class TestRoundtripMultipleStatusOnOneLine:
         assert "FAIL" in texts
 
 
+class TestParseInlineMarks:
+    """Test parse_inline_marks converts markdown inline syntax to ADF marks."""
+
+    def test_plain_text(self):
+        from confluence_adf_utils import parse_inline_marks
+
+        result = parse_inline_marks("just plain text")
+        assert result == [{"type": "text", "text": "just plain text"}]
+
+    def test_code_mark(self):
+        from confluence_adf_utils import parse_inline_marks
+
+        result = parse_inline_marks("Use `--flag` here")
+        assert len(result) == 3
+        assert result[0] == {"type": "text", "text": "Use "}
+        assert result[1] == {
+            "type": "text",
+            "text": "--flag",
+            "marks": [{"type": "code"}],
+        }
+        assert result[2] == {"type": "text", "text": " here"}
+
+    def test_bold_mark(self):
+        from confluence_adf_utils import parse_inline_marks
+
+        result = parse_inline_marks("This is **important** text")
+        assert len(result) == 3
+        assert result[1] == {
+            "type": "text",
+            "text": "important",
+            "marks": [{"type": "strong"}],
+        }
+
+    def test_mixed_marks(self):
+        from confluence_adf_utils import parse_inline_marks
+
+        result = parse_inline_marks("`code` - **REQUIRED** for *all*")
+        assert len(result) == 5
+        assert result[0]["marks"] == [{"type": "code"}]
+        assert result[2]["marks"] == [{"type": "strong"}]
+        assert result[4]["marks"] == [{"type": "em"}]
+
+    def test_strikethrough(self):
+        from confluence_adf_utils import parse_inline_marks
+
+        result = parse_inline_marks("~~removed~~")
+        assert result == [
+            {"type": "text", "text": "removed", "marks": [{"type": "strike"}]}
+        ]
+
+    def test_no_marks_no_empty_marks_array(self):
+        from confluence_adf_utils import parse_inline_marks
+
+        result = parse_inline_marks("no marks here")
+        assert "marks" not in result[0]
+
+
 class TestPreprocessor:
     """Test _preprocess_markdown normalizes emoji lines and bare checkboxes."""
 

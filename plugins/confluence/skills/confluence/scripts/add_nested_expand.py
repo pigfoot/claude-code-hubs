@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from confluence_adf_utils import (
     execute_modification,
     find_node_recursive,
+    parse_inline_marks,
 )
 
 
@@ -77,7 +78,7 @@ def add_nested_expand(adf, parent_expand_title, nested_title, nested_content):
             {
                 "type": "paragraph",
                 "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-                "content": [{"type": "text", "text": nested_content}],
+                "content": parse_inline_marks(nested_content),
             }
         ],
     }

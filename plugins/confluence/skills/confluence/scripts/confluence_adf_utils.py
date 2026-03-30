@@ -43,14 +43,87 @@ __all__ = [
     "upload_attachment_file",
     "detect_content_type",
     "is_image_file",
+    # Inline text helpers
+    "parse_inline_marks",
 ]
 
 import json
 import os
+import re
 import sys
 from typing import Optional, Tuple, List, Dict, Any
 import requests
 from dotenv import load_dotenv
+
+
+# ============================================================================
+# Inline text parsing: Markdown inline syntax → ADF text nodes with marks
+# ============================================================================
+
+# Pattern order matters: longer delimiters first to avoid partial matches
+_INLINE_PATTERN = re.compile(
+    r"(?P<code>`[^`]+`)"  # `code`
+    r"|(?P<bold>\*\*[^*]+\*\*)"  # **bold**
+    r"|(?P<italic>\*[^*]+\*)"  # *italic*
+    r"|(?P<strike>~~[^~]+~~)"  # ~~strikethrough~~
+)
+
+
+def parse_inline_marks(text: str) -> List[Dict[str, Any]]:
+    """Parse markdown inline syntax into ADF text nodes with marks.
+
+    Supports: `code`, **bold**, *italic*, ~~strikethrough~~.
+    Plain text without any markup is returned as a single text node.
+
+    Args:
+        text: Input text, optionally containing markdown inline syntax.
+
+    Returns:
+        List of ADF inline content nodes (text nodes with optional marks).
+
+    Example:
+        >>> parse_inline_marks('Use `--flag` for **important** options')
+        [
+            {"type": "text", "text": "Use "},
+            {"type": "text", "text": "--flag", "marks": [{"type": "code"}]},
+            {"type": "text", "text": " for "},
+            {"type": "text", "text": "important", "marks": [{"type": "strong"}]},
+            {"type": "text", "text": " options"},
+        ]
+    """
+    nodes: List[Dict[str, Any]] = []
+    last_end = 0
+
+    for m in _INLINE_PATTERN.finditer(text):
+        # Add preceding plain text
+        if m.start() > last_end:
+            nodes.append({"type": "text", "text": text[last_end : m.start()]})
+
+        raw = m.group()
+        if m.group("code"):
+            inner = raw[1:-1]  # strip backticks
+            nodes.append({"type": "text", "text": inner, "marks": [{"type": "code"}]})
+        elif m.group("bold"):
+            inner = raw[2:-2]  # strip **
+            nodes.append({"type": "text", "text": inner, "marks": [{"type": "strong"}]})
+        elif m.group("italic"):
+            inner = raw[1:-1]  # strip *
+            nodes.append({"type": "text", "text": inner, "marks": [{"type": "em"}]})
+        elif m.group("strike"):
+            inner = raw[2:-2]  # strip ~~
+            nodes.append({"type": "text", "text": inner, "marks": [{"type": "strike"}]})
+
+        last_end = m.end()
+
+    # Trailing plain text
+    if last_end < len(text):
+        nodes.append({"type": "text", "text": text[last_end:]})
+
+    # No markup found → single text node (no empty marks array)
+    if not nodes:
+        return [{"type": "text", "text": text}]
+
+    return nodes
 
 
 def get_auth() -> Tuple[str, Tuple[str, str]]:

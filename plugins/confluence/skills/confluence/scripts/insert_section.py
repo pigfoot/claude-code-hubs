@@ -31,6 +31,7 @@ from confluence_adf_utils import (
     get_page_adf,
     update_page_adf,
     find_heading_index,
+    parse_inline_marks,
 )
 
 
@@ -96,7 +97,7 @@ def insert_section(adf, after_heading, new_heading_text, level, content_text):
         new_paragraph = {
             "type": "paragraph",
             "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-            "content": [{"type": "text", "text": content_text}],
+            "content": parse_inline_marks(content_text),
         }
         content.insert(insert_idx, new_paragraph)
 

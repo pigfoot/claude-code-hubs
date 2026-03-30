@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from confluence_adf_utils import (
     execute_modification,
     find_heading_index,
+    parse_inline_marks,
 )
 
 
@@ -49,7 +50,7 @@ def add_blockquote(adf, quote_text, after_heading=None):
             {
                 "type": "paragraph",
                 "attrs": {"localId": f"para-{os.urandom(4).hex()}"},
-                "content": [{"type": "text", "text": quote_text}],
+                "content": parse_inline_marks(quote_text),
             }
         ],
     }
