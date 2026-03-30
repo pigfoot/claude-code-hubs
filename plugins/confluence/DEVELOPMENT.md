@@ -60,6 +60,22 @@ While page content operations use the v2 REST API exclusively, two operations st
 | **Attachment upload** | `POST /rest/api/content/{id}/child/attachment` | v2 API does not support attachment upload |
 | **Page width (full-width layout)** | `PUT /rest/api/content/{id}/property/content-appearance-published` | v2 API does not expose page properties |
 
+### Known Confluence API Limitations
+
+**`__confluenceMetadata` lost on every update:**
+The v2 API GET does not return `__confluenceMetadata` fields (internal metadata
+Confluence attaches to inline cards / page links for hover previews). Since GET
+never provides them, every PUT drops them. Confluence regenerates them after save,
+but this causes a "Formatting was changed" entry in version comparison even when
+no actual content was modified. This is a Confluence API design limitation — there
+is no workaround.
+
+**Marks array reordering:**
+Confluence normalizes the order of `marks` arrays on save (e.g.,
+`[underline, strong, link]` → `[link, strong, underline]`). This plugin
+pre-sorts marks alphabetically via `normalize_adf_marks()` in
+`update_page_adf()` and `create_page_adf()` to prevent spurious diffs.
+
 ### MCP Upload: Use ADF, Not Markdown
 
 When uploading via MCP (no API token), always use `contentFormat: "adf"` with

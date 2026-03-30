@@ -338,6 +338,122 @@ class TestRoundtripMultipleStatusOnOneLine:
         assert "FAIL" in texts
 
 
+class TestNormalizeAdfMarks:
+    """Test normalize_adf_marks sorts marks to match Confluence server order."""
+
+    def test_sorts_marks_alphabetically(self):
+        from confluence_adf_utils import normalize_adf_marks
+
+        adf = {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "test",
+                            "marks": [
+                                {"type": "underline"},
+                                {"type": "strong"},
+                                {"type": "link", "attrs": {"href": "https://x.com"}},
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        normalize_adf_marks(adf)
+        marks = adf["content"][0]["content"][0]["marks"]
+        types = [m["type"] for m in marks]
+        assert types == ["link", "strong", "underline"]
+
+    def test_no_marks_unchanged(self):
+        from confluence_adf_utils import normalize_adf_marks
+
+        adf = {
+            "type": "doc",
+            "content": [
+                {"type": "paragraph", "content": [{"type": "text", "text": "plain"}]}
+            ],
+        }
+        normalize_adf_marks(adf)
+        assert "marks" not in adf["content"][0]["content"][0]
+
+    def test_nested_marks_in_table(self):
+        from confluence_adf_utils import normalize_adf_marks
+
+        adf = {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableHeader",
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "header",
+                                                    "marks": [
+                                                        {"type": "underline"},
+                                                        {"type": "em"},
+                                                        {"type": "strong"},
+                                                    ],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        normalize_adf_marks(adf)
+        marks = adf["content"][0]["content"][0]["content"][0]["content"][0]["content"][
+            0
+        ]["marks"]
+        types = [m["type"] for m in marks]
+        assert types == ["em", "strong", "underline"]
+
+    def test_idempotent(self):
+        from confluence_adf_utils import normalize_adf_marks
+        import json
+
+        adf = {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "test",
+                            "marks": [
+                                {"type": "strong"},
+                                {"type": "code"},
+                                {"type": "em"},
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        normalize_adf_marks(adf)
+        first = json.dumps(adf, sort_keys=True)
+        normalize_adf_marks(adf)
+        second = json.dumps(adf, sort_keys=True)
+        assert first == second
+
+
 class TestParseInlineMarks:
     """Test parse_inline_marks converts markdown inline syntax to ADF marks."""
 

@@ -45,6 +45,8 @@ __all__ = [
     "is_image_file",
     # Inline text helpers
     "parse_inline_marks",
+    # ADF normalization
+    "normalize_adf_marks",
 ]
 
 import json
@@ -124,6 +126,41 @@ def parse_inline_marks(text: str) -> List[Dict[str, Any]]:
         return [{"type": "text", "text": text}]
 
     return nodes
+
+
+# ============================================================================
+# ADF normalization: match Confluence server's canonical ordering
+# ============================================================================
+
+
+def normalize_adf_marks(adf: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize ADF to match Confluence server's canonical form.
+
+    Sorts marks arrays by type name so that PUT → GET produces identical JSON.
+    Confluence re-orders marks on save (e.g., underline,strong,link → link,strong,underline).
+    By pre-sorting before PUT, we avoid spurious diffs in version history.
+
+    Mutates and returns the same dict for convenience.
+    """
+    _normalize_node(adf)
+    return adf
+
+
+def _normalize_node(node: Any) -> None:
+    """Recursively normalize marks ordering in an ADF node tree."""
+    if isinstance(node, dict):
+        if "marks" in node and isinstance(node["marks"], list):
+            node["marks"].sort(key=_mark_sort_key)
+        for value in node.values():
+            _normalize_node(value)
+    elif isinstance(node, list):
+        for item in node:
+            _normalize_node(item)
+
+
+def _mark_sort_key(mark: Dict[str, Any]) -> str:
+    """Sort key for ADF marks: alphabetical by type."""
+    return mark.get("type", "")
 
 
 def get_auth() -> Tuple[str, Tuple[str, str]]:
@@ -215,6 +252,10 @@ def update_page_adf(
     api_base = base_url.rstrip("/").replace("/wiki", "")
     url = f"{api_base}/wiki/api/v2/pages/{page_id}"
 
+    # Normalize marks order to match Confluence server's canonical form,
+    # preventing spurious diffs in version history.
+    normalize_adf_marks(body)
+
     payload = {
         "id": page_id,
         "status": "current",
@@ -265,6 +306,8 @@ def create_page_adf(
     """
     api_base = base_url.rstrip("/").replace("/wiki", "")
     url = f"{api_base}/wiki/api/v2/pages"
+
+    normalize_adf_marks(body)
 
     payload = {
         "spaceId": space_id,
