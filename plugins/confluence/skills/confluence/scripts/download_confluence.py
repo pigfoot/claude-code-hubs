@@ -55,7 +55,8 @@ def get_confluence_client(env_file: Optional[str] = None) -> Confluence:
     if env_file:
         load_dotenv(env_file)
     else:
-        load_dotenv()
+        load_dotenv(Path(__file__).parent.parent / ".env")
+        load_dotenv()  # Also try CWD for overrides
 
     url = os.getenv("CONFLUENCE_URL")
     username = os.getenv("CONFLUENCE_USER")

@@ -742,6 +742,14 @@ def main():
     """Main batch generation entry point."""
     check_environment()
 
+    # Load credentials from .env bundled with this skill (no-op if not present)
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv(Path(__file__).parent.parent / ".env")
+    except ImportError:
+        pass  # dotenv not available, rely on system env vars
+
     # Parse arguments
     if len(sys.argv) != 3 or sys.argv[1] != "--config":
         print("Usage: uv run generate_batch.py --config <config_file>", file=sys.stderr)

@@ -1,6 +1,6 @@
 ---
 name: confluence
-description: Confluence documentation management. Use when user provides Confluence URLs (including /wiki/x/... short URLs), or asks to read/upload/download/search/create/update Confluence pages, convert Markdown to Wiki Markup, or sync docs to Confluence.
+description: Confluence doc management. Use for Confluence URLs (/wiki/x/... short URLs), reading/uploading/downloading/searching/creating/updating pages, Markdown→ADF conversion, and syncing docs to Confluence.
 ---
 
 # Confluence Skill

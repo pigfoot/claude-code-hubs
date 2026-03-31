@@ -53,6 +53,7 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 from typing import Optional, Tuple, List, Dict, Any
 import requests
 from dotenv import load_dotenv
@@ -178,7 +179,8 @@ def get_auth() -> Tuple[str, Tuple[str, str]]:
         CONFLUENCE_USER - Your email address
         CONFLUENCE_API_TOKEN - API token from https://id.atlassian.com/manage-profile/security/api-tokens
     """
-    load_dotenv()
+    load_dotenv(Path(__file__).parent.parent / ".env")
+    load_dotenv()  # Also try CWD for overrides
 
     url = os.getenv("CONFLUENCE_URL")
     username = os.getenv("CONFLUENCE_USER")
