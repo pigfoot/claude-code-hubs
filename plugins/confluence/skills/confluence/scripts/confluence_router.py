@@ -118,12 +118,12 @@ class ConfluenceRouter:
             RoutingDecision with chosen API mode and rationale
         """
         # Rovo search uses the built-in Claude Code Atlassian integration.
-        # This is external to the plugin — use mcp__claude_ai_Atlassian__searchAtlassian.
+        # This is external to the plugin — use mcp__claude_ai_Atlassian_Rovo__searchAtlassian.
         if operation == OperationType.SEARCH_ROVO:
             return RoutingDecision(
                 api_mode=APIMode.MCP,
                 reason=(
-                    "Rovo AI search: use built-in mcp__claude_ai_Atlassian__searchAtlassian. "
+                    "Rovo AI search: use built-in mcp__claude_ai_Atlassian_Rovo__searchAtlassian. "
                     "If not authenticated, call mcp__claude_ai_Atlassian__authenticate first."
                 ),
                 fallback_available=False,

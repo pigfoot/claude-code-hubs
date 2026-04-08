@@ -243,7 +243,7 @@ class SmartSearch:
             f"\n"
             f"   To upgrade: ask the user if they want Rovo AI search, then:\n"
             f"   1. Call mcp__claude_ai_Atlassian__authenticate (one-time OAuth flow)\n"
-            f'   2. Call mcp__claude_ai_Atlassian__searchAtlassian(query="{query}")\n'
+            f'   2. Call mcp__claude_ai_Atlassian_Rovo__searchAtlassian(query="{query}")\n'
         )
         return suggestion
 

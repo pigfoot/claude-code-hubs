@@ -13,10 +13,9 @@ marketplaces.
 - **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and
   GPG signing support
 - **[confluence](./plugins/confluence/)** - Professional Confluence document management with **intelligent roundtrip
-  editing** (preserves macros while Claude edits content), **smart routing** (auto-selects between MCP and REST API
-  for 25x faster writes), short URL resolution, search quality detection, markdown-first workflows, unlimited file
-  sizes, any-file attachment upload with auto image/document detection, and full-width page layout with table
-  column width control
+  editing** (preserves macros while Claude edits content), **REST API only** (no MCP dependency, always available),
+  CQL search with Rovo AI fallback (`mcp__claude_ai_Atlassian_Rovo__searchAtlassian`), short URL resolution,
+  markdown-first workflows, unlimited file sizes, any-file attachment upload, and full-width page layout control
 - **[nano-banana](./plugins/nano-banana/)** - AI image generation with Gemini models. Direct generation or interactive
   prompting with brand style support
 - **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime,
@@ -179,7 +178,7 @@ jq "$(cat <<'EOF'
   "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
   "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
   "Bash(openspec:*)",
-  "mcp__plugin_context7_context7", "mcp__plugin_confluence_atlassian__*",
+  "mcp__plugin_context7_context7", "mcp__claude_ai_Atlassian__*", "mcp__claude_ai_Atlassian_Rovo__*",
   "Skill(commit:*)", "Skill(confluence:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 ] | unique)
   | .alwaysThinkingEnabled = true
@@ -223,7 +222,7 @@ $newPermissions = @(
     "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
     "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
     "Bash(openspec:*)",
-    "mcp__plugin_context7_context7", "mcp__plugin_confluence_atlassian__*",
+    "mcp__plugin_context7_context7", "mcp__claude_ai_Atlassian__*", "mcp__claude_ai_Atlassian_Rovo__*",
     "Skill(commit:*)", "Skill(confluence:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
 )
 

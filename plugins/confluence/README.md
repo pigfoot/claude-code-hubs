@@ -12,7 +12,7 @@
 - **`--query` flag** — pass natural language intent separately from CQL so
   Rovo suggestions use the original question
 - **Rovo AI search** — on-demand via Claude Code's built-in Atlassian integration
-  (`mcp__claude_ai_Atlassian__searchAtlassian`); no persistent MCP session needed
+  (`mcp__claude_ai_Atlassian_Rovo__searchAtlassian`); no persistent MCP session needed
 - **Method 6 roundtrip** — `_read_page()` and `_write_page()` now use REST API directly
 
 ## Design & Research

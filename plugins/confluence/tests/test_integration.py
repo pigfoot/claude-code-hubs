@@ -596,7 +596,7 @@ class TestSearchCqlIntegration:
         assert analysis.should_suggest_cql is True
         assert analysis.suggestion is not None
         assert "mcp__claude_ai_Atlassian__authenticate" in analysis.suggestion
-        assert "mcp__claude_ai_Atlassian__searchAtlassian" in analysis.suggestion
+        assert "mcp__claude_ai_Atlassian_Rovo__searchAtlassian" in analysis.suggestion
 
     def test_search_empty_results_no_rovo_suggestion(self, cql_auth):
         """

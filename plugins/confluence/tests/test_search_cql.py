@@ -203,10 +203,10 @@ class TestRovoSuggestion:
         assert "mcp__claude_ai_Atlassian__authenticate" in analysis.suggestion
 
     def test_suggestion_mentions_search_tool(self):
-        """Suggestion names mcp__claude_ai_Atlassian__searchAtlassian for follow-up."""
+        """Suggestion names mcp__claude_ai_Atlassian_Rovo__searchAtlassian for follow-up."""
         results = [{"title": "Unrelated", "id": "1"}] * 3
         analysis = self.searcher.analyze_results("needle", results)
-        assert "mcp__claude_ai_Atlassian__searchAtlassian" in analysis.suggestion
+        assert "mcp__claude_ai_Atlassian_Rovo__searchAtlassian" in analysis.suggestion
 
     def test_suggestion_includes_original_query(self):
         """Suggestion embeds the original query so Claude can reuse it."""

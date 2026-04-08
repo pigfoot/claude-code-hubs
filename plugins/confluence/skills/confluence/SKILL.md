@@ -15,7 +15,7 @@ description: Confluence doc management. Use for Confluence URLs (/wiki/x/... sho
 - **DO NOT write inline scripts to manipulate ADF JSON** — use the structural scripts which handle ADF marks correctly.
 - **DO NOT use raw XML/HTML** for images. Use markdown syntax: `![alt](path.png)`.
 - **DO NOT forget diagram conversion** — pre-convert Mermaid/PlantUML to PNG/SVG before upload.
-- **For Rovo AI search**: use Claude Code's built-in `mcp__claude_ai_Atlassian__searchAtlassian`
+- **For Rovo AI search**: use Claude Code's built-in `mcp__claude_ai_Atlassian_Rovo__searchAtlassian`
   (requires one-time Atlassian authentication via `mcp__claude_ai_Atlassian__authenticate`).
 
 ## Architecture
@@ -47,7 +47,7 @@ All `.py` scripts run with: `uv run --managed-python scripts/SCRIPT_NAME.py`
 |------|------|-------|-------|
 | Read page | `read_page.py` | <1s | Markdown or ADF output |
 | Search pages | `search_cql.py` | <1s | CQL-based, confidence scoring |
-| Rovo AI search | built-in `mcp__claude_ai_Atlassian__searchAtlassian` | Varies | Requires auth; use when CQL quality is low |
+| Rovo AI search | built-in `mcp__claude_ai_Atlassian_Rovo__searchAtlassian` | Varies | Requires auth; use when CQL quality is low |
 | Analyze page structure | `analyze_page.py` | <1s | Shows all components |
 | Edit text (preserve macros) | `read_page.py --format adf` + Method 6 | Interactive | Recommended for existing pages |
 | Add table row | `add_table_row.py` | ~1s | 650x faster than MCP |
@@ -207,9 +207,9 @@ Rovo AI search (when CQL confidence is low):
 
 When `search_cql.py` reports confidence < 0.6 and asks if you want Rovo AI search:
 
-1. Check if Atlassian integration is authenticated — try calling `mcp__claude_ai_Atlassian__searchAtlassian`
+1. Check if Atlassian integration is authenticated — try calling `mcp__claude_ai_Atlassian_Rovo__searchAtlassian`
 2. If not authenticated, call `mcp__claude_ai_Atlassian__authenticate` to start OAuth flow
-3. After authentication: `mcp__claude_ai_Atlassian__searchAtlassian({query: "search terms"})`
+3. After authentication: `mcp__claude_ai_Atlassian_Rovo__searchAtlassian({query: "search terms"})`
 4. If user declines authentication: use existing CQL results as-is
 
 ### Convert Markdown ↔ Wiki Markup
@@ -291,7 +291,7 @@ Example: `--item '`"compat"`- **REQUIRED** for all models'` correctly renders as
 ## When NOT to Use Scripts
 
 - Jira issues → Use Jira-specific tools
-- Rovo AI search → Use built-in `mcp__claude_ai_Atlassian__searchAtlassian` (when CQL quality is low)
+- Rovo AI search → Use built-in `mcp__claude_ai_Atlassian_Rovo__searchAtlassian` (when CQL quality is low)
 
 ## Prerequisites
 

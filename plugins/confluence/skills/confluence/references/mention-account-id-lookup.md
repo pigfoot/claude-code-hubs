@@ -94,7 +94,7 @@ This reference documents tested methods for obtaining account IDs.
 ### Steps
 
 1. Find a page **created by the user**:
-   - Search: `mcp__claude_ai_Atlassian__searchAtlassian(query="User B author")`
+   - Search: `mcp__claude_ai_Atlassian_Rovo__searchAtlassian(query="User B author")`
    - Or if you already know a specific page ID they created
 
 2. Get page metadata (no need to read full body):
@@ -191,7 +191,7 @@ GOLD STANDARD - the format is guaranteed to work in Confluence.
 1. Search for pages containing the user's name:
 
    ```python
-   mcp__claude_ai_Atlassian__searchAtlassian(
+   mcp__claude_ai_Atlassian_Rovo__searchAtlassian(
        query="User A @mention"
    )
    ```
