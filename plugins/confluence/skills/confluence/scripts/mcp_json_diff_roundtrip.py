@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.14"
-# dependencies = []
+# dependencies = [
+#   "requests>=2.31.0",
+#   "python-dotenv>=1.0.0",
+# ]
 # ///
 """
-MCP + JSON Diff Roundtrip (Method 6) for Confluence page editing.
+JSON Diff Roundtrip (Method 6) for Confluence page editing.
 
 This module provides intelligent roundtrip editing that preserves all macros
 while allowing Claude to edit text content. Features include:
@@ -13,19 +16,24 @@ while allowing Claude to edit text content. Features include:
 - Automatic backup before every edit
 - Auto-rollback on failure
 
+Read and write operations use the Confluence REST API v2 directly.
+
 Usage:
-    # This module is designed to be imported and used by Claude in conversation
-    # with MCP tools, not run as a standalone script.
+    # This module is designed to be imported and used by Claude in conversation.
 
     from mcp_json_diff_roundtrip import MCPJsonDiffRoundtrip, BackupManager
 """
 
 import json
 import re
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).parent))
+from confluence_adf_utils import get_auth, get_page_adf, update_page_adf
 
 
 @dataclass
@@ -932,30 +940,30 @@ class MCPJsonDiffRoundtrip:
 
     def _read_page(self, cloud_id: str, page_id: str) -> dict:
         """
-        Read page via MCP.
+        Read page via REST API v2.
 
-        Note: This method expects to be called from Claude Code environment
-        where MCP tools are available. When using this module standalone,
-        you need to provide a mock mcp_client with get_page method.
+        Args:
+            cloud_id: Unused (kept for API compatibility with existing callers)
+            page_id: Confluence page ID
+
+        Returns:
+            Page data dict with title, version, body (ADF)
         """
         if hasattr(self.mcp_client, "get_page"):
             # Using mock client (for testing)
             return self.mcp_client.get_page(cloud_id, page_id, content_format="adf")
-        else:
-            # This will be replaced by actual MCP tool call when invoked by Claude
-            raise NotImplementedError(
-                "This method must be called from Claude Code environment with MCP tools. "
-                "The actual implementation should use: "
-                "mcp__plugin_confluence_atlassian__getConfluencePage(cloudId=..., pageId=..., contentFormat='adf')"
-            )
+
+        base_url, auth = get_auth()
+        return get_page_adf(base_url, auth, page_id)
 
     def _write_page(self, cloud_id: str, page_id: str, adf_content: dict) -> None:
         """
-        Write page via MCP.
+        Write page via REST API v2.
 
-        Note: This method expects to be called from Claude Code environment
-        where MCP tools are available. When using this module standalone,
-        you need to provide a mock mcp_client with update_page method.
+        Args:
+            cloud_id: Unused (kept for API compatibility with existing callers)
+            page_id: Confluence page ID
+            adf_content: Page ADF body to write
         """
         if hasattr(self.mcp_client, "update_page"):
             # Using mock client (for testing)
@@ -965,13 +973,15 @@ class MCPJsonDiffRoundtrip:
                 body=json.dumps(adf_content),
                 content_format="adf",
             )
-        else:
-            # This will be replaced by actual MCP tool call when invoked by Claude
-            raise NotImplementedError(
-                "This method must be called from Claude Code environment with MCP tools. "
-                "The actual implementation should use: "
-                "mcp__plugin_confluence_atlassian__updateConfluencePage(cloudId=..., pageId=..., body=json.dumps(adf_content), contentFormat='adf')"
-            )
+            return
+
+        # Read current page to get title and version (required for update)
+        base_url, auth = get_auth()
+        current = get_page_adf(base_url, auth, page_id)
+        title = current.get("title", "")
+        version = current.get("version", {}).get("number", 1)
+
+        update_page_adf(base_url, auth, page_id, title, adf_content, version)
 
 
 if __name__ == "__main__":

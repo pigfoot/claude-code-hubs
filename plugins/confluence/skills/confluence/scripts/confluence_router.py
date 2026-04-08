@@ -87,8 +87,8 @@ class ConfluenceRouter:
         # REST API requires all three variables
         has_rest_api = all([url, user, token])
 
-        # MCP is assumed available (OAuth via Claude Code)
-        has_mcp = True
+        # MCP is no longer a routing target. Plugin does not declare MCP.
+        has_mcp = False
 
         return CredentialConfig(
             has_rest_api=has_rest_api,
@@ -117,50 +117,44 @@ class ConfluenceRouter:
         Returns:
             RoutingDecision with chosen API mode and rationale
         """
-        # Rovo search is MCP-exclusive
+        # Rovo search uses the built-in Claude Code Atlassian integration.
+        # This is external to the plugin — use mcp__claude_ai_Atlassian__searchAtlassian.
         if operation == OperationType.SEARCH_ROVO:
             return RoutingDecision(
                 api_mode=APIMode.MCP,
-                reason="Rovo AI search is MCP-exclusive feature",
+                reason=(
+                    "Rovo AI search: use built-in mcp__claude_ai_Atlassian__searchAtlassian. "
+                    "If not authenticated, call mcp__claude_ai_Atlassian__authenticate first."
+                ),
                 fallback_available=False,
             )
 
-        # If REST API is available, prefer it for speed
-        if self.credentials.has_rest_api:
-            if operation in [
-                OperationType.READ,
-                OperationType.SEARCH_CQL,
-                OperationType.UPLOAD,
-            ]:
-                return RoutingDecision(
-                    api_mode=APIMode.REST_API,
-                    reason="REST API available and faster for read/search operations",
-                    fallback_available=True,  # Can fall back to MCP if REST fails
-                )
-            elif operation == OperationType.WRITE:
-                return RoutingDecision(
-                    api_mode=APIMode.REST_API,
-                    reason="REST API provides fast writes (~1 second)",
-                    fallback_available=True,
-                )
-
-        # Fallback to MCP when no REST API credentials
-        warning = None
-        if operation == OperationType.WRITE:
-            warning = (
-                "⚠️  Writing via MCP without REST API token (~26 seconds).\n"
-                "For faster writes (~1 second), configure REST API credentials:\n"
+        # All other operations require REST API credentials
+        if not self.credentials.has_rest_api:
+            raise ValueError(
+                "REST API credentials are required. Please set:\n"
                 '  export CONFLUENCE_URL="https://yoursite.atlassian.net/wiki"\n'
                 '  export CONFLUENCE_USER="your-email@company.com"\n'
                 '  export CONFLUENCE_API_TOKEN="your-token"\n'
                 "\nGenerate token: https://id.atlassian.com/manage-profile/security/api-tokens"
             )
 
+        if operation in [
+            OperationType.READ,
+            OperationType.SEARCH_CQL,
+            OperationType.UPLOAD,
+        ]:
+            return RoutingDecision(
+                api_mode=APIMode.REST_API,
+                reason="REST API for read/search operations",
+                fallback_available=False,
+            )
+
+        # WRITE
         return RoutingDecision(
-            api_mode=APIMode.MCP,
-            reason=f"MCP fallback mode (no REST API credentials for {operation.value})",
-            warning=warning,
-            fallback_available=False,  # Already using fallback
+            api_mode=APIMode.REST_API,
+            reason="REST API provides fast writes (~1 second)",
+            fallback_available=False,
         )
 
     def handle_fallback(
@@ -170,12 +164,7 @@ class ConfluenceRouter:
         error: Exception,
     ) -> Optional[RoutingDecision]:
         """
-        Handle API failure with graceful fallback.
-
-        Fallback scenarios:
-        - REST API fails → Try MCP
-        - MCP session expires + has token → Use REST API silently
-        - MCP session expires + no token → Prompt re-authentication
+        Handle REST API failure. No MCP fallback — REST API is the only path.
 
         Args:
             original_operation: The operation that failed
@@ -183,47 +172,13 @@ class ConfluenceRouter:
             error: The error that occurred
 
         Returns:
-            New RoutingDecision for fallback, or None if no fallback available
+            None (no fallback available)
         """
-        error_str = str(error).lower()
-
-        # Scenario 1: REST API failed, try MCP
-        if original_mode == APIMode.REST_API and self.credentials.has_mcp:
-            return RoutingDecision(
-                api_mode=APIMode.MCP,
-                reason=f"Fallback to MCP after REST API error: {error}",
-                warning="Using MCP fallback mode, operation may be slower",
-                fallback_available=False,
-            )
-
-        # Scenario 2: MCP session expired
-        if original_mode == APIMode.MCP and "session not found" in error_str:
-            if self.credentials.has_rest_api:
-                # Silent fallback to REST API
-                return RoutingDecision(
-                    api_mode=APIMode.REST_API,
-                    reason="MCP session expired, using REST API",
-                    fallback_available=False,
-                )
-            else:
-                # No REST API available, prompt user to re-authenticate
-                print(
-                    "❌ MCP session expired. Please re-authenticate:\n"
-                    "   Run: /mcp\n"
-                    "   Select: atlassian → Authenticate",
-                    file=sys.stderr,
-                )
-                return None
-
-        # Scenario 3: MCP failed with other error
-        if original_mode == APIMode.MCP and self.credentials.has_rest_api:
-            return RoutingDecision(
-                api_mode=APIMode.REST_API,
-                reason=f"Fallback to REST API after MCP error: {error}",
-                fallback_available=False,
-            )
-
-        # No fallback available
+        print(
+            f"❌ REST API error for {original_operation.value}: {error}\n"
+            "   Check your credentials and network connectivity.",
+            file=sys.stderr,
+        )
         return None
 
     def get_status(self) -> Dict[str, Any]:
@@ -235,9 +190,9 @@ class ConfluenceRouter:
         """
         return {
             "rest_api_available": self.credentials.has_rest_api,
-            "mcp_available": self.credentials.has_mcp,
+            "mcp_available": False,
             "primary_mode": (
-                "REST API (fast)" if self.credentials.has_rest_api else "MCP (fallback)"
+                "REST API" if self.credentials.has_rest_api else "Not configured"
             ),
             "credentials": {
                 "confluence_url": self.credentials.confluence_url or "Not set",

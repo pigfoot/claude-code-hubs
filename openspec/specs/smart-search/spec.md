@@ -41,35 +41,19 @@ The system MUST calculate a confidence score for search results.
 
 ### Requirement: Precision Warning
 
-The system MUST warn users when search results may be imprecise.
+The system MUST suggest Rovo AI search when CQL search results are imprecise,
+and users should be offered the opportunity to authenticate and retry with
+semantic search.
 
-#### Scenario: Suggest CQL for low confidence
+#### Scenario: Suggest Rovo for low confidence CQL results
 
-- **Given** search results with confidence < 0.6
-- **When** results are returned to the user
-- **Then** a suggestion is included
-- **And** the suggestion mentions CQL as an alternative
-- **And** a CQL preview query is provided
+- **WHEN** CQL search results have confidence < 0.6
+- **THEN** a suggestion is included in the output
+- **AND** the suggestion asks whether the user wants to try Rovo AI search
+- **AND** the suggestion notes that Rovo requires Atlassian authentication
 
-#### Scenario: No warning for high confidence
+#### Scenario: No suggestion for high confidence CQL results
 
-- **Given** search results with confidence >= 0.6
-- **When** results are returned to the user
-- **Then** no suggestion is included
-- **And** results are returned directly
-
-### Requirement: CQL Preview Generation
-
-The system MUST generate a CQL query preview for the user.
-
-#### Scenario: Generate title and text search CQL
-
-- **Given** a search query `"API documentation"`
-- **When** CQL preview is generated
-- **Then** the preview is `title ~ "API documentation" OR text ~ "API documentation"`
-
-#### Scenario: Escape special characters in CQL
-
-- **Given** a search query with special characters
-- **When** CQL preview is generated
-- **Then** special characters are properly escaped
+- **WHEN** CQL search results have confidence >= 0.6
+- **THEN** no suggestion is included
+- **AND** results are returned directly

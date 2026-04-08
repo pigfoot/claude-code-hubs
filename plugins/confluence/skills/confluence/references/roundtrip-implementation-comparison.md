@@ -375,7 +375,7 @@ def mcp_roundtrip(page_id: str, edit_fn):
     """Roundtrip using MCP tools"""
     # 1. Read via MCP
     result = call_mcp_tool(
-        "mcp__plugin_confluence_atlassian__getConfluencePage",
+        "read_page.py --format adf (REST API v2)",
         {
             "cloudId": CLOUD_ID,
             "pageId": page_id,
@@ -396,7 +396,7 @@ def mcp_roundtrip(page_id: str, edit_fn):
 
     # 5. Write via MCP
     call_mcp_tool(
-        "mcp__plugin_confluence_atlassian__updateConfluencePage",
+        "update_page_adf (REST API v2)",
         {
             "cloudId": CLOUD_ID,
             "pageId": page_id,
@@ -519,7 +519,7 @@ def quick_edit(page_id: str, instruction: str):
     """
     # 1. Read page (get ADF JSON)
     result = call_mcp_tool(
-        "mcp__plugin_confluence_atlassian__getConfluencePage",
+        "read_page.py --format adf (REST API v2)",
         {
             "cloudId": CLOUD_ID,
             "pageId": page_id,
@@ -552,7 +552,7 @@ Modified ADF JSON:
 
     # 3. Write back
     call_mcp_tool(
-        "mcp__plugin_confluence_atlassian__updateConfluencePage",
+        "update_page_adf (REST API v2)",
         {
             "cloudId": CLOUD_ID,
             "pageId": page_id,
@@ -1552,7 +1552,7 @@ class MCPJsonDiffRoundtrip:
         # 1. Read page via MCP (ADF format)
         print(f"📖 Reading page {page_id}...")
         page_data = self.mcp.call_tool(
-            "mcp__plugin_confluence_atlassian__getConfluencePage",
+            "read_page.py --format adf (REST API v2)",
             {
                 "cloudId": cloud_id,
                 "pageId": page_id,
@@ -1592,7 +1592,7 @@ class MCPJsonDiffRoundtrip:
         # 7. Write back via MCP
         print("💾 Writing back to Confluence...")
         result = self.mcp.call_tool(
-            "mcp__plugin_confluence_atlassian__updateConfluencePage",
+            "update_page_adf (REST API v2)",
             {
                 "cloudId": cloud_id,
                 "pageId": page_id,

@@ -6,6 +6,8 @@ Pages are created under a designated parent and deleted after each test.
 
 Skip conditions:
     - Missing CONFLUENCE_URL, CONFLUENCE_USER, or CONFLUENCE_API_TOKEN env vars
+    - CQL tests additionally skip when the /wiki/rest/api/search endpoint
+      returns a 4xx or network error
 
 Parent page: https://trendmicro.atlassian.net/wiki/x/glWyAg
     Page ID: 45241730, Space ID: 22217757
@@ -15,6 +17,7 @@ import json
 import os
 import shutil
 import tempfile
+import time
 import uuid
 from pathlib import Path
 
@@ -29,6 +32,8 @@ from confluence_adf_utils import (
     create_page_adf,
     update_page_adf,
 )
+from search_cql import search_cql
+from smart_search import SmartSearch
 
 # ── Constants ──────────────────────────────────────────────────────────
 
@@ -115,6 +120,33 @@ def _unique_title(label: str) -> str:
     """Generate a unique page title to avoid collisions."""
     short_id = uuid.uuid4().hex[:8]
     return f"[TEST] {label} ({short_id})"
+
+
+def _wait_for_cql_result(
+    base_url: str,
+    auth: tuple,
+    cql: str,
+    expected_id: str,
+    timeout: int = 30,
+    interval: int = 3,
+) -> list:
+    """
+    Poll CQL search until expected_id appears in results or timeout expires.
+
+    Confluence's search index is eventually consistent — newly created pages
+    may not appear immediately. This helper retries with a fixed interval to
+    accommodate indexing latency.
+
+    Returns the final result list (empty if timed out).
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        results = search_cql(base_url, auth, cql, limit=10)
+        if any(r["id"] == expected_id for r in results):
+            return results
+        time.sleep(interval)
+    # Final attempt
+    return search_cql(base_url, auth, cql, limit=10)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────
@@ -372,3 +404,211 @@ class TestUpdateExistingPage:
         assert "After Update" in final_text
         assert "new text" in final_text
         assert final["version"]["number"] == version + 1
+
+
+# ── CQL availability guard ─────────────────────────────────────────────
+
+
+def _cql_available(auth) -> bool:
+    """Return True if the CQL search endpoint is reachable."""
+    import requests as req
+
+    base_url, http_auth = auth
+    api_base = base_url.rstrip("/").replace("/wiki", "")
+    url = f"{api_base}/wiki/rest/api/search"
+    try:
+        r = req.get(
+            url, auth=http_auth, params={"cql": "type=page", "limit": 1}, timeout=10
+        )
+        return r.ok
+    except Exception:
+        return False
+
+
+@pytest.fixture(scope="session")
+def cql_auth():
+    """Provide auth and skip the whole session if CQL is unavailable."""
+    auth = get_auth()
+    if not _cql_available(auth):
+        pytest.skip(
+            "CQL search endpoint unavailable (Hystrix circuit open or network error)"
+        )
+    return auth
+
+
+# ── read_page.py integration ───────────────────────────────────────────
+
+
+class TestReadPageIntegration:
+    """Integration tests for read_page.py functions against live Confluence."""
+
+    def test_read_created_page_returns_correct_title(
+        self, confluence_auth, create_child_page
+    ):
+        """get_page_adf() returns the title we set when creating the page."""
+        base_url, auth = confluence_auth
+        title = _unique_title("read-page-title")
+        adf_body = markdown_to_adf("# Hello\n\nContent here.\n")
+        page = create_child_page(title, adf_body)
+
+        fetched = get_page_adf(base_url, auth, page["id"])
+        assert fetched["title"] == title
+
+    def test_read_created_page_returns_adf_body(
+        self, confluence_auth, create_child_page
+    ):
+        """get_page_adf() response contains a parseable ADF doc body."""
+        base_url, auth = confluence_auth
+        unique_phrase = f"unique-{uuid.uuid4().hex[:8]}"
+        adf_body = markdown_to_adf(f"# Title\n\n{unique_phrase}\n")
+        page = create_child_page(_unique_title("read-page-adf"), adf_body)
+
+        fetched = get_page_adf(base_url, auth, page["id"])
+        adf = _extract_adf_from_page(fetched)
+
+        assert adf.get("type") == "doc"
+        text = _extract_all_text(adf)
+        assert unique_phrase in text
+
+    def test_read_page_adf_output_shape(self, confluence_auth, create_child_page):
+        """
+        Verify get_page_adf() response has the fields read_page.py depends on:
+        title, version.number, spaceId, body.atlas_doc_format.value.
+        """
+        base_url, auth = confluence_auth
+        adf_body = markdown_to_adf("# Shape Test\n\nBody.\n")
+        page = create_child_page(_unique_title("read-page-shape"), adf_body)
+
+        fetched = get_page_adf(base_url, auth, page["id"])
+
+        assert "title" in fetched
+        assert "version" in fetched and "number" in fetched["version"]
+        assert "spaceId" in fetched
+        body_value = fetched.get("body", {}).get("atlas_doc_format", {}).get("value")
+        assert body_value is not None
+        adf = json.loads(body_value) if isinstance(body_value, str) else body_value
+        assert adf.get("type") == "doc"
+
+    def test_read_page_markdown_conversion(self, confluence_auth, create_child_page):
+        """ADF fetched from Confluence converts back to readable Markdown."""
+        base_url, auth = confluence_auth
+        sentinel = f"sentinel-{uuid.uuid4().hex[:8]}"
+        md_source = f"# Read Page Test\n\n**Bold text** and {sentinel}.\n"
+        adf_body = markdown_to_adf(md_source)
+        page = create_child_page(_unique_title("read-page-md"), adf_body)
+
+        fetched = get_page_adf(base_url, auth, page["id"])
+        adf = _extract_adf_from_page(fetched)
+        md_output = adf_to_markdown(adf)
+
+        assert sentinel in md_output
+        assert "Read Page Test" in md_output
+
+
+# ── search_cql.py integration ──────────────────────────────────────────
+
+
+class TestSearchCqlIntegration:
+    """
+    Integration tests for search_cql() and SmartSearch against live Confluence.
+
+    All tests skip automatically when the CQL endpoint is circuit-broken
+    (via the cql_auth fixture).
+    """
+
+    def test_search_finds_created_page_by_exact_title(
+        self, cql_auth, create_child_page
+    ):
+        """A page created with a unique title is found by CQL title search."""
+        base_url, auth = cql_auth
+        unique_title = _unique_title("cql-exact-title")
+        adf_body = markdown_to_adf("# CQL Test\n\nSearchable content.\n")
+        page = create_child_page(unique_title, adf_body)
+
+        # Poll until indexed (Confluence index is eventually consistent)
+        results = _wait_for_cql_result(
+            base_url, auth, f'title = "{unique_title}"', page["id"]
+        )
+        ids = [r["id"] for r in results]
+        assert page["id"] in ids, f"Expected page {page['id']} in results {ids}"
+
+    def test_search_result_has_expected_fields(self, cql_auth, create_child_page):
+        """search_cql() results include title, id, space, url."""
+        base_url, auth = cql_auth
+        unique_title = _unique_title("cql-fields")
+        adf_body = markdown_to_adf("# Fields Test\n\nBody.\n")
+        page = create_child_page(unique_title, adf_body)
+
+        results = _wait_for_cql_result(
+            base_url, auth, f'title = "{unique_title}"', page["id"]
+        )
+        assert len(results) >= 1
+        r = results[0]
+        assert "title" in r
+        assert "id" in r
+        assert "space" in r
+        assert "url" in r
+        assert r["id"] == page["id"]
+
+    def test_high_confidence_exact_title_match(self, cql_auth, create_child_page):
+        """
+        Searching by exact title yields high confidence (no Rovo suggestion).
+        When the title matches, SmartSearch should NOT suggest Rovo OAuth.
+        """
+        base_url, auth = cql_auth
+        label = f"cql-confidence-{uuid.uuid4().hex[:8]}"
+        unique_title = f"[TEST] {label}"
+        adf_body = markdown_to_adf(f"# {label}\n\nBody.\n")
+        page = create_child_page(unique_title, adf_body)
+
+        results = _wait_for_cql_result(
+            base_url, auth, f'title = "{unique_title}"', page["id"]
+        )
+        assert len(results) >= 1
+
+        searcher = SmartSearch()
+        analysis = searcher.analyze_results(label, results)
+
+        # At least 1 title match → confidence >= 0.7, no Rovo suggestion
+        assert analysis.confidence >= 0.6, (
+            f"Expected confidence >= 0.6 for exact title match, got {analysis.confidence}"
+        )
+        assert analysis.should_suggest_cql is False
+        assert analysis.suggestion is None
+
+    def test_low_confidence_generic_search_triggers_rovo_suggestion(self, cql_auth):
+        """
+        A generic CQL query returning many unrelated pages yields low confidence
+        and produces a Rovo OAuth suggestion containing mcp__claude_ai_Atlassian__authenticate.
+        """
+        base_url, auth = cql_auth
+
+        # Search for a very common term to get many unrelated results
+        results = search_cql(base_url, auth, "type = page", limit=50)
+
+        if len(results) < 5:
+            pytest.skip("Not enough results to test low-confidence scenario")
+
+        searcher = SmartSearch()
+        # Use a very specific needle that won't appear in generic page titles
+        analysis = searcher.analyze_results("xyzzy-nonexistent-needle-12345", results)
+
+        assert analysis.should_suggest_cql is True
+        assert analysis.suggestion is not None
+        assert "mcp__claude_ai_Atlassian__authenticate" in analysis.suggestion
+        assert "mcp__claude_ai_Atlassian__searchAtlassian" in analysis.suggestion
+
+    def test_search_empty_results_no_rovo_suggestion(self, cql_auth):
+        """
+        A search that returns 0 results should NOT produce a Rovo suggestion
+        (there's nothing to upgrade from).
+        """
+        base_url, auth = cql_auth
+        impossible_title = f"impossible-{uuid.uuid4().hex}-does-not-exist"
+        results = search_cql(base_url, auth, f'title = "{impossible_title}"', limit=5)
+
+        assert results == []
+
+        searcher = SmartSearch()
+        analysis = searcher.analyze_results(impossible_title, results)
+        assert analysis.suggestion is None

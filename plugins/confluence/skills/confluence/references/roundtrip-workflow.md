@@ -295,7 +295,7 @@ def quick_edit_page(page_id: str, edit_instruction: str):
     Quick edit using MCP with Claude understanding ADF structure
     """
     # 1. Read page (returns ADF JSON string)
-    result = mcp_tool_call("mcp__plugin_confluence_atlassian__getConfluencePage", {
+    result = mcp_tool_call("read_page.py (REST API v2)", {
         "cloudId": CLOUD_ID,
         "pageId": page_id,
         "contentFormat": "adf"  # Actually returns ADF regardless
@@ -317,7 +317,7 @@ def quick_edit_page(page_id: str, edit_instruction: str):
     edited_adf = call_claude(prompt)
 
     # 3. Write back
-    mcp_tool_call("mcp__plugin_confluence_atlassian__updateConfluencePage", {
+    mcp_tool_call("update_page_adf (REST API v2)", {
         "cloudId": CLOUD_ID,
         "pageId": page_id,
         "body": edited_adf,

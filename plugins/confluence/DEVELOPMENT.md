@@ -226,9 +226,11 @@ We conducted side-by-side comparison tests between md2cf (mistune 0.8.4) and our
 Tests live in `plugins/confluence/tests/` with three modules:
 
 ```bash
-# Unit tests (offline, no credentials needed) — 75 tests
+# Unit tests (offline, no credentials needed) — 129 tests
 uv run --python 3.14 --with "pytest>=8.0" --with "mistune>=3.0.0" \
-  pytest plugins/confluence/tests/test_adf_to_markdown.py plugins/confluence/tests/test_roundtrip.py -v
+  --with "requests>=2.31.0" --with "python-dotenv>=1.0.0" \
+  pytest plugins/confluence/tests/test_adf_to_markdown.py plugins/confluence/tests/test_roundtrip.py \
+         plugins/confluence/tests/test_search_cql.py plugins/confluence/tests/test_read_page.py -v
 
 # Integration tests (requires API credentials, creates/deletes real pages) — 5 tests
 uv run --python 3.14 --with "pytest>=8.0" --with "mistune>=3.0.0" \
@@ -244,7 +246,9 @@ uv run --python 3.14 --with "pytest>=8.0" --with "mistune>=3.0.0" \
 | Module | Tests | Requires API | What it covers |
 |--------|-------|--------------|----------------|
 | `test_adf_to_markdown.py` | 44 | No | ADF → Markdown for all node types, marks, real 37-element fixture |
-| `test_roundtrip.py` | 31 | No | ADF → MD → ADF fidelity, marker-free markdown, multiple-status regression |
+| `test_roundtrip.py` | 47 | No | ADF → MD → ADF fidelity, marker-free markdown, multiple-status regression, marks normalization |
+| `test_search_cql.py` | 20 | No | CQL HTTP layer, result formatting, Rovo OAuth suggestion flow (confidence < 0.6) |
+| `test_read_page.py` | 18 | No | URL/ID resolution, Markdown output, ADF JSON output, error paths |
 | `test_integration.py` | 5 | Yes | Upload → Confluence → download → compare, page update, cleanup |
 
 ### Integration Test Details

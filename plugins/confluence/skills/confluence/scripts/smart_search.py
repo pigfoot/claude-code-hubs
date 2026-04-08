@@ -221,12 +221,15 @@ class SmartSearch:
         """
         Generate user-facing suggestion message (bilingual: EN + ZH-TW).
 
+        CQL is the primary search path. When CQL quality is low, suggest
+        upgrading to Rovo AI search via the built-in Atlassian MCP integration.
+
         Args:
             query: Original query
             total_results: Total number of results
             title_matches: Number of title matches
             confidence: Confidence score
-            cql_query: Generated CQL query
+            cql_query: Generated CQL query (unused, kept for API compatibility)
 
         Returns:
             Formatted suggestion message
@@ -235,9 +238,12 @@ class SmartSearch:
             f"ℹ️  Search precision may be low (confidence: {confidence:.0%}).\n"
             f"   Found {total_results} results, but only {title_matches} title match(es) for '{query}'.\n"
             f"\n"
-            f"   Consider using CQL search for more precise results:\n"
-            f"   CQL 查詢可能提供更精確的結果：\n"
-            f"   {cql_query}\n"
+            f"   Consider Rovo AI search for better semantic results (requires Atlassian authentication):\n"
+            f"   考慮使用 Rovo AI 語義搜尋以獲得更好的結果（需要 Atlassian 認證）：\n"
+            f"\n"
+            f"   To upgrade: ask the user if they want Rovo AI search, then:\n"
+            f"   1. Call mcp__claude_ai_Atlassian__authenticate (one-time OAuth flow)\n"
+            f'   2. Call mcp__claude_ai_Atlassian__searchAtlassian(query="{query}")\n'
         )
         return suggestion
 

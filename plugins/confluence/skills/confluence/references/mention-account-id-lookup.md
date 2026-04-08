@@ -47,7 +47,7 @@ This reference documents tested methods for obtaining account IDs.
 
    ```python
    # Via MCP tool
-   mcp__plugin_confluence_atlassian__lookupJiraAccountId(
+   mcp__claude_ai_Atlassian__lookupJiraAccountId(
        cloudId="79a3ee80-0d14-4a82-9335-03f989902e7a",
        searchString="User A"  # or email
    )
@@ -94,13 +94,13 @@ This reference documents tested methods for obtaining account IDs.
 ### Steps
 
 1. Find a page **created by the user**:
-   - Search: `mcp__plugin_confluence_atlassian__search(query="User B author")`
+   - Search: `mcp__claude_ai_Atlassian__searchAtlassian(query="User B author")`
    - Or if you already know a specific page ID they created
 
 2. Get page metadata (no need to read full body):
 
    ```python
-   mcp__plugin_confluence_atlassian__getConfluencePage(
+   mcp__claude_ai_Atlassian__getConfluencePage(
        cloudId="79a3ee80-0d14-4a82-9335-03f989902e7a",
        pageId="746336757"
        # Don't need contentFormat="adf" - metadata is enough
@@ -145,7 +145,7 @@ This reference documents tested methods for obtaining account IDs.
 2. Get space metadata:
 
    ```python
-   mcp__plugin_confluence_atlassian__getConfluenceSpaces(
+   mcp__claude_ai_Atlassian__getConfluenceSpaces(
        cloudId="79a3ee80-0d14-4a82-9335-03f989902e7a",
        keys="~557058179bd84475114c2d87665896d380072b"
    )
@@ -191,7 +191,7 @@ GOLD STANDARD - the format is guaranteed to work in Confluence.
 1. Search for pages containing the user's name:
 
    ```python
-   mcp__plugin_confluence_atlassian__search(
+   mcp__claude_ai_Atlassian__searchAtlassian(
        query="User A @mention"
    )
    ```
@@ -199,7 +199,7 @@ GOLD STANDARD - the format is guaranteed to work in Confluence.
 2. Read page in ADF format:
 
    ```python
-   mcp__plugin_confluence_atlassian__getConfluencePage(
+   mcp__claude_ai_Atlassian__getConfluencePage(
        cloudId="79a3ee80-0d14-4a82-9335-03f989902e7a",
        pageId="2130805210",
        contentFormat="adf"

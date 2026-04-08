@@ -3,12 +3,24 @@
 > Professional Confluence document management with **intelligent roundtrip editing** (preserves macros while Claude
 > edits), markdown-first workflows, unlimited file sizes, and complete image support
 
+## ✨ Recent Improvements (v0.2.0)
+
+- **Removed MCP dependency** — plugin now works entirely via REST API; no more plugin disabling when OAuth expires
+- **New `read_page.py`** — read any Confluence page as Markdown or ADF JSON directly via REST API
+- **New `search_cql.py`** — CQL search via REST API with confidence scoring;
+  suggests Rovo AI search when results are low quality
+- **`--query` flag** — pass natural language intent separately from CQL so
+  Rovo suggestions use the original question
+- **Rovo AI search** — on-demand via Claude Code's built-in Atlassian integration
+  (`mcp__claude_ai_Atlassian__searchAtlassian`); no persistent MCP session needed
+- **Method 6 roundtrip** — `_read_page()` and `_write_page()` now use REST API directly
+
 ## Design & Research
 
 See [docs/plans/005-confluence-smart-routing/](../../docs/plans/005-confluence-smart-routing/) for:
 
 - **[design.md](../../docs/plans/005-confluence-smart-routing/design.md)** -
-  Smart routing architecture (MCP ↔ REST API)
+  Smart routing architecture (REST API)
 - **[research.md](../../docs/plans/005-confluence-smart-routing/research.md)** - Performance testing & technical
   decisions
 
@@ -20,48 +32,32 @@ See [docs/plans/005-confluence-smart-routing/](../../docs/plans/005-confluence-s
 claude plugin install --scope user confluence@pigfoot-marketplace
 ```
 
-### 2. Authenticate with OAuth (One-Time Setup)
+### 2. Set API Token (Required)
 
-**First time only:** After installation, restart Claude Code and run:
-
-```
-/mcp
-```
-
-This opens an interactive menu:
-
-1. **Select "atlassian"** from the list of MCP servers
-2. **Choose "Authenticate"**
-3. Browser window opens automatically
-4. Sign in to your Atlassian account
-5. Grant Confluence access permissions
-6. Authentication completes and token is stored securely
-
-**After authentication:** You can directly use Confluence features - no need to run `/mcp` again.
-
-**Note:** If you have multiple MCP servers (e.g., context7, github), `/mcp` shows all of them and you select which one
-to authenticate.
-
-**What you can do with MCP (OAuth):**
-
-- ✅ Search pages with CQL queries
-- ✅ Read page content
-- ✅ Small text updates (<10KB)
-- ❌ Large document uploads (use API Token instead)
-- ❌ Image attachments (use API Token instead)
-
-### 3. (Optional) Set API Token for Full Features
-
-For unlimited document sizes, image handling, and batch operations:
+Generate an API token at <https://id.atlassian.com/manage-profile/security/api-tokens>, then configure:
 
 ```bash
-# Generate API Token at: https://id.atlassian.com/manage-profile/security/api-tokens
-# Then configure (see Installation section for detailed options):
-
 export CONFLUENCE_URL="https://your-company.atlassian.net/wiki"
 export CONFLUENCE_USER="your-email@company.com"
 export CONFLUENCE_API_TOKEN="your-token-here"
 ```
+
+Add these to your `~/.zshrc` or `~/.bashrc` to persist across sessions.
+
+**What you can do with REST API credentials:**
+
+- ✅ Read page content (`read_page.py`)
+- ✅ Search pages with CQL (`search_cql.py`)
+- ✅ Upload documents of any size (`upload_confluence.py`)
+- ✅ Edit pages with macro preservation (Method 6)
+- ✅ All structural modifications (~1s operations)
+- ✅ Image and attachment handling
+
+### 3. (Optional) Rovo AI Search
+
+For AI-powered semantic search across Confluence and Jira, authenticate the built-in
+Atlassian integration when prompted. This is triggered automatically when CQL search
+results have low confidence. No additional setup required.
 
 ### 4. Try It Out
 
@@ -112,27 +108,26 @@ export CONFLUENCE_USER="your-email@company.com"
 
 ## ✨ Key Features
 
-### 🔀 Smart Routing (Auto API Selection)
+### 🔀 Smart Routing (REST API First)
 
-**Automatically selects the optimal API for each operation.** This plugin intelligently switches between MCP and REST
-API based on:
+**Uses Confluence REST API for all operations.** No MCP dependency — plugin is always
+available regardless of OAuth session state.
 
-- **Available credentials** - Uses REST API when token is configured, falls back to MCP otherwise
-- **Operation type** - Reads vs writes vs Rovo AI search
-- **Performance requirements** - REST API for fast writes (~1s), MCP for zero-config simplicity
+- **All reads** via REST API v2 (`read_page.py`) — fast, always works with API token
+- **CQL search** via REST API v1 (`search_cql.py`) — deterministic, precise
+- **Rovo AI search** via Claude Code's built-in Atlassian integration — triggered on-demand when CQL quality is low
 
-**Why this is unique:**
+**Why REST API first:**
 
-- **25x faster writes** with REST API (~1s vs ~26s via MCP)
-- **Zero-config fallback** to MCP when no token configured
-- **Graceful degradation** - MCP session expires? Silently switches to REST API
-- **Best of both worlds** - Easy OAuth setup + optional performance optimization
+- **Never disabled by OAuth expiry** — plugin works independently of MCP session state
+- **Fast writes** (~1s vs ~26s historically via MCP)
+- **Rovo on-demand** — semantic search only when CQL results aren't good enough
 
 **What other tools lack:**
 
-- Official Atlassian MCP: Only MCP (slow writes, 55-min token expiry)
-- Third-party tools: Only REST API (requires manual setup, no OAuth option)
-- This plugin: Combines both with automatic selection
+- Official Atlassian MCP: Session expires after 55 min, disabling all features
+- Third-party tools: REST API only, no Rovo access
+- This plugin: REST API reliability + optional Rovo upgrade when needed
 
 ### 🔗 Short URL Resolution
 
@@ -608,63 +603,24 @@ claude plugin install --scope user confluence@pigfoot-marketplace
 
 **What gets configured automatically:**
 
-- ✅ Atlassian Remote MCP Server (official endpoint)
 - ✅ All Python scripts with inline dependencies
 - ✅ Skill definitions and references
 
 ---
 
-### Step 2: MCP Server Configuration
+### Step 2: Configure API Token (Required)
 
-The plugin automatically configures the **Atlassian Remote MCP Server** (official cloud-based endpoint).
+API Token is required for all plugin functionality. The plugin uses Confluence REST API directly — no MCP dependency.
 
-**Automatic configuration** (already done by plugin):
+**Capabilities with API Token:**
 
-```json
-{
-  "atlassian": {
-    "type": "http",
-    "url": "https://mcp.atlassian.com/v1/mcp"
-  }
-}
-```
-
-**Benefits of Remote MCP Server:**
-
-- ✅ No local installation required (no bunx/npx needed)
-- ✅ Official Atlassian endpoint with OAuth 2.1
-- ✅ Supports Confluence, Jira, and Compass
-- ✅ Always up-to-date with latest features
-
-**First use OAuth flow:**
-
-- On first Confluence operation, Claude Code will prompt OAuth login
-- Browser opens to Atlassian authorization page
-- Grant permissions for Confluence access
-- Session stored securely by Claude Code
-
-**OAuth capabilities (via MCP):**
-
-- ✅ Search pages with CQL
-- ✅ Read page content
-- ✅ Small text-only updates (<10KB)
-
----
-
-### Step 3: Configure API Token (Recommended)
-
-API Token enables full functionality including large file uploads and image handling.
-
-**Additional capabilities:**
-
-- ✅ Upload large documents (>10KB, no limits)
-- ✅ Handle images and attachments
-- ✅ Batch operations
-- ✅ Offline/CI-CD workflows
-
-**Why both OAuth and API Token?**
-MCP uses cloud-based OAuth sessions that local Python scripts cannot access. For full functionality (large uploads,
-images), you need API Token credentials.
+- ✅ Read page content (`read_page.py`)
+- ✅ Search pages with CQL (`search_cql.py`)
+- ✅ Upload documents of any size (no limits)
+- ✅ Edit pages with macro preservation (Method 6)
+- ✅ All structural modifications (~1s each)
+- ✅ Image and attachment handling
+- ✅ CI/CD and automation workflows
 
 **Setup:**
 
@@ -897,27 +853,25 @@ You can still upload documents. You just need to convert UML diagrams manually b
 
 ## 🤔 FAQ
 
-### When should I use MCP vs Python scripts?
+### What's the difference between CQL search and Rovo AI search?
 
-**Use MCP (via Claude Code) for:**
+**CQL search** (`search_cql.py`) uses Confluence's structured query language via REST API.
+It's precise, fast, and always available with API token credentials.
+Good for: finding pages by title, space, label, author, or date.
 
-- Quick searches and queries
-- Reading page content
-- Small text-only updates (<10KB)
-- Interactive exploration
+**Rovo AI search** uses Atlassian's semantic search across Confluence and Jira.
+It understands natural language and context. Good for: vague queries, cross-product
+search, when you don't know the exact title. Requires Atlassian authentication via
+Claude Code's built-in integration.
 
-**Use Python scripts for:**
+The plugin automatically suggests Rovo when CQL results have low confidence (< 60% precision).
 
-- Large documents (>10KB)
-- Documents with images/attachments
-- Batch operations
-- CI/CD pipelines
-- Offline operations
+### Why does the plugin use REST API instead of MCP?
 
-### Why do I need both OAuth and API Token?
-
-MCP's OAuth tokens are cloud-based sessions managed by Atlassian's server. Local Python scripts cannot access these
-sessions. API tokens provide direct REST API access for full functionality.
+MCP OAuth sessions expire after 55 minutes. When the session expires, Claude Code
+disables the entire plugin — including all scripts that don't need MCP at all.
+Using REST API directly means the plugin is always available as long as your API
+token is valid (tokens don't expire).
 
 ### Can I use this without Git?
 
@@ -966,16 +920,6 @@ echo $CONFLUENCE_API_TOKEN
 cat .env
 ```
 
-### "Content too large" / MCP upload fails
-
-**Cause:** Using MCP for large documents (>10-20KB).
-
-**Fix:** Use upload script instead:
-
-```bash
-uv run scripts/upload_confluence.py document.md --id PAGE_ID
-```
-
 ### "Authentication failed" for scripts
 
 **Cause:** Invalid API token or credentials.
@@ -985,17 +929,6 @@ uv run scripts/upload_confluence.py document.md --id PAGE_ID
 1. Generate new API token: <https://id.atlassian.com/manage-profile/security/api-tokens>
 2. Verify `CONFLUENCE_USER` matches your Atlassian account email
 3. Check `CONFLUENCE_URL` format: `https://yourcompany.atlassian.net/wiki` (no trailing slash)
-
-### OAuth prompt appears repeatedly
-
-**Cause:** MCP server not properly configured or session expired.
-
-**Fix:**
-
-1. Restart Claude Code
-2. Verify `.mcp.json` exists in plugin directory
-3. Complete OAuth flow in browser when prompted
-4. Check Atlassian permissions at <https://id.atlassian.com/manage-profile/apps>
 
 ### Images not uploading
 

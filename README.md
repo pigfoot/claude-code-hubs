@@ -784,7 +784,7 @@ Once configured, Claude will:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
-| [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads, attachment support, and page formatting control | 0.1.0 |
+| [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads, attachment support, and page formatting control | 0.2.0 |
 | [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.1.0 |
 | [taiwan-calendar](./plugins/taiwan-calendar/) | Taiwan working day/holiday calendar queries | 0.0.1 |
 | [taiwan-mrt-fareastern-empty-train](./plugins/taiwan-mrt-fareastern-empty-train/) | Find empty trains (空車) at 亞東醫院 MRT station | 0.0.1 |
