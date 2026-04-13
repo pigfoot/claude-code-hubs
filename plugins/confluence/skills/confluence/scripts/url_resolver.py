@@ -47,9 +47,10 @@ def decode_tiny_url(tiny_code: str) -> int:
         # Add padding if needed (Base64 requires length divisible by 4)
         padded = tiny_code + "=="
 
-        # Convert URL-safe Base64 to standard Base64
-        # URL-safe uses: - instead of +, _ instead of /
-        standard_b64 = padded.replace("-", "+").replace("_", "/")
+        # Convert Confluence TinyUI Base64 to standard Base64
+        # Confluence TinyUI swaps the RFC 4648 URL-safe mapping:
+        #   - → / (value 63), _ → + (value 62)
+        standard_b64 = padded.replace("_", "+").replace("-", "/")
 
         # Decode Base64
         decoded_bytes = base64.b64decode(standard_b64)

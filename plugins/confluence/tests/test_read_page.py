@@ -13,7 +13,7 @@ sys.path.insert(
     str(Path(__file__).resolve().parent.parent / "skills" / "confluence" / "scripts"),
 )
 
-from url_resolver import resolve_confluence_url
+from url_resolver import decode_tiny_url, resolve_confluence_url
 
 
 # ---------------------------------------------------------------------------
@@ -96,6 +96,28 @@ class TestUrlResolution:
     def test_unknown_url_returns_unknown_type(self):
         result = resolve_confluence_url("https://example.com/not-confluence")
         assert result["type"] == "unknown"
+
+    # Confluence TinyUI short URL decoding — uses swapped URL-safe base64
+    # (-→/ and _→+, opposite of RFC 4648) with little-endian byte order.
+    def test_tiny_url_underscore_character(self):
+        """_ in TinyUI maps to + (value 62), not / (value 63) as in RFC 4648."""
+        assert decode_tiny_url("Ew7_jQ") == 2382237203
+
+    def test_tiny_url_dash_character(self):
+        """- in TinyUI maps to / (value 63), not + (value 62) as in RFC 4648."""
+        assert decode_tiny_url("-4GCcQ") == 1904378367
+
+    def test_short_url_with_underscore_resolves_correctly(self):
+        url = "https://trendmicro.atlassian.net/wiki/x/Ew7_jQ"
+        result = resolve_confluence_url(url)
+        assert result["type"] == "page_id"
+        assert result["value"] == "2382237203"
+
+    def test_short_url_with_dash_resolves_correctly(self):
+        url = "https://trendmicro.atlassian.net/wiki/x/-4GCcQ"
+        result = resolve_confluence_url(url)
+        assert result["type"] == "page_id"
+        assert result["value"] == "1904378367"
 
 
 # ---------------------------------------------------------------------------
