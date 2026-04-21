@@ -28,7 +28,8 @@ marketplaces.
 - **[context7](https://github.com/upstash/context7)** - Access up-to-date documentation and code examples for any
   library or framework (official from @claude-plugins-official)
 - **[superpowers](https://github.com/obra/superpowers)** - Comprehensive skills library with proven development
-  workflows (TDD, debugging, code review)
+  workflows (TDD, debugging, code review) — now in **official Claude Code marketplace**
+  (`claude plugin install --scope user superpowers@claude-plugins-official`)
 
 ### 🎯 Skills
 
@@ -297,7 +298,7 @@ claude plugin install --scope user github-actions-container-build@pigfoot-market
 
 # Install recommended third-party plugins
 claude plugin install --scope user context7@claude-plugins-official
-claude plugin install --scope user superpowers@pigfoot-marketplace
+claude plugin install --scope user superpowers@claude-plugins-official
 ```
 
 **Update marketplace (fetch latest plugin list):**
@@ -320,9 +321,8 @@ claude plugin update nano-banana@pigfoot-marketplace
 claude plugin update secure-container-build@pigfoot-marketplace
 claude plugin update github-actions-container-build@pigfoot-marketplace
 
-# Update third-party plugins installed via this marketplace
-# (Note: superpowers must be installed first via: claude plugin install --scope user superpowers@pigfoot-marketplace)
-claude plugin update superpowers@pigfoot-marketplace
+# Note: superpowers is managed by the official Claude Code marketplace
+# It updates automatically — no manual update required
 ```
 
 ### Step 3: Setup CLAUDE.md Template (Optional but Recommended)
@@ -694,14 +694,17 @@ Just ask Claude about Taiwan dates naturally - the skill triggers automatically.
 
 ---
 
-### 🦸 superpowers Plugin - Proven Development Workflows
+### 🦸 superpowers - Proven Development Workflows
 
-```bash
-claude plugin install --scope user superpowers@pigfoot-marketplace
-```
+> superpowers is now in the **[official Claude Code marketplace](https://github.com/obra/superpowers)**
+> (previously distributed via pigfoot-marketplace). Install with:
+>
+> ```bash
+> claude plugin install --scope user superpowers@claude-plugins-official
+> ```
 
-> **Note:** This is a third-party plugin originally from [obra/superpowers](https://github.com/obra/superpowers),
-> available in this marketplace for convenient installation
+Also ensure your `settings.json` includes `Skill(superpowers:*)` in
+`permissions.allow` (already included in the setup script above).
 
 **What it does:**
 Provides a comprehensive library of battle-tested skills that enforce systematic development practices.
@@ -745,19 +748,39 @@ Provides a comprehensive library of battle-tested skills that enforce systematic
 - `finishing-a-development-branch` - Structured options for merge/PR/cleanup
 
 **Usage:**
-Skills activate automatically when relevant, or you can invoke directly.
 
-**Examples:**
+Skills activate automatically when relevant. Just talk to Claude naturally — no slash commands needed.
 
-```bash
-# Automatic activation
-User: "Add user authentication"
-→ brainstorming skill activates for design refinement
-→ test-driven-development activates during implementation
-→ verification-before-completion activates before claiming done
+**Automatic activation examples:**
 
-# Manual invocation
-User: "/brainstorm how to architect this feature"
+```
+# Building a new feature
+User: "Add OAuth2 login support"
+→ brainstorming skill activates first to refine design
+→ test-driven-development skill activates during implementation
+→ verification-before-completion skill activates before Claude says "done"
+```
+
+```
+# Debugging a failing test
+User: "This test keeps failing intermittently"
+→ systematic-debugging skill activates (investigate → hypothesize → test → fix)
+```
+
+```
+# Planning complex work
+User: "Refactor the auth module to support multi-tenant"
+→ brainstorming skill activates to explore tradeoffs
+→ writing-plans skill creates a phased implementation plan
+→ subagent-driven-development skill dispatches parallel agents per task
+```
+
+**Manual invocation examples:**
+
+```
+User: "brainstorm how we should approach the caching layer"
+User: "use systematic debugging on this bug"
+User: "do a code review before we finish"
 ```
 
 **Why it matters:**
@@ -880,13 +903,13 @@ claude plugin install --scope user <plugin-name>@pigfoot-marketplace
 | [context7](https://github.com/upstash/context7) | official (@claude-plugins-official) | Library documentation via Context7 MCP | MCP server |
 | [taiwan-calendar](./plugins/taiwan-calendar/) | pigfoot | Taiwan working day/holiday calendar queries | `taiwan-calendar:taiwan-calendar` |
 | [taiwan-mrt-fareastern-empty-train](./plugins/taiwan-mrt-fareastern-empty-train/) | pigfoot | Find empty trains (空車) at 亞東醫院 MRT station | `taiwan-mrt-fareastern-empty-train:taiwan-mrt-fareastern-empty-train` |
-| [superpowers](https://github.com/obra/superpowers) | 3rd-party (obra) | Proven development workflows (TDD, debugging, review) | 17+ skills (brainstorming, TDD, systematic-debugging, etc.) |
+| [superpowers](https://github.com/obra/superpowers) | official (@claude-plugins-official) | Proven development workflows (TDD, debugging, review) | 17+ skills (brainstorming, TDD, systematic-debugging, etc.) |
 
 **Installation:**
 
 - pigfoot plugins: `claude plugin install --scope user <name>@pigfoot-marketplace`
-- Official/3rd-party: `claude plugin install --scope user context7@claude-plugins-official` or
-  `claude plugin install --scope user superpowers@pigfoot-marketplace`
+- Official plugins: `claude plugin install --scope user context7@claude-plugins-official`
+- superpowers: `claude plugin install --scope user superpowers@claude-plugins-official`
 
 ## Contributing
 
