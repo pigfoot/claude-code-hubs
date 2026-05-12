@@ -41,7 +41,7 @@ Key points:
 
 ## Decision Matrix
 
-All `.py` scripts run with: `uv run --managed-python scripts/SCRIPT_NAME.py`
+All `.py` scripts run with: `uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/SCRIPT_NAME.py`
 
 | Task | Tool | Speed | Notes |
 |------|------|-------|-------|
@@ -77,13 +77,13 @@ All `.py` scripts run with: `uv run --managed-python scripts/SCRIPT_NAME.py`
 1. Resolve URL → page ID:
 
    ```bash
-   uv run --managed-python scripts/url_resolver.py "URL"
+   uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/url_resolver.py "URL"
    ```
 
 2. Read page:
 
    ```bash
-   uv run --managed-python scripts/read_page.py PAGE_ID
+   uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/read_page.py PAGE_ID
    ```
 
 ### Method 6: Edit Existing Pages (Recommended)
@@ -105,7 +105,7 @@ Workflow:
 1. Read page ADF via REST API:
 
    ```bash
-   uv run --managed-python scripts/read_page.py PAGE_ID --format adf
+   uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/read_page.py PAGE_ID --format adf
    ```
 
 2. Safe mode (default): edit outside macros only. Advanced mode: edit inside macros (requires confirmation)
@@ -120,13 +120,13 @@ Implementation: `scripts/mcp_json_diff_roundtrip.py`
 
 ```bash
 # Update existing page
-uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/upload_confluence.py doc.md --id PAGE_ID
 
 # Create new page
-uv run --managed-python scripts/upload_confluence.py doc.md --space SPACE_KEY --parent-id PARENT_ID
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/upload_confluence.py doc.md --space SPACE_KEY --parent-id PARENT_ID
 
 # Auto-detect from frontmatter
-uv run --managed-python scripts/upload_confluence.py doc.md
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/upload_confluence.py doc.md
 
 # Options: --dry-run, --title "...", --width narrow, --table-layout default
 ```
@@ -156,9 +156,9 @@ confluence:
 Downloads via v2 ADF API → converts to readable Markdown. **Display only** — use Method 6 for roundtrip editing.
 
 ```bash
-uv run --managed-python scripts/download_confluence.py PAGE_ID
-uv run --managed-python scripts/download_confluence.py --download-children PAGE_ID
-uv run --managed-python scripts/download_confluence.py --output-dir ./docs PAGE_ID
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/download_confluence.py PAGE_ID
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/download_confluence.py --download-children PAGE_ID
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/download_confluence.py --output-dir ./docs PAGE_ID
 ```
 
 Custom markers in downloaded Markdown:
@@ -174,7 +174,7 @@ These markers are recognized by `upload_confluence.py` for page duplication/migr
 650x faster than MCP (~1s vs ~13min). Example:
 
 ```bash
-uv run --managed-python scripts/add_table_row.py PAGE_ID \
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/add_table_row.py PAGE_ID \
   --table-heading "Access Control Inventory" \
   --after-row-containing "GitHub" \
   --cells "Elasticsearch Cluster" "@Data Team" "Read-Only" \
@@ -185,13 +185,13 @@ Common patterns for structural scripts:
 
 ```bash
 # Most scripts: PAGE_ID + --after-heading or --at-end + content args + --dry-run
-uv run --managed-python scripts/add_panel.py PAGE_ID --after-heading "Setup" --panel-type info --content "Note text" --dry-run
-uv run --managed-python scripts/add_list_item.py PAGE_ID --after-heading "TODO" --item "New task" --position end
-uv run --managed-python scripts/insert_section.py PAGE_ID --new-heading "New Section" --level 2 --after-heading "Existing"
-uv run --managed-python scripts/add_media.py PAGE_ID --image-path "./img.png" --at-end --width 500
-uv run --managed-python scripts/add_status.py PAGE_ID --search-text "Status:" --status "TODO" --color blue
-uv run --managed-python scripts/add_mention.py PAGE_ID --search-text "Owner:" --user-id "557058..." --display-name "John"
-uv run --managed-python scripts/analyze_page.py PAGE_ID [--type codeBlock|table|bulletList]
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/add_panel.py PAGE_ID --after-heading "Setup" --panel-type info --content "Note text" --dry-run
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/add_list_item.py PAGE_ID --after-heading "TODO" --item "New task" --position end
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/insert_section.py PAGE_ID --new-heading "New Section" --level 2 --after-heading "Existing"
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/add_media.py PAGE_ID --image-path "./img.png" --at-end --width 500
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/add_status.py PAGE_ID --search-text "Status:" --status "TODO" --color blue
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/add_mention.py PAGE_ID --search-text "Owner:" --user-id "557058..." --display-name "John"
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/analyze_page.py PAGE_ID [--type codeBlock|table|bulletList]
 ```
 
 ### Search
@@ -199,8 +199,8 @@ uv run --managed-python scripts/analyze_page.py PAGE_ID [--type codeBlock|table|
 Primary: CQL search via REST API
 
 ```bash
-uv run --managed-python scripts/search_cql.py 'space = "DEV" AND text ~ "API"'
-uv run --managed-python scripts/search_cql.py 'title ~ "deployment"' --limit 20
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/search_cql.py 'space = "DEV" AND text ~ "API"'
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/search_cql.py 'title ~ "deployment"' --limit 20
 ```
 
 Rovo AI search (when CQL confidence is low):
@@ -215,7 +215,7 @@ When `search_cql.py` reports confidence < 0.6 and asks if you want Rovo AI searc
 ### Convert Markdown ↔ Wiki Markup
 
 ```bash
-uv run --managed-python scripts/convert_markdown_to_wiki.py input.md output.wiki
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/convert_markdown_to_wiki.py input.md output.wiki
 ```
 
 ## Editing Existing Pages: Decision Order
@@ -241,7 +241,7 @@ Always start with `analyze_page.py PAGE_ID` to understand the page structure fir
 
 1. Convert diagrams if needed: `mmdc -i diagram.mmd -o diagram.png` or `plantuml diagram.puml -tpng`
 2. Use markdown syntax: `![alt](./path/to/image.png)`
-3. Upload: `uv run --managed-python scripts/upload_confluence.py doc.md --id PAGE_ID`
+3. Upload: `uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/upload_confluence.py doc.md --id PAGE_ID`
 
 ## Checklists
 
@@ -251,7 +251,7 @@ Always start with `analyze_page.py PAGE_ID` to understand the page structure fir
 
 ## Script Reference
 
-All scripts: `uv run --managed-python scripts/SCRIPT_NAME.py`
+All scripts: `uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/SCRIPT_NAME.py`
 
 | Script | Purpose | Usage |
 |--------|---------|-------|

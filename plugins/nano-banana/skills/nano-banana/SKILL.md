@@ -10,10 +10,10 @@ description: |
 
 allowed-tools: Bash Write Read AskUserQuestion
 metadata:
-  short-description: Unified image generation workflow with Gemini/Imagen models
-  version: "0.1.0"
+  short-description: Unified image generation workflow via OpenAI-compatible API
+  version: "0.2.0"
   openclaw:
-    primaryEnv: GOOGLE_API_KEY
+    primaryEnv: RDSEC_API_KEY
 
 # === GitHub Copilot ===
 
@@ -34,65 +34,40 @@ Supports two modes:
 
 ## 🚨 CRITICAL: Read This First
 
-### API Selection Rule
+### API Routing by Model
 
-#### BEFORE writing ANY code, determine which API to use
+The script routes API calls based on `IMAGE_GEN_MODEL`:
 
-```python
-model = os.environ.get("NANO_BANANA_MODEL") or "gemini-3-pro-image-preview"
+| Condition | API Call | Endpoint |
+|-----------|----------|----------|
+| `gpt-image-2` (no `reference_image`, no TrendLife featured) | `client.images.generate()` | POST `/images/generations` |
+| `gpt-image-2` + `reference_image` | `client.images.edit()` | POST `/images/edits` |
+| `gpt-image-2` + `style: "trendlife"` + `layout: "featured"` | `client.images.edit()` (logo as image) | POST `/images/edits` |
+| Any other model (Gemini, etc.) | `client.chat.completions.create()` | POST `/chat/completions` |
 
-# Select API based on model name
-if "imagen" in model.lower():
-    use_imagen_api = True   # → generate_images()
-else:
-    use_imagen_api = False  # → generate_content()
-```
+**gpt-image-2**: Always uses `quality="low"` — other values timeout or return 400.
+Seed and temperature are not supported and will be silently ignored (one warning per job).
 
-### Two COMPLETELY DIFFERENT APIs
-
-These are **NOT interchangeable**. Using the wrong API will cause errors.
-
-| | **Gemini Image** | **Imagen** |
-|---|---|---|
-| **API Method** | `generate_content()` | `generate_images()` |
-| **Config Type** | `GenerateContentConfig` | `GenerateImagesConfig` |
-| **Models** | `gemini-*-image*` | `imagen-*` |
-| **Prompt Format** | `contents=[prompt]` (array) | `prompt=prompt` (string) |
-| **Response** | `response.parts` | `response.generated_images` |
-| **Special Config** | `response_modalities=['IMAGE']` | Not used |
-
-#### Example model detection
+**Gemini models** (`gemini-3-pro-image`, `gemini-3.1-flash-image`): Use `chat.completions` with `response_modalities=["IMAGE"]`:
 
 ```python
-# These trigger Imagen API:
-"imagen-4.0-generate-001" → generate_images()
-"custom-imagen-v2" → generate_images()
-
-# These trigger Gemini API:
-"gemini-3-pro-image-preview" → generate_content()
-"gemini-2.5-flash-image" → generate_content()
-"custom-gemini-image" → generate_content()
+client.chat.completions.create(
+    model=os.environ.get("IMAGE_GEN_MODEL") or "gemini-3-pro-image",
+    messages=[{"role": "user", "content": prompt}],
+    seed=seed,
+    temperature=temperature,
+    extra_body={"response_modalities": ["IMAGE"]},
+)
 ```
 
-### ❌ DOES NOT EXIST - Never Use These
+### IMAGE_GEN_MODEL: NEVER Override
 
-If you find yourself writing these, **STOP** - you are using the wrong API:
-
-| ❌ Wrong (Does NOT exist) | ✅ Correct |
-|--------------------------|-----------|
-| `types.ImageGenerationConfig` | Use `GenerateContentConfig` (Gemini) or `GenerateImagesConfig` (Imagen) |
-| `generate_images()` + Gemini model | Use `generate_content()` for Gemini models |
-| `generate_content()` + Imagen model | Use `generate_images()` for Imagen models |
-| `response_modalities` in Imagen | Only use with Gemini's `GenerateContentConfig` |
-
-### NANO_BANANA_MODEL: NEVER Override
-
-**Rule:** If `NANO_BANANA_MODEL` is set, use it EXACTLY as-is.
+**Rule:** If `IMAGE_GEN_MODEL` is set, use it EXACTLY as-is.
 
 ❌ **WRONG - Do NOT do this:**
 
 ```python
-model = os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image")
+model = os.environ.get("IMAGE_GEN_MODEL", "gemini-3-pro-image")
 if not model.endswith("-preview"):
     model = f"{model}-preview"  # ❌ NEVER modify user's model name
 ```
@@ -100,10 +75,10 @@ if not model.endswith("-preview"):
 ✅ **CORRECT:**
 
 ```python
-model = os.environ.get("NANO_BANANA_MODEL")
+model = os.environ.get("IMAGE_GEN_MODEL")
 if not model:
-    # Only choose default when NANO_BANANA_MODEL is NOT set
-    model = "gemini-3-pro-image-preview"
+    # Only choose default when IMAGE_GEN_MODEL is NOT set
+    model = "gemini-3-pro-image"
 # Use model EXACTLY as-is - do NOT add suffixes or change names
 ```
 
@@ -111,7 +86,7 @@ if not model:
 
 - Custom endpoints have their own model names (e.g., `gemini-3-pro-image` without `-preview`)
 - User explicitly set the model they want
-- DO NOT apply Google's naming conventions to custom endpoints
+- DO NOT apply naming conventions to custom endpoint models
 
 ---
 
@@ -184,10 +159,15 @@ User: "Create 3 slides with same seed 100"
 
 When `style: "trendlife"` is detected:
 
-1. Generate slide image with TrendLife colors (no logo in prompt)
-2. Detect layout type from prompt content
-3. Apply logo overlay with `logo_overlay.overlay_logo()`
-4. Output final image with logo
+1. Detect layout type from prompt content (or use explicit `layout` field)
+2. Build TrendLife-branded prompt with brand colors
+3. **Featured layout** (title/divider/closing slides):
+   - Logo passed as reference image to AI generation (Gemini: `image_url`; gpt-image-2: `/images/edits`)
+   - AI integrates logo into the design naturally
+4. **Content layout** (information slides):
+   - Generate slide with brand colors only (no logo in prompt)
+   - Apply logo overlay with `logo_overlay.overlay_logo()` post-generation
+5. Output final image with logo
 
 ### Layout Detection Rules
 
@@ -254,12 +234,13 @@ output_with_logo.replace(output_path)
 
 ## Quick Reference
 
-### API Selection (CRITICAL - Check First)
+### API Routing Decision (CRITICAL - Check First)
 
-| Model Name Contains | API to Use | Config Type |
-|---------------------|------------|-------------|
-| `imagen` | `generate_images()` | `GenerateImagesConfig` |
-| Anything else | `generate_content()` | `GenerateContentConfig` |
+| `IMAGE_GEN_MODEL` | `reference_image` | API Used |
+|-------------------|-------------------|----------|
+| `gpt-image-2` | absent | `client.images.generate()` — POST `/images/generations` |
+| `gpt-image-2` | present | `client.images.edit()` — POST `/images/edits` |
+| `gemini-*` or any other | any | `client.chat.completions.create()` — POST `/chat/completions` |
 
 #### See CRITICAL section above for complete details
 
@@ -270,11 +251,10 @@ All image generation uses the same fixed Python script with JSON config:
 1. **Create Config:** Write JSON to system temp directory (NOT skill directory)
    - Use `Write` tool with path: `{temp_dir}/nano-banana-config-{timestamp}.json`
    - Get temp_dir from user's OS temp location (cross-platform)
-2. **Execute Script:** `uv run --managed-python scripts/generate_images.py --config <temp_config_path>`
-   - Script path is relative to skill directory
-   - **CRITICAL:** Use relative path to script WITHOUT changing directory (no `cd` command)
+2. **Execute Script:** `uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/generate_images.py --config <temp_config_path>`
+   - **CRITICAL:** Use `${CLAUDE_SKILL_DIR}` prefix WITHOUT changing directory (no `cd` command)
    - **WRONG:** `cd scripts && uv run --managed-python generate_images.py ...` ❌
-   - **CORRECT:** `uv run --managed-python scripts/generate_images.py ...` ✅
+   - **CORRECT:** `uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/generate_images.py ...` ✅
    - This ensures execution cwd remains in user's project directory, so relative paths in config work correctly
 3. **Track Progress:** Monitor progress/results files (for background tasks)
 4. **Return Paths:** Report generated image locations
@@ -282,7 +262,7 @@ All image generation uses the same fixed Python script with JSON config:
 #### IMPORTANT
 
 - Always write config to system temp directory, NEVER to skill base directory
-- Always use `scripts/generate_images.py` for the script path (relative to skill directory)
+- Always use `${CLAUDE_SKILL_DIR}/scripts/generate_images.py` for the script path
 
 #### Config Requirements
 
@@ -304,16 +284,29 @@ All image generation uses the same fixed Python script with JSON config:
       "number": 1,
       "prompt": "...",
       "style": "trendlife",
-      "layout": "featured",  // Optional: "featured" or "content" (auto-detect if omitted)
-      "temperature": 0.8,    // Optional: 0.0-2.0 per-slide override
-      "seed": 42             // Optional: integer for reproducible generation
+      "layout": "featured",       // Optional: "featured" or "content" (auto-detect if omitted)
+      "temperature": 0.8,         // Optional: 0.0-2.0 per-slide override (Gemini only)
+      "seed": 42,                 // Optional: integer for reproducible generation (Gemini only)
+      "reference_image": "./src.png"  // Optional: relative path; triggers /images/edits for gpt-image-2
     }
   ],
   "output_dir": "./001-feature-name/",  // MUST use NNN-short-name format
   "format": "webp",      // Optional: webp (default, RECOMMENDED), png, jpg
   "quality": 90,         // Optional: 1-100 (default: 90)
-  "temperature": 1.0,    // Optional: 0.0-2.0 global default (default: 1.0)
-  "seed": 12345          // Optional: integer global default (default: auto-generate)
+  "temperature": 1.0,    // Optional: 0.0-2.0 global default (default: 1.0, Gemini only)
+  "seed": 12345          // Optional: integer global default (default: auto-generate, Gemini only)
+}
+```
+
+#### gpt-image-2 Config Example
+
+```json
+{
+  "slides": [
+    {"number": 1, "prompt": "A futuristic cityscape at night"},
+    {"number": 2, "prompt": "Add a moon to the sky", "reference_image": "./001-city/slide-01.webp"}
+  ],
+  "output_dir": "./002-city-edit/"
 }
 ```
 
@@ -331,10 +324,11 @@ All image generation uses the same fixed Python script with JSON config:
 **Valid values:**
 
 - **`"featured"`** - For title slides, dividers, and closing slides
-  - Logo is used as **reference image** during AI generation (Gemini only)
+  - Logo is used as **reference image** during AI generation (both Gemini and gpt-image-2)
+  - Gemini: logo passed as `image_url` in `chat.completions`
+  - gpt-image-2: logo passed as `image` param in `/images/edits`
   - AI naturally integrates logo into the overall design
   - Provides creative, professional branding
-  - **Note:** Imagen API doesn't support reference images, so logo is overlaid instead
 
 - **`"content"`** - For content/information slides
   - Logo is **overlaid** in bottom-right corner (50px, 25px padding)
@@ -371,7 +365,11 @@ All image generation uses the same fixed Python script with JSON config:
 
 ### Temperature & Seed Parameters
 
-#### ⚡ NEW: Reproducible Generation
+> **gpt-image-2**: Seed and temperature are **not supported** by the RONE endpoint.
+> The script will emit a warning (once per job) and ignore both fields.
+> Use Gemini models if you need reproducible generation.
+
+#### ⚡ NEW: Reproducible Generation (Gemini only)
 
 #### Seed Parameter (Recommended)
 
@@ -455,9 +453,11 @@ All image generation uses the same fixed Python script with JSON config:
   - NNN = 3-digit number (001, 002, etc.)
   - short-name = brief descriptive name (lowercase, hyphens)
   - Examples: `./001-ai-safety/`, `./002-threat-detection/`, `./003-user-onboarding/`
+- ✅ `reference_image` MUST be a relative path (e.g., `"./source.png"`) — gpt-image-2 only; triggers `/images/edits`
 - ❌ NO absolute paths (breaks cross-platform)
 - ❌ NO plain names without numbers (e.g., `./slides/` is WRONG)
-- ❌ NO `model` field (use NANO_BANANA_MODEL env var)
+- ❌ NO `model` field (use IMAGE_GEN_MODEL env var)
+- ❌ NO `seed` or `temperature` for gpt-image-2 slides (unsupported; silently ignored)
 
 #### Output Directory Behavior
 
@@ -527,19 +527,63 @@ Write tool: C:/Users/<user>/AppData/Local/Temp/nano-banana-config-1234567890.jso
 
 | Error | Quick Fix |
 |-------|-----------|
-| `GEMINI_API_KEY not set` | `export GEMINI_API_KEY="your-key"` |
-| `Model not found` | Check exact model name, use `-preview` suffix if needed |
-| Wrong API used | Check CRITICAL section: Gemini vs Imagen |
-| `ModuleNotFoundError` | Verify `# dependencies = ["google-genai", "pillow"]` |
-| No image generated | Check `response.parts` (Gemini) or `response.generated_images` (Imagen) |
-| `Invalid aspect ratio` | Use exact strings: `"16:9"`, `"1:1"`, `"9:16"` (with quotes) |
+| `RDSEC_API_KEY not set` | `export RDSEC_API_KEY=<your-token>` |
+| `IMAGE_GEN_BASE_URL not set` | `export IMAGE_GEN_BASE_URL="https://api.rdsec.trendmicro.com/prod/aiendpoint/v1"` |
+| `Model not found` | Check exact model name in `IMAGE_GEN_MODEL` |
+| `ModuleNotFoundError` | Verify `# dependencies = ["openai", "pillow"]` in script header |
+| No image generated | Check that endpoint returns data in `message.images` field |
+| `401 Unauthorized` | Verify `RDSEC_API_KEY` is a valid JWT token with endpoint permissions |
 
 ### Debug Steps
 
-1. Verify API key: `echo $GEMINI_API_KEY`
-2. Test with simple prompt: `"A red circle"`
-3. Check response object: `print(response.parts)` or `print(response.generated_images)`
+1. Verify API key: `echo $RDSEC_API_KEY`
+2. Verify endpoint URL: `echo $IMAGE_GEN_BASE_URL` (must end with `/v1`)
+3. Test with simple prompt: `"A red circle"`
 4. Review CRITICAL section if API errors occur
+
+### Known Limitations (RONE Endpoint)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| `gpt-image-2` text-to-image (`/images/generations`) | ✅ Working | Use `quality: "low"` to avoid timeout |
+| `gpt-image-2` image editing (`/images/edits`) | ✅ Working | Fixed; use multipart form data + `quality: "low"` (~37-152s) |
+| Gemini image generation (`chat.completions`) | ✅ Working | Primary workflow for this skill |
+| Gemini image editing (`/images/edits`) | ❌ Not working | LiteLLM Vertex AI credential issue; use `chat.completions` with `image_url` parts instead |
+
+#### gpt-image-2 `/images/edits` — Correct Usage
+
+Send as **multipart form data** (do NOT set `Content-Type` manually):
+
+```python
+files = {"image": ("image.png", img_bytes, "image/png")}
+data = {
+    "model": "gpt-image-2",
+    "prompt": "edit instruction",
+    "n": "1",
+    "size": "1024x1024",   # must be a verified GPT pixel size
+    "quality": "low",       # REQUIRED — other values risk timeout
+}
+resp = requests.post(f"{BASE_URL}/images/edits",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    files=files, data=data, timeout=300)
+# Response: resp.json()["data"][0]["b64_json"]
+```
+
+#### Timeout Reference (from May 8 probe sweep, Michael Fu UX-AS)
+
+| Endpoint | `quality` | Time | Use? |
+|----------|-----------|------|------|
+| `/images/generations` | `low` | ~72s | ✅ |
+| `/images/generations` | `medium` | ~110s | ⚠️ slow |
+| `/images/generations` | `auto` / omitted | timeout | ❌ |
+| `/images/generations` | `high` | timeout | ❌ |
+| `/images/edits` | `low` | ~37–152s | ✅ |
+| `/images/edits` | omitted / `auto` / `high` | timeout / 400 | ❌ |
+| `/images/edits` | `standard` / `hd` | 400 | ❌ |
+
+**Rule:** All gpt-image-2 calls use `quality="low"` — the script enforces this automatically.
+
+**Reference:** [RDSec_One_Support — gpt-image-2 image editing follow-up (2026-05-12)](https://teams.microsoft.com/l/message/19:30f59149137649be85abbba50c7f4617@thread.tacv2/1778557586181?tenantId=3e04753a-ae5b-42d4-a86d-d6f05460f9e4&groupId=3e59784e-87f1-45d9-9393-0472c3c885a7&parentMessageId=1778557586181&teamName=RDSec-Service-Public&channelName=RDSec_One_Support&createdTime=1778557586181)
 
 ## Common Mistakes
 
@@ -548,9 +592,9 @@ Write tool: C:/Users/<user>/AppData/Local/Temp/nano-banana-config-1234567890.jso
 | **Using `types.ImageGenerationConfig`** | **Does NOT exist - use `GenerateContentConfig` or `GenerateImagesConfig`** |
 | **Using `generate_images()` with Gemini** | **Use `generate_content()` for Gemini models** |
 | **Using `generate_content()` with Imagen** | **Use `generate_images()` for Imagen models** |
-| Overriding `NANO_BANANA_MODEL` when set | Use model EXACTLY as-is - don't add suffixes |
-| Using `google-generativeai` (old library) | Use `google-genai` (new library) |
-| Using text models for image gen | Use image models only (`gemini-*-image*` or `imagen-*`) |
+| Overriding `IMAGE_GEN_MODEL` when set | Use model EXACTLY as-is - don't add suffixes |
+| Using `google-genai` library | Use `openai` library with OpenAI-compatible endpoint |
+| Using text models for image gen | Use image models only (e.g., `gemini-3-pro-image`) |
 | Saving to flat files | Use `NNN-short-name/` directories |
 | Using PIL to draw/edit | Use Gemini/Imagen API with image in `contents` |
 
@@ -567,7 +611,7 @@ Assistant actions:
      "slides": [{"number": 1, "prompt": "Modern office interior with natural lighting"}],
      "output_dir": "./001-office-design/"
    }
-2. Execute: uv run --managed-python scripts/generate_images.py --config {temp_config}
+2. Execute: uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/generate_images.py --config {temp_config}
 3. Read results: ./001-office-design/generation-results.json
    → {"outputs": [{"slide": 1, "path": "slide-01.png", "seed": 392664860}]}
 4. Report to user: "Generated at ./001-office-design/slide-01.png (seed: 392664860)"
@@ -678,14 +722,15 @@ If script execution fails, check these common issues:
 - Check write permissions in uv cache directory (usually `~/.local/share/uv/`)
 - **Verify**: Firewall/proxy settings allow uv to download Python
 
-### 5. Missing dependencies (google-genai, pillow)
+### 5. Missing dependencies (openai, pillow)
 
 - Dependencies are automatically installed by `uv run` via PEP 723 metadata
 - If user bypasses uv and runs script directly with python, they'll see standard ImportError
-- **Solution**: Always use `uv run --managed-python scripts/generate_images.py`
+- **Solution**: Always use `uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/generate_images.py`
 
 ## References
 
+- **API compatibility**: `references/api-compatibility.md` (model × feature matrix, gpt-image-2 timeout data, API routing)
 - **Advanced workflows**: `references/guide.md` (thinking, search grounding, 16+ prompting techniques)
 - **Brand styles**: `references/brand-styles.md` (Trend Micro specs)
 - **Slide decks**: `references/slide-deck-styles.md` (NotebookLM aesthetic, infographics, data viz)

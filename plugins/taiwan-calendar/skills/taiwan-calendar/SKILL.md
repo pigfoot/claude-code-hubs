@@ -44,14 +44,14 @@ This skill queries Taiwan's government administrative calendar API to provide ac
 
 ## Commands
 
-All commands use: `uv run --managed-python scripts/taiwan_calendar.py <command>`
+All commands use: `uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py <command>`
 
 ### Basic Queries
 
 #### `today` - Today's date and status
 
 ```bash
-uv run --managed-python scripts/taiwan_calendar.py today
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py today
 ```
 
 **Output example:**
@@ -63,8 +63,8 @@ uv run --managed-python scripts/taiwan_calendar.py today
 #### `check <date>` - Check specific date
 
 ```bash
-uv run --managed-python scripts/taiwan_calendar.py check 2025-01-01
-uv run --managed-python scripts/taiwan_calendar.py check 01/01
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py check 2025-01-01
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py check 01/01
 ```
 
 **Output example:**
@@ -84,7 +84,7 @@ uv run --managed-python scripts/taiwan_calendar.py check 01/01
 #### `range <start> <end>` - Count working days in range
 
 ```bash
-uv run --managed-python scripts/taiwan_calendar.py range 2025-01-01 2025-01-31
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py range 2025-01-01 2025-01-31
 ```
 
 **Output example:**
@@ -103,10 +103,10 @@ uv run --managed-python scripts/taiwan_calendar.py range 2025-01-01 2025-01-31
 
 ```bash
 # From today
-uv run --managed-python scripts/taiwan_calendar.py add-days 5
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py add-days 5
 
 # From specific date
-uv run --managed-python scripts/taiwan_calendar.py add-days 2025-01-06 5
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py add-days 2025-01-06 5
 ```
 
 **Output example:**
@@ -119,10 +119,10 @@ uv run --managed-python scripts/taiwan_calendar.py add-days 2025-01-06 5
 
 ```bash
 # From today
-uv run --managed-python scripts/taiwan_calendar.py next-working
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py next-working
 
 # From specific date
-uv run --managed-python scripts/taiwan_calendar.py next-working 2025-01-03
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py next-working 2025-01-03
 ```
 
 **Output example:**
@@ -135,10 +135,10 @@ uv run --managed-python scripts/taiwan_calendar.py next-working 2025-01-03
 
 ```bash
 # From today
-uv run --managed-python scripts/taiwan_calendar.py next-holiday
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py next-holiday
 
 # From specific date
-uv run --managed-python scripts/taiwan_calendar.py next-holiday 2025-01-06
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py next-holiday 2025-01-06
 ```
 
 **Output example:**
@@ -157,7 +157,7 @@ uv run --managed-python scripts/taiwan_calendar.py next-holiday 2025-01-06
 User: "今天是幾號？"
 
 Response:
-[Run: uv run --managed-python scripts/taiwan_calendar.py today]
+[Run: uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py today]
 Output: 2025-01-06 (週一) 是工作日。
 
 "今天是 2025 年 1 月 6 日（週一），是工作日。"
@@ -169,7 +169,7 @@ Output: 2025-01-06 (週一) 是工作日。
 User: "元旦是放假嗎？"
 
 Response:
-[Run: uv run --managed-python scripts/taiwan_calendar.py check 01/01]
+[Run: uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py check 01/01]
 Output: 2025-01-01 (週三) 是非工作日 - 元旦。
 
 "是的，元旦（1/1）是國定假日。"
@@ -181,7 +181,7 @@ Output: 2025-01-01 (週三) 是非工作日 - 元旦。
 User: "報告要 5 個工作天內交，今天開始算那是哪天？"
 
 Response:
-[Run: uv run --managed-python scripts/taiwan_calendar.py add-days 5]
+[Run: uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py add-days 5]
 Output: 從 2025-01-06 算起 5 個工作日後是 2025-01-13 (週一)。
 
 "從今天算起 5 個工作日後是 1 月 13 日（週一）。"
@@ -193,7 +193,7 @@ Output: 從 2025-01-06 算起 5 個工作日後是 2025-01-13 (週一)。
 User: "這個月有幾個工作日？"
 
 Response:
-[Run: uv run --managed-python scripts/taiwan_calendar.py range 2025-01-01 2025-01-31]
+[Run: uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py range 2025-01-01 2025-01-31]
 Output: 2025-01-01 到 2025-01-31 共有 23 個工作日。
 
 期間假日：
@@ -208,7 +208,7 @@ Output: 2025-01-01 到 2025-01-31 共有 23 個工作日。
 User: "下一個連假是什麼時候？"
 
 Response:
-[Run: uv run --managed-python scripts/taiwan_calendar.py next-holiday]
+[Run: uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py next-holiday]
 Output: 下一個假日是 2025-01-29 (週三) - 春節。
 
 "下一個假日是春節，從 1 月 29 日（週三）開始。"
@@ -270,15 +270,15 @@ The script outputs Chinese (Traditional) responses. Use these directly when resp
 Always use the full command with `uv run --managed-python`:
 
 ```bash
-uv run --managed-python scripts/taiwan_calendar.py <command> [args]
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py <command> [args]
 ```
 
 **NEVER** use:
 
-- `python scripts/taiwan_calendar.py` ❌
+- `python ${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py` ❌
 - `cd scripts && uv run taiwan_calendar.py` ❌
 
-The script path is relative to the skill directory.
+Use `${CLAUDE_SKILL_DIR}` prefix so the path resolves correctly regardless of working directory.
 
 ---
 
@@ -316,4 +316,4 @@ The script path is relative to the skill directory.
 
 This is the main skill file. All essential information is included here for immediate use.
 
-For implementation details, see: `scripts/taiwan_calendar.py`
+For implementation details, see: `${CLAUDE_SKILL_DIR}/scripts/taiwan_calendar.py`

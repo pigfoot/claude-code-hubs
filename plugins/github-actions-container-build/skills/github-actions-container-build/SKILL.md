@@ -136,7 +136,7 @@ for full BuildKit compatibility:
 1. **Copy workflow template**:
 
    ```bash
-   cp assets/github-actions-workflow-matrix-build.yml .github/workflows/build.yml
+   cp ${CLAUDE_SKILL_DIR}/assets/github-actions-workflow-matrix-build.yml .github/workflows/build.yml
    ```
 
 2. **Customize Containerfile path**:
@@ -152,7 +152,7 @@ for full BuildKit compatibility:
 1. **Copy workflow template**:
 
    ```bash
-   cp assets/github-actions-workflow-qemu.yml .github/workflows/build.yml
+   cp ${CLAUDE_SKILL_DIR}/assets/github-actions-workflow-qemu.yml .github/workflows/build.yml
    ```
 
 2. Follow steps 2-3 from above.

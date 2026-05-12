@@ -4,6 +4,9 @@ assets/templates/*.pptx
 # Generated test slides (not part of plugin distribution)
 [0-9][0-9][0-9]-*/
 
+# Local environment secrets
+.env
+
 # Python cache
 __pycache__/
 *.pyc

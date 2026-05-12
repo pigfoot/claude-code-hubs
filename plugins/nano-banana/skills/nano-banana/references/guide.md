@@ -19,13 +19,13 @@ producing the final output.
 ```bash
 uv run - << 'EOF'
 # /// script
-# dependencies = ["google-genai", "pillow"]
+# dependencies = ["openai", "pillow"]
 # ///
 import os
 import io
 from pathlib import Path
-from google import genai
-from google.genai import types
+from openai import OpenAI
+
 from PIL import Image as PILImage
 
 # Auto-increment folder detection
@@ -42,11 +42,11 @@ OUTPUT_DIR = Path(f"{next_num:03d}-futuristic-city")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Client with optional custom endpoint
-base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+base_url = os.environ.get("IMAGE_GEN_BASE_URL")
 client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 response = client.models.generate_content(
-    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
+    model=os.environ.get("IMAGE_GEN_MODEL", "gemini-3-pro-image-preview"),
     contents=["Create a detailed architectural blueprint of a futuristic city"],
     config=types.GenerateContentConfig(
         response_modalities=['TEXT', 'IMAGE']
@@ -86,13 +86,13 @@ Generate images based on real-time information like weather forecasts, stock dat
 ```bash
 uv run - << 'EOF'
 # /// script
-# dependencies = ["google-genai", "pillow"]
+# dependencies = ["openai", "pillow"]
 # ///
 import os
 import io
 from pathlib import Path
-from google import genai
-from google.genai import types
+from openai import OpenAI
+
 from PIL import Image as PILImage
 
 # Auto-increment folder detection
@@ -109,11 +109,11 @@ OUTPUT_DIR = Path(f"{next_num:03d}-weather-chart")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Client with optional custom endpoint
-base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+base_url = os.environ.get("IMAGE_GEN_BASE_URL")
 client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 response = client.models.generate_content(
-    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
+    model=os.environ.get("IMAGE_GEN_MODEL", "gemini-3-pro-image-preview"),
     contents=["Visualize current weather for San Francisco as a chart"],
     config=types.GenerateContentConfig(
         response_modalities=['TEXT', 'IMAGE'],
@@ -156,12 +156,12 @@ Use chat sessions for iterative image refinement across multiple turns.
 ```bash
 uv run - << 'EOF'
 # /// script
-# dependencies = ["google-genai", "pillow"]
+# dependencies = ["openai", "pillow"]
 # ///
 import io
 from pathlib import Path
-from google import genai
-from google.genai import types
+from openai import OpenAI
+
 from PIL import Image as PILImage
 
 # Auto-increment folder detection
@@ -178,11 +178,11 @@ OUTPUT_DIR = Path(f"{next_num:03d}-photosynthesis")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Client with optional custom endpoint
-base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+base_url = os.environ.get("IMAGE_GEN_BASE_URL")
 client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 chat = client.chats.create(
-    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
+    model=os.environ.get("IMAGE_GEN_MODEL", "gemini-3-pro-image-preview"),
     config=types.GenerateContentConfig(
         response_modalities=['TEXT', 'IMAGE']
     )
@@ -236,12 +236,12 @@ Combine up to 14 reference images (6 for objects, 5 for humans) to create compos
 ```bash
 uv run - << 'EOF'
 # /// script
-# dependencies = ["google-genai", "pillow"]
+# dependencies = ["openai", "pillow"]
 # ///
 import io
 from pathlib import Path
-from google import genai
-from google.genai import types
+from openai import OpenAI
+
 from PIL import Image as PILImage
 
 # Auto-increment folder detection
@@ -258,7 +258,7 @@ OUTPUT_DIR = Path(f"{next_num:03d}-group-photo")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Client with optional custom endpoint
-base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+base_url = os.environ.get("IMAGE_GEN_BASE_URL")
 client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 # Load reference images
@@ -267,7 +267,7 @@ person2 = PILImage.open("person2.png")
 person3 = PILImage.open("person3.png")
 
 response = client.models.generate_content(
-    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
+    model=os.environ.get("IMAGE_GEN_MODEL", "gemini-3-pro-image-preview"),
     contents=[
         "Office group photo of these people making funny faces",
         person1,
@@ -299,12 +299,12 @@ Use `gemini-3-pro-image-preview` for high-fidelity professional outputs.
 ```bash
 uv run - << 'EOF'
 # /// script
-# dependencies = ["google-genai", "pillow"]
+# dependencies = ["openai", "pillow"]
 # ///
 import io
 from pathlib import Path
-from google import genai
-from google.genai import types
+from openai import OpenAI
+
 from PIL import Image as PILImage
 
 # Auto-increment folder detection
@@ -321,11 +321,11 @@ OUTPUT_DIR = Path(f"{next_num:03d}-butterfly-4k")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Client with optional custom endpoint
-base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL")
+base_url = os.environ.get("IMAGE_GEN_BASE_URL")
 client = genai.Client(http_options={'base_url': base_url}) if base_url else genai.Client()
 
 response = client.models.generate_content(
-    model=os.environ.get("NANO_BANANA_MODEL", "gemini-3-pro-image-preview"),
+    model=os.environ.get("IMAGE_GEN_MODEL", "gemini-3-pro-image-preview"),
     contents=["Da Vinci style anatomical sketch of a butterfly"],
     config=types.GenerateContentConfig(
         response_modalities=['TEXT', 'IMAGE'],

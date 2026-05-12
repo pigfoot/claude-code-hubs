@@ -16,7 +16,7 @@ marketplaces.
   editing** (preserves macros while Claude edits content), **REST API only** (no MCP dependency, always available),
   CQL search with Rovo AI fallback (`mcp__claude_ai_Atlassian_Rovo__searchAtlassian`), short URL resolution,
   markdown-first workflows, unlimited file sizes, any-file attachment upload, and full-width page layout control
-- **[nano-banana](./plugins/nano-banana/)** - AI image generation with Gemini models. Direct generation or interactive
+- **[nano-banana](./plugins/nano-banana/)** - Image generation via OpenAI-compatible API. Direct generation or interactive
   prompting with brand style support
 - **[secure-container-build](./plugins/secure-container-build/)** - Build secure container images with Wolfi runtime,
   non-root users, and multi-stage builds. Templates for Python/uv, Bun, Node.js/pnpm, Golang, and Rust
@@ -507,73 +507,66 @@ claude plugin install --scope user nano-banana@pigfoot-marketplace
 ```
 
 **What it does:**
-Generates and edits images using Google's Gemini or Imagen models with Python scripting powered by uv.
+Generates images via OpenAI-compatible API (LiteLLM/Azure proxy) with Python scripting powered by uv.
+Supports Gemini and gpt-image-2 models, TrendLife brand styling, and reference image editing.
 
-**Recent Improvements (v0.1.0):**
+**Recent Improvements (v0.2.0):**
 
-- ✅ **Logo update** - Upgraded to TrendLife 2026 logo design with transparent background
-- ✅ **Smart cover pages** - Logo as reference image (Gemini API) for professional branding
-- ✅ **Layout detection fix** - Word boundary check prevents false positives (e.g., "smart cover pages" ≠ "cover
-  page")
-- ✅ **Logo space optimization** - Removed excessive blank space; logos overlay content directly
-- ✅ **Python compatibility** - Fallback support for Python 3.9+ (3.14+ recommended)
-- ✅ **Git LFS error detection** - Automatic pointer file detection with installation instructions
-- ✅ **Better error messages** - Pre-flight environment checks with helpful hints
-
-**Previous Improvements (v0.0.9):**
-
-- ✅ **Seed parameter** - Reproducible image generation with automatic seed tracking
-- ✅ **Temperature parameter** - Experimental control over generation randomness (0.0-2.0)
+- ✅ **gpt-image-2 support** - Full routing for text-to-image (`/images/generations`) and image
+  editing (`/images/edits`) with `reference_image` per-slide config
+- ✅ **OpenAI-compatible client** - Switched from `google-genai` to `openai` library;
+  works with any OpenAI-compatible endpoint
+- ✅ **Model-based routing** - Script auto-selects API path based on `IMAGE_GEN_MODEL`
+- ✅ **TrendLife + gpt-image-2** - Featured layout uses logo via `/images/edits`;
+  content layout applies logo overlay post-generation
+- ✅ **Renamed environment variables** - `IMAGE_GEN_MODEL`, `RDSEC_API_KEY`, `IMAGE_GEN_BASE_URL`
 
 **Benefits:**
 
-- ✅ **Dual API support** - Gemini (quality, slides) or Imagen (multiple images, negative prompts)
-- ✅ **TrendLife brand support** - Automatic logo overlay with precise positioning matching PowerPoint template
-- ✅ **Batch generation** - Generate 5+ slides efficiently in background with progress tracking (since v0.0.4)
-- ✅ **AI image generation** - Create images from text descriptions
-- ✅ **Image editing** - Edit existing images with AI-powered transformations
+- ✅ **Multi-model support** - Gemini (`chat.completions`) or gpt-image-2 (dedicated Images API)
+- ✅ **TrendLife brand support** - Automatic logo integration for both Gemini and gpt-image-2
+- ✅ **Batch generation** - Generate 1-100 slides with progress tracking
+- ✅ **Image editing** - Edit existing images with `reference_image` (gpt-image-2)
 - ✅ **Interactive prompting** - Get help crafting effective prompts for better results
 - ✅ **Brand style support** - TrendLife and NotebookLM presentation styles
-- ✅ **Multiple models** - Choose between quality and speed
-- ✅ **Format flexibility** - Output WebP (default), JPEG, or PNG with quality control
+- ✅ **Format flexibility** - Output WebP (default, lossless for styled slides), JPEG, or PNG
 
 **Prerequisites:**
 
 - [uv](https://docs.astral.sh/uv/) installed
-- `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) environment variable set with a valid Gemini API key
+- `RDSEC_API_KEY`, `IMAGE_GEN_BASE_URL` environment variables set
 
 **📖 Complete Documentation:**
 See [plugins/nano-banana/README.md](./plugins/nano-banana/README.md) for:
 
-- Detailed API selection logic (Gemini vs Imagen)
-- Configuration examples (official API, custom endpoints)
-- Brand style support (Trend Micro, NotebookLM)
-- Slide deck visual styles (Professional, Blackboard, Data Viz, etc.)
+- API selection logic (Gemini vs gpt-image-2) and endpoint routing
+- Configuration examples with all environment variables
+- Brand style support (TrendLife, NotebookLM)
 - Complete usage examples
 
 **Quick Configuration:**
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NANO_BANANA_MODEL` | (Claude chooses) | Gemini (`gemini-*-image*`) or Imagen (`imagen-*`) - auto-detects API |
-| `NANO_BANANA_FORMAT` | `webp` | Output format: `webp`, `jpg`, or `png` |
-| `NANO_BANANA_QUALITY` | `90` | Image quality (1-100) for webp/jpg |
+| `IMAGE_GEN_MODEL` | `gemini-3-pro-image` | Model: `gemini-3-pro-image`, `gemini-3.1-flash-image`, `gpt-image-2` |
+| `IMAGE_GEN_BASE_URL` | (required) | OpenAI-compatible endpoint URL (must include `/v1` suffix) |
+| `RDSEC_API_KEY` | (required) | API key / JWT token |
 
 **Quick Start:**
 
 ```bash
-# Official Google API
-export GEMINI_API_KEY="your-api-key"
+export RDSEC_API_KEY="your-api-key"
+export IMAGE_GEN_BASE_URL="https://api.example.com/v1"
 
-# Generate image
+# Gemini (default)
 "Generate a photorealistic cat wearing sunglasses, beach sunset, 16:9"
 
-# With brand style
-"Create a professional infographic about CI/CD, style: trend"
+# gpt-image-2
+export IMAGE_GEN_MODEL="gpt-image-2"
+"Generate a product photo of running shoes"
 
-# Multiple images with Imagen
-export NANO_BANANA_MODEL="imagen-4.0-generate-001"
-"Generate 4 variations of running shoes product photos"
+# With brand style
+"Create a TrendLife presentation slide about cloud security"
 ```
 
 ---
@@ -807,7 +800,7 @@ Once configured, Claude will:
 |--------|-------------|---------|
 | [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
 | [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads, attachment support, and page formatting control | 0.2.0 |
-| [nano-banana](./plugins/nano-banana/) | Python scripting and Gemini image generation | 0.1.0 |
+| [nano-banana](./plugins/nano-banana/) | Image generation via OpenAI-compatible API | 0.2.0 |
 | [taiwan-calendar](./plugins/taiwan-calendar/) | Taiwan working day/holiday calendar queries | 0.0.1 |
 | [taiwan-mrt-fareastern-empty-train](./plugins/taiwan-mrt-fareastern-empty-train/) | Find empty trains (空車) at 亞東醫院 MRT station | 0.0.1 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
@@ -897,7 +890,7 @@ claude plugin install --scope user <plugin-name>@pigfoot-marketplace
 |--------|--------|-------------|-----------------|
 | [commit](./plugins/commit/) | pigfoot | Conventional commits with emoji and GPG signing | `commit:commit` |
 | [confluence](./plugins/confluence/) | pigfoot | Confluence document management with unlimited uploads, attachment support, and page formatting control | `confluence:confluence` |
-| [nano-banana](./plugins/nano-banana/) | pigfoot | Python scripting and Gemini image generation with dual-mode operation | `nano-banana:nano-banana` |
+| [nano-banana](./plugins/nano-banana/) | pigfoot | Image generation via OpenAI-compatible API with brand style support | `nano-banana:nano-banana` |
 | [secure-container-build](./plugins/secure-container-build/) | pigfoot | Secure container images with Wolfi runtime | `secure-container-build:secure-container-build` |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | pigfoot | Multi-arch container builds in GitHub Actions | `github-actions-container-build:github-actions-container-build` |
 | [context7](https://github.com/upstash/context7) | official (@claude-plugins-official) | Library documentation via Context7 MCP | MCP server |

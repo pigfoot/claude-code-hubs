@@ -16,39 +16,48 @@ the number of images (1-100).
 
 #### Scenario: Single image generation
 
-**Given:** User requests 1 image
-**When:** Claude prepares generation
-**Then:**
-
-- Claude creates JSON config with 1 slide
-- Calls `uv run generate_images.py --config <path>`
-- Same script as batch mode
-- No heredoc generation
+- **WHEN** user requests 1 image
+- **THEN** Claude creates JSON config with 1 slide
+- **AND** calls `uv run generate_images.py --config <path>`
+- **AND** generation uses the OpenAI-compatible client (`openai` library), not `google-genai`
 
 #### Scenario: Small batch (3 images)
 
-**Given:** User requests 3 images
-**When:** Claude prepares generation
-**Then:**
-
-- Claude creates JSON config with 3 slides
-- Calls `uv run generate_images.py --config <path>`
-- Same script as single/large batch
-- No mode switching logic
+- **WHEN** user requests 3 images
+- **THEN** Claude creates JSON config with 3 slides
+- **AND** calls `uv run generate_images.py --config <path>`
+- **AND** the same script is used as for single or large batch
 
 #### Scenario: Large batch (50 images)
 
-**Given:** User requests 50 images
-**When:** Claude prepares generation
-**Then:**
-
-- Claude creates JSON config with 50 slides
-- Calls `uv run generate_images.py --config <path>`
-- Same script behavior, scales naturally
-- Progress tracking handles large counts
+- **WHEN** user requests 50 images
+- **THEN** Claude creates JSON config with 50 slides
+- **AND** calls `uv run generate_images.py --config <path>`
+- **AND** script behavior scales naturally with no mode switching
 
 **Rationale:** Eliminates complexity of mode switching and ensures consistent, hallucination-free behavior across all
 use cases.
+
+---
+
+### Requirement: OpenAI Library Dependency
+
+The system SHALL declare `openai` (not `google-genai`) as the image generation dependency in the script header.
+
+**ID:** `unified-generation-009`
+**Priority:** High
+
+#### Scenario: Script header specifies openai
+
+- **WHEN** `generate_images.py` is inspected
+- **THEN** the `# dependencies` line in the uv inline script header contains `"openai"` and `"pillow"`
+- **AND** does NOT contain `"google-genai"`
+
+#### Scenario: uv resolves openai at runtime
+
+- **WHEN** `uv run generate_images.py --config <path>` is executed
+- **THEN** `uv` installs `openai` and `pillow` if not cached
+- **AND** the script runs without any manual `pip install`
 
 ---
 
@@ -133,6 +142,23 @@ Example:
 }
 ```
 
+#### Scenario: Claude creates config with reference image for editing
+
+- **WHEN** user requests gpt-image-2 image editing
+- **THEN** config includes `reference_image` on the relevant slide
+
+Updated example:
+
+```json
+{
+  "slides": [
+    {"number": 1, "prompt": "Add a blue border to this image", "reference_image": "./source.png"},
+    {"number": 2, "prompt": "A futuristic cityscape", "style": "professional"}
+  ],
+  "output_dir": "./001-edits/"
+}
+```
+
 #### Scenario: Claude uses cross-platform temp path
 
 **Given:** Claude needs to create config file
@@ -207,3 +233,49 @@ The unified generation workflow SHALL achieve zero AI-caused hallucinations in i
 - Success rate for AI-generated parts: 100%
 
 **Rationale:** This is the primary goal - eliminate the 30-40% hallucination rate of heredoc approach.
+
+---
+
+### Requirement: Slide config supports optional reference_image field
+
+The JSON slide config SHALL accept an optional `reference_image` field containing a relative path
+to a source image for model-supported editing workflows.
+
+**ID:** `unified-generation-007`
+**Priority:** High
+
+#### Scenario: Config with reference_image is valid
+
+- **WHEN** slide config contains `"reference_image": "./source.png"`
+- **THEN** `load_config()` accepts it without error
+- **AND** the path is passed to `generate_slide()` for model dispatch
+
+#### Scenario: Config without reference_image is unchanged
+
+- **WHEN** slide config has no `reference_image` field
+- **THEN** behavior is identical to current (no breaking change)
+
+---
+
+### Requirement: Model-based routing in generate_slide
+
+`generate_images.py` SHALL dispatch API calls based on the model name:
+
+- `gpt-image-2` without `reference_image` → `client.images.generate()`
+- `gpt-image-2` with `reference_image` → `client.images.edit()`
+- Any other model → existing `client.chat.completions.create()` path (unchanged)
+
+**ID:** `unified-generation-008`
+**Priority:** High
+
+#### Scenario: Gemini model unchanged
+
+- **WHEN** `IMAGE_GEN_MODEL=gemini-3-pro-image`
+- **THEN** script uses `client.chat.completions.create()` exactly as before
+- **AND** no new code paths are entered
+
+#### Scenario: Mixed-model batch routes each slide correctly
+
+- **WHEN** batch config has Gemini slides and gpt-image-2 slides
+- **THEN** each slide is dispatched to its correct API path independently
+- **AND** results are collected in the same output format regardless of model

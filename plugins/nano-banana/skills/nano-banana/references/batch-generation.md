@@ -47,7 +47,7 @@ config = {
         {"number": 10, "prompt": "Best practices and next steps", "style": "professional"}
     ],
     "output_dir": "/home/user/presentations/001-cicd-deck/",
-    # NOTE: Don't specify "model" here - let the script use NANO_BANANA_MODEL env var
+    # NOTE: Don't specify "model" here - let the script use IMAGE_GEN_MODEL env var
     # This matches nano-banana's standard pattern
     "format": "webp",
     "quality": 90
@@ -361,10 +361,10 @@ The batch script continues processing remaining slides when individual slides fa
 #### 4. Missing API Key
 
 ```
-Error: GEMINI_API_KEY or GOOGLE_API_KEY environment variable not set
+Error: RDSEC_API_KEY or GOOGLE_API_KEY environment variable not set
 ```
 
-**Solution:** Set `GEMINI_API_KEY` environment variable
+**Solution:** Set `RDSEC_API_KEY` environment variable
 
 ---
 

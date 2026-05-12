@@ -75,7 +75,7 @@ CMD ["your-app"]
 1. **Copy Containerfile template**:
 
    ```bash
-   cp assets/Containerfile.python-uv ./Containerfile
+   cp ${CLAUDE_SKILL_DIR}/assets/Containerfile.python-uv ./Containerfile
    ```
 
 2. **Update application command**:
@@ -89,7 +89,7 @@ CMD ["your-app"]
 1. **Copy Containerfile template**:
 
    ```bash
-   cp assets/Containerfile.bun ./Containerfile
+   cp ${CLAUDE_SKILL_DIR}/assets/Containerfile.bun ./Containerfile
    ```
 
 2. **Update runtime command**:
@@ -103,7 +103,7 @@ CMD ["your-app"]
 1. **Copy Containerfile template**:
 
    ```bash
-   cp assets/Containerfile.nodejs ./Containerfile
+   cp ${CLAUDE_SKILL_DIR}/assets/Containerfile.nodejs ./Containerfile
    ```
 
 2. **Update entry point**:
@@ -131,7 +131,7 @@ CGO_ENABLED=0 go build .
 1. **Copy Containerfile template**:
 
    ```bash
-   cp assets/Containerfile.golang ./Containerfile
+   cp ${CLAUDE_SKILL_DIR}/assets/Containerfile.golang ./Containerfile
    ```
 
 2. **Update binary name**:
@@ -145,7 +145,7 @@ CGO_ENABLED=0 go build .
 1. **Copy CGO template**:
 
    ```bash
-   cp assets/Containerfile.golang-cgo ./Containerfile
+   cp ${CLAUDE_SKILL_DIR}/assets/Containerfile.golang-cgo ./Containerfile
    ```
 
 ### Rust Project
@@ -155,7 +155,7 @@ CGO_ENABLED=0 go build .
 1. **Copy template**:
 
    ```bash
-   cp assets/Containerfile.rust ./Containerfile
+   cp ${CLAUDE_SKILL_DIR}/assets/Containerfile.rust ./Containerfile
    ```
 
 2. **Update binary name**:
@@ -181,7 +181,7 @@ If you need the smallest possible image and have no C dependencies:
 1. **Copy musl template**:
 
    ```bash
-   cp assets/Containerfile.rust-musl ./Containerfile
+   cp ${CLAUDE_SKILL_DIR}/assets/Containerfile.rust-musl ./Containerfile
    ```
 
 **Warning:** musl's allocator is 7-10x slower in multi-threaded workloads. You MUST add mimalloc to Cargo.toml (see

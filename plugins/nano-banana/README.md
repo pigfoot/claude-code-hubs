@@ -1,8 +1,31 @@
 # Nano Banana Plugin
 
-Python scripting and Gemini/Imagen image generation using uv with inline script dependencies.
+Image generation via OpenAI-compatible API using uv with inline script dependencies.
 
-## ✨ Recent Improvements (v0.1.0)
+## ✨ Recent Improvements (v0.2.0)
+
+- **gpt-image-2 support**: Full routing for text-to-image (`/images/generations`) and image editing
+  (`/images/edits`) with `reference_image` per-slide config
+- **OpenAI-compatible client**: Switched from `google-genai` to `openai` library —
+  works with any OpenAI-compatible endpoint (LiteLLM, etc.)
+- **Seed now actually works**: `seed` is passed as a standard `chat.completions` parameter —
+  same seed + same prompt = same image (verified, Gemini only)
+- **Model-based routing**: Script auto-selects API path based on `IMAGE_GEN_MODEL`;
+  Gemini uses `chat.completions`, gpt-image-2 uses dedicated Images API
+- **Renamed environment variables** (breaking change):
+  - `NANO_BANANA_MODEL` → `IMAGE_GEN_MODEL`
+  - `GOOGLE_GEMINI_BASE_URL` → `IMAGE_GEN_BASE_URL` (must include `/v1` suffix)
+  - `GEMINI_API_KEY` / `GOOGLE_API_KEY` → `RDSEC_API_KEY`
+
+### Migration from v0.1.x
+
+| Old variable | New variable | Notes |
+|---|---|---|
+| `NANO_BANANA_MODEL` | `IMAGE_GEN_MODEL` | Same value |
+| `GEMINI_API_KEY` | `RDSEC_API_KEY` | Same JWT token value |
+| `GOOGLE_GEMINI_BASE_URL` | `IMAGE_GEN_BASE_URL` | Append `/v1` to existing URL |
+
+## Previous Improvements (v0.1.0)
 
 - **Logo Update**: Upgraded to TrendLife 2026 logo design (`trendlife-2026-logo-light.png`)
 - **Smart Cover Pages**: TrendLife slide deck cover pages now use logo as reference image (Gemini API) for
@@ -91,7 +114,8 @@ Python scripting and Gemini/Imagen image generation using uv with inline script 
   - First run will download Python if needed (requires internet connection)
   - Optional: Pre-install with `uv python install 3.14` to avoid download during first execution
   - Note: The script includes fallback support for Python 3.9+ if run directly without uv
-- **`GEMINI_API_KEY`** (or `GOOGLE_API_KEY`) environment variable set with a valid Gemini API key
+- **`RDSEC_API_KEY`** environment variable set with a valid JWT token
+- **`IMAGE_GEN_BASE_URL`** environment variable set to the OpenAI-compatible endpoint URL (must include `/v1` suffix)
 
 ## Quick Setup
 
@@ -102,8 +126,9 @@ Configure environment variables in `~/.claude/settings.json` so they're availabl
 #### macOS / Linux / WSL / Git Bash
 
 ```bash
-# Replace with your actual API key
-GEMINI_API_KEY="your-api-key-here"
+# Replace with your actual values
+RDSEC_API_KEY="your-jwt-token-here"  # pragma: allowlist secret
+IMAGE_GEN_BASE_URL="https://api.rdsec.trendmicro.com/prod/aiendpoint/v1"
 
 # Check if jq is installed
 if ! command -v jq &> /dev/null; then
@@ -115,7 +140,7 @@ fi
 [[ ! -r "${HOME}/.claude/settings.json" ]] && mkdir -p "${HOME}/.claude" && echo "{}" > "${HOME}/.claude/settings.json"
 
 jq "$(cat <<EOFSETTINGS
-.env.GEMINI_API_KEY="${GEMINI_API_KEY}"
+.env.RDSEC_API_KEY="${RDSEC_API_KEY}" | .env.IMAGE_GEN_BASE_URL="${IMAGE_GEN_BASE_URL}"
 EOFSETTINGS
 )" ${HOME}/.claude/settings.json > /tmp/temp.json && mv -f /tmp/temp.json ${HOME}/.claude/settings.json
 
@@ -125,8 +150,9 @@ echo "Configuration updated successfully"
 #### Windows PowerShell
 
 ```powershell
-# Replace with your actual API key
-$GEMINI_API_KEY = "your-api-key-here"
+# Replace with your actual values
+$RDSEC_API_KEY = "your-jwt-token-here"  # pragma: allowlist secret
+$IMAGE_GEN_BASE_URL = "https://api.rdsec.trendmicro.com/prod/aiendpoint/v1"
 
 # Settings.json setup
 $settingsPath = "$env:USERPROFILE\.claude\settings.json"
@@ -143,7 +169,8 @@ if (-not $settings.env) {
 }
 
 # Add or update environment variables (preserving existing ones)
-$settings.env | Add-Member -Type NoteProperty -Name "GEMINI_API_KEY" -Value $GEMINI_API_KEY -Force
+$settings.env | Add-Member -Type NoteProperty -Name "RDSEC_API_KEY" -Value $RDSEC_API_KEY -Force
+$settings.env | Add-Member -Type NoteProperty -Name "IMAGE_GEN_BASE_URL" -Value $IMAGE_GEN_BASE_URL -Force
 
 $settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
 
@@ -164,14 +191,16 @@ Get-Content (Join-Path $env:USERPROFILE ".claude\settings.json")
 
 ```bash
 # Add to ~/.bashrc, ~/.zshrc, or ~/.profile
-export GEMINI_API_KEY="your-api-key-here"
+export RDSEC_API_KEY="your-jwt-token-here"  # pragma: allowlist secret
+export IMAGE_GEN_BASE_URL="https://api.rdsec.trendmicro.com/prod/aiendpoint/v1"
 ```
 
 ### Option C: Project .env file
 
 ```bash
 # Create .env file in your project directory
-GEMINI_API_KEY=your-api-key-here
+RDSEC_API_KEY=your-jwt-token-here
+IMAGE_GEN_BASE_URL=https://api.rdsec.trendmicro.com/prod/aiendpoint/v1
 ```
 
 ## Configuration
@@ -180,70 +209,25 @@ Customize plugin behavior using environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NANO_BANANA_MODEL` | (Claude chooses) | **Specify model name** - determines API automatically:<br>• Contains `"imagen"` → Imagen API<br>• Otherwise → Gemini API<br>**IMPORTANT:** Used exactly as-is, no modifications |
+| `RDSEC_API_KEY` | (required) | JWT token for the OpenAI-compatible endpoint |
+| `IMAGE_GEN_BASE_URL` | (required) | OpenAI-compatible endpoint URL — **must include `/v1` suffix** |
+| `IMAGE_GEN_MODEL` | `gemini-3-pro-image` | Model name — used exactly as-is, no modifications |
 | `NANO_BANANA_FORMAT` | `webp` | Output image format: `webp`, `jpg`, or `png` |
 | `NANO_BANANA_QUALITY` | `90` | Image quality (1-100) for webp/jpg formats |
-| `GOOGLE_GEMINI_BASE_URL` | (official API) | Custom API endpoint (for non-official deployments) |
-| `GEMINI_API_KEY` | (falls back to `GOOGLE_API_KEY`) | API key (official or custom endpoint) |
-
-### API Selection Logic
-
-The plugin automatically selects the correct API based on the model name:
-
-```python
-# Automatic detection
-if "imagen" in model.lower():
-    use_imagen_api = True   # → generate_images()
-else:
-    use_gemini_api = True   # → generate_content()
-```
-
-#### Supported Models
-
-- **Gemini**: `gemini-3-pro-image-preview`, `gemini-2.5-flash-image`, or custom names
-- **Imagen**: `imagen-4.0-generate-001`, or custom names containing "imagen"
-
-#### ⚠️ Custom Endpoints
-
-- Model names from custom endpoints are used **exactly as-is**
-- Do NOT add `-preview` or other suffixes
-- Example: If your endpoint uses `gemini-3-pro-image` (no `-preview`), set it exactly like that
 
 ### Examples
 
-#### Complete configuration (all variables)
+#### Complete configuration
 
 ```bash
 # Required
-export GEMINI_API_KEY="your-api-key"                    # Or GOOGLE_API_KEY
+export RDSEC_API_KEY="your-jwt-token"  # pragma: allowlist secret
+export IMAGE_GEN_BASE_URL="https://api.rdsec.trendmicro.com/prod/aiendpoint/v1"
 
 # Optional customization
-export NANO_BANANA_MODEL="gemini-3-pro-image-preview"  # Override model choice
-export NANO_BANANA_FORMAT="webp"                        # Output format (webp/jpg/png)
-export NANO_BANANA_QUALITY="95"                         # Quality 1-100 (webp/jpg)
-
-# For custom endpoints (self-hosted/proxy)
-export GOOGLE_GEMINI_BASE_URL="https://api.example.com/v1"
-```
-
-#### Official Google API (default)
-
-```bash
-export GEMINI_API_KEY="your-api-key"  # Or GOOGLE_API_KEY (backward compatible)
-# Model: Claude chooses Pro (default) or Flash (budget/fast) automatically
-# Optional: force specific model or format
-# export NANO_BANANA_MODEL="gemini-2.5-flash-image"
-# export NANO_BANANA_FORMAT="jpg"
-```
-
-#### Custom Endpoint (self-hosted or proxy)
-
-```bash
-export GOOGLE_GEMINI_BASE_URL="https://your-api.example.com/v1"
-export GEMINI_API_KEY="your-custom-api-key"
-export NANO_BANANA_MODEL="gemini-3-pro-image"
-export NANO_BANANA_FORMAT="webp"
-export NANO_BANANA_QUALITY="90"
+export IMAGE_GEN_MODEL="gemini-3-pro-image"  # Override model choice
+export NANO_BANANA_FORMAT="webp"             # Output format (webp/jpg/png)
+export NANO_BANANA_QUALITY="95"              # Quality 1-100 (webp/jpg)
 ```
 
 #### High-quality PNG for professional work
@@ -258,9 +242,6 @@ export NANO_BANANA_FORMAT="png"
 - Better compression than PNG for photos
 - Supports transparency (unlike JPEG)
 - Widely supported in modern browsers and tools
-
-**Note:** When using `NANO_BANANA_MODEL` with a custom model name, you typically need to set `GOOGLE_GEMINI_BASE_URL`
-and `GEMINI_API_KEY` to match your custom deployment.
 
 ## Usage
 

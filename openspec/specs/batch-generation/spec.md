@@ -64,17 +64,13 @@ The system SHALL create a JSON configuration file containing slide specification
 
 #### Scenario: Creating config for mixed-style presentation
 
-**Given:** User requests slides with different visual styles
-**When:** Claude prepares generation
-**Then:**
+- **WHEN** user requests slides with different visual styles
+- **THEN** a config JSON is created containing a slides array with number, prompt, and style fields
+- **AND** includes `output_dir` as a relative path
+- **AND** does NOT include a `model` field
+- **AND** uses `IMAGE_GEN_MODEL` environment variable for model selection (not `NANO_BANANA_MODEL`)
 
-- Config JSON is created
-- Contains slides array with number, prompt, style
-- Includes output_dir (relative path)
-- Does NOT include `model` field
-- Uses environment variable for model selection
-
-Updated example:
+Example:
 
 ```json
 {
@@ -92,6 +88,39 @@ Updated example:
 
 **Rationale:** Model selection via environment variable prevents hallucinations; relative paths ensure cross-platform
 compatibility.
+
+---
+
+### Requirement: Renamed Environment Variables
+
+The system SHALL read the model name from `IMAGE_GEN_MODEL`, API credentials from `RDSEC_API_KEY`,
+and the endpoint URL from `IMAGE_GEN_BASE_URL`.
+
+**ID:** `batch-generation-009`
+**Priority:** High
+
+#### Scenario: Read model from IMAGE_GEN_MODEL
+
+- **WHEN** the environment variable `IMAGE_GEN_MODEL` is set to `gemini-3-pro-image`
+- **THEN** the script uses `gemini-3-pro-image` as the model for all API calls
+- **AND** `NANO_BANANA_MODEL` is NOT read
+
+#### Scenario: IMAGE_GEN_MODEL not set uses default
+
+- **WHEN** `IMAGE_GEN_MODEL` is not set
+- **THEN** the script uses `gemini-3-pro-image` as the default model
+
+#### Scenario: Read credentials from RDSEC_API_KEY
+
+- **WHEN** `RDSEC_API_KEY` is set
+- **THEN** it is used as the API key for the OpenAI client
+- **AND** `GEMINI_API_KEY` and `GOOGLE_API_KEY` are NOT read
+
+#### Scenario: Read endpoint from IMAGE_GEN_BASE_URL
+
+- **WHEN** `IMAGE_GEN_BASE_URL` is set to `https://api.rdsec.trendmicro.com/prod/aiendpoint/v1`
+- **THEN** the OpenAI client uses this value as `base_url`
+- **AND** `GOOGLE_GEMINI_BASE_URL` is NOT read
 
 ---
 

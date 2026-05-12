@@ -61,13 +61,13 @@ From **this skill's directory** (`skills/taiwan-mrt-fareastern-empty-train/`):
 
 ```bash
 # Show next N empty trains (空車 only)
-uv run --managed-python scripts/mrt_empty_train.py query \
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/mrt_empty_train.py query \
   --day-type <type> \
   --time HH:MM \
   --count 5
 
 # Show all trains with 空車/海山發 labels
-uv run --managed-python scripts/mrt_empty_train.py all \
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/mrt_empty_train.py all \
   --day-type <type> \
   --time HH:MM \
   --count 10
@@ -82,7 +82,7 @@ uv run --managed-python scripts/mrt_empty_train.py all \
 Shows the next N trains that originate at 亞東醫院 (空車 only).
 
 ```bash
-uv run --managed-python scripts/mrt_empty_train.py query \
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/mrt_empty_train.py query \
   --day-type mon_thu \
   --time 08:30 \
   --count 5
@@ -104,7 +104,7 @@ uv run --managed-python scripts/mrt_empty_train.py query \
 Shows all trains after the query time, labelled 空車 or 海山發.
 
 ```bash
-uv run --managed-python scripts/mrt_empty_train.py all \
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/mrt_empty_train.py all \
   --day-type mon_thu \
   --time 06:00 \
   --count 7
@@ -128,7 +128,7 @@ uv run --managed-python scripts/mrt_empty_train.py all \
 Downloads latest PDFs from TRTC and regenerates cache.
 
 ```bash
-uv run --managed-python scripts/mrt_empty_train.py refresh
+uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/mrt_empty_train.py refresh
 ```
 
 ---
@@ -165,7 +165,7 @@ Step 1 — Get day type via taiwan-calendar:
   → day type = mon_thu
 
 Step 2 — Query empty trains:
-  uv run --managed-python scripts/mrt_empty_train.py query --day-type mon_thu
+  uv run --managed-python ${CLAUDE_SKILL_DIR}/scripts/mrt_empty_train.py query --day-type mon_thu
 ```
 
 ---
