@@ -54,6 +54,8 @@ out/
 .npm
 .eslintcache
 .stylelintcache
+__pycache__/
+*.py[cod]
 
 # Testing coverage
 coverage/
