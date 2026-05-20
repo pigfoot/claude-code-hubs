@@ -10,8 +10,8 @@ marketplaces.
 
 **From this marketplace (pigfoot):**
 
-- **[commit](./plugins/commit/)** - Smart commit message generation with conventional commits, emoji prefixes, and
-  GPG signing support
+- **[commit](./plugins/commit/)** - Smart commit workflow: conventional commits, GPG signing, multi-concern detection,
+  and `/commit-push-pr` for end-to-end commit + push + PR in one step
 - **[confluence](./plugins/confluence/)** - Professional Confluence document management with **intelligent roundtrip
   editing** (preserves macros while Claude edits content), **REST API only** (no MCP dependency, always available),
   CQL search with Rovo AI fallback (`mcp__claude_ai_Atlassian_Rovo__searchAtlassian`), short URL resolution,
@@ -378,7 +378,7 @@ Automates the tedious parts of creating well-formatted commits.
 **Benefits:**
 
 - ✅ **No more commit message writer's block** - Analyzes your changes and suggests appropriate messages
-- ✅ **Consistent format** - Automatic conventional commits with emoji (`✨ feat:`, `🐛 fix:`, etc.)
+- ✅ **Consistent format** - Automatic conventional commits (`feat:`, `fix:`, etc.)
 - ✅ **Multi-concern detection** - Suggests splitting commits when you've mixed different types of changes
 - ✅ **GPG signing made easy** - Handles passphrase caching automatically
 - ✅ **DCO compliance** - Always includes --signoff for projects requiring it
@@ -392,9 +392,9 @@ Just say "commit changes" and Claude will handle the rest.
 User: "commit changes"
 → Claude analyzes: auth changes + UI updates + docs
 → Suggests: Split into 3 commits?
-→ Creates: ✨ feat: add JWT authentication
-         💄 style: update login UI
-         📝 docs: update auth documentation
+→ Creates: feat: add JWT authentication
+         style: update login UI
+         docs: update auth documentation
 ```
 
 ---
@@ -808,7 +808,7 @@ Once configured, Claude will:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| [commit](./plugins/commit/) | Conventional commits with emoji and GPG signing | 0.0.1 |
+| [commit](./plugins/commit/) | Conventional commits, GPG signing, commit-push-pr | 0.0.2 |
 | [confluence](./plugins/confluence/) | Confluence document management with unlimited uploads, attachment support, and page formatting control | 0.2.0 |
 | [nano-banana](./plugins/nano-banana/) | Image generation via OpenAI-compatible API | 0.2.0 |
 | [taiwan-calendar](./plugins/taiwan-calendar/) | Taiwan working day/holiday calendar queries | 0.0.1 |

@@ -1,13 +1,13 @@
 ---
 name: commit
-description: Smart commit creation with conventional commits, emoji, and GPG signing. Use when user says "commit" or requests committing changes. Handles staged file detection, suggests splits for multi-concern changes, and applies proper commit format.
-allowed-tools: "Bash(git *)"
-version: 0.0.1
+description: Smart commit creation with conventional commits and GPG signing. Use when user says "commit" or requests committing changes. Handles staged file detection, suggests splits for multi-concern changes, and applies proper commit format.
+allowed-tools: "Bash(git *), Bash(gpg *)"
+version: 0.0.2
 ---
 
 # Commit Skill
 
-Creates well-formatted commits following conventional commit standards with emoji prefixes.
+Creates well-formatted commits following conventional commit standards.
 
 ## When to Use
 
@@ -21,9 +21,18 @@ Creates well-formatted commits following conventional commit standards with emoj
 - **GPG signing** with cached passphrase (if `$GPG_PASSPHRASE` set)
 - **Staged vs unstaged detection** - commits only staged files when present
 - **Split suggestions** - analyzes diffs for multiple logical changes
-- **Conventional commits** - `<emoji> <type>: <description>` format
+- **Conventional commits** - `<type>: <description>` format
 - **Pre-commit hook integration** - respects Husky/other hooks
 - **Always --signoff** - DCO compliance
+
+---
+
+## Context
+
+- Current git status: !`git status`
+- Current git diff (staged and unstaged): !`git diff HEAD`
+- Current branch: !`git branch --show-current`
+- Recent commits: !`git log --oneline -10`
 
 ---
 
@@ -95,16 +104,16 @@ Multiple concerns detected:
 3. Docs (README.md)
 
 Split into 3 commits?
-- ✨ feat: add JWT authentication
-- 💄 style: update login UI
-- 📝 docs: update auth documentation
+- feat: add JWT authentication
+- style: update login UI
+- docs: update auth documentation
 
 [split/all]
 ```
 
 ### 4. Create Commit
 
-Format: `<emoji> <type>: <description>`
+Format: `<type>: <description>`
 
 #### Rules
 
@@ -114,7 +123,7 @@ Format: `<emoji> <type>: <description>`
 - Use body for "why" if needed
 
 ```bash
-git commit --signoff ${USE_GPG:+--gpg-sign} -m "<emoji> <type>: <description>"
+git commit --signoff ${USE_GPG:+--gpg-sign} -m "<type>: <description>"
 ```
 
 ### 5. Handle --no-verify
@@ -134,31 +143,23 @@ Only proceed if confirmed.
 
 ---
 
-## Commit Types & Emoji
+## Commit Types
 
-| Type | Emoji | Use Case |
-|------|-------|----------|
-| feat | ✨ | New feature |
-| fix | 🐛 | Bug fix |
-| docs | 📝 | Documentation |
-| style | 💄 | Formatting, styling |
-| refactor | ♻️ | Code restructure |
-| perf | ⚡ | Performance |
-| test | ✅ | Tests |
-| chore | 🔧 | Build/tools |
-| ci | 🚀 | CI/CD |
-| security | 🔒️ | Security fix |
-| build | 🏗️ | Build system |
-| revert | ⏪️ | Revert changes |
-| wip | 🚧 | Work in progress |
-
-### Extended emoji map
-
-🚚 move | ➕ add-dep | ➖ remove-dep | 🌱 seed | 🧑‍💻 dx | 🏷️ types | 👔 business | 🚸 ux | 🩹 minor-fix | 🥅 errors |
-🔥 remove | 🎨 structure | 🚑️ hotfix | 🎉 init | 🔖 release | 💚 ci-fix | 📌 pin-deps | 👷 ci-build | 📈 analytics |
-✏️ typos | 📄 license |
-💥 breaking | 🍱 assets | ♿️ a11y | 💡 comments | 🗃️ db | 🔊 logs | 🔇 remove-logs | 🙈 gitignore | 📸 snapshots | ⚗️
-experiment | 🚩 flags | 💫 animations | ⚰️ dead-code | 🦺 validation | ✈️ offline
+| Type | Use Case |
+|------|----------|
+| feat | New feature |
+| fix | Bug fix |
+| docs | Documentation |
+| style | Formatting, styling |
+| refactor | Code restructure |
+| perf | Performance |
+| test | Tests |
+| chore | Build/tools |
+| ci | CI/CD |
+| security | Security fix |
+| build | Build system |
+| revert | Revert changes |
+| wip | Work in progress |
 
 ---
 
@@ -182,7 +183,7 @@ experiment | 🚩 flags | 💫 animations | ⚰️ dead-code | 🦺 validation |
 + tests/auth.test.ts
 ```
 
-**One commit:** ✨ feat: add authentication
+**One commit:** `feat: add authentication`
 
 ### ❌ Bad - Mixed types
 
@@ -225,7 +226,7 @@ experiment | 🚩 flags | 💫 animations | ⚰️ dead-code | 🦺 validation |
 - ✅ Analyze diff before commit
 - ✅ Suggest splits when appropriate
 - ✅ Use imperative mood
-- ✅ Pick correct emoji + type
+- ✅ Pick correct type
 - ✅ Ask approval for --no-verify
 
 ---
@@ -241,7 +242,7 @@ CLAUDE.md references this skill: "Use `/commit` or say 'commit changes'"
 Reference planning docs in commit body:
 
 ```
-✨ feat: add user authentication
+feat: add user authentication
 
 - JWT token validation
 - Protected routes middleware
@@ -267,7 +268,7 @@ Process:
 1. Check GPG ✓
 2. Analyze: src/auth/login.ts (modified)
 3. Single concern ✓
-4. Create: ✨ feat: add login endpoint
+4. Create: feat: add login endpoint
 5. Execute: git commit --signoff --gpg-sign -m "..."
 ```
 
@@ -280,7 +281,7 @@ Process:
 1. Detect: auth + UI + docs
 2. Suggest split (3 commits)
 3. User confirms "split"
-4. Commit each separately with proper emoji/type
+4. Commit each separately with proper type
 ```
 
 ### Skip hooks
