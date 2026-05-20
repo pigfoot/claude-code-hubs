@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.14"
+# requires-python = ">=3.11,<3.14"
 # dependencies = ["openai", "pillow", "python-dotenv"]
 # ///
 """
@@ -589,7 +589,7 @@ def check_environment():
         sys.exit(1)
     elif sys.version_info < (3, 14):
         print(
-            f"Warning: Python {sys.version_info.major}.{sys.version_info.minor} detected. Python 3.14+ is recommended.",
+            f"Warning: Python {sys.version_info.major}.{sys.version_info.minor} detected. Python 3.11-3.13 is recommended (3.14+ breaks pydantic-core).",
             file=sys.stderr,
         )
 
