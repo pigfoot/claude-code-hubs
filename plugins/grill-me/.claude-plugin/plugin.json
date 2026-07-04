@@ -1,0 +1,20 @@
+{
+  "name": "grill-me",
+  "description": "A relentless interview to stress-test and sharpen a plan or design before building. Asks probing questions one at a time, walks every branch of the design tree, and defers implementation until shared understanding is reached.",
+  "version": "0.0.1",
+  "author": {
+    "name": "pigfoot",
+    "email": "pigfoot@gmail.com"
+  },
+  "keywords": [
+    "planning",
+    "design",
+    "stress-test",
+    "interview",
+    "review",
+    "decision-making"
+  ],
+  "skills": [
+    "./skills/grill-me"
+  ]
+}

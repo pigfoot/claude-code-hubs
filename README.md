@@ -815,6 +815,7 @@ Once configured, Claude will:
 | [taiwan-mrt-fareastern-empty-train](./plugins/taiwan-mrt-fareastern-empty-train/) | Find empty trains (空車) at 亞東醫院 MRT station | 0.0.1 |
 | [secure-container-build](./plugins/secure-container-build/) | Secure container images with Wolfi runtime | 0.0.1 |
 | [github-actions-container-build](./plugins/github-actions-container-build/) | Multi-arch container builds in GitHub Actions | 0.0.1 |
+| [grill-me](./plugins/grill-me/) | Relentless interview to stress-test a plan or design before building | 0.0.1 |
 
 ## Project Structure
 
