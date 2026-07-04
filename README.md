@@ -305,6 +305,7 @@ claude plugin install --scope user confluence@pigfoot-marketplace
 claude plugin install --scope user nano-banana@pigfoot-marketplace
 claude plugin install --scope user secure-container-build@pigfoot-marketplace
 claude plugin install --scope user github-actions-container-build@pigfoot-marketplace
+claude plugin install --scope user grill-me@pigfoot-marketplace
 
 # Install recommended third-party plugins
 claude plugin install --scope user context7@claude-plugins-official
@@ -330,9 +331,14 @@ claude plugin update confluence@pigfoot-marketplace
 claude plugin update nano-banana@pigfoot-marketplace
 claude plugin update secure-container-build@pigfoot-marketplace
 claude plugin update github-actions-container-build@pigfoot-marketplace
+claude plugin update grill-me@pigfoot-marketplace
 
 # Note: superpowers is managed by the official Claude Code marketplace
-# It updates automatically — no manual update required
+# Update it manually with:
+claude plugin update superpowers@claude-plugins-official
+
+# Update context7 (also from official marketplace):
+claude plugin update context7@claude-plugins-official
 ```
 
 ### Step 3: Setup CLAUDE.md Template (Optional but Recommended)
@@ -430,6 +436,12 @@ Ask Claude about any library naturally.
 Claude automatically fetches documentation from Context7's curated database.
 
 **Note:** This is the official plugin from @claude-plugins-official, maintained by Upstash.
+
+**Update:**
+
+```bash
+claude plugin update context7@claude-plugins-official
+```
 
 #### Optional: Configure package runner (bunx recommended)
 
@@ -705,6 +717,12 @@ Just ask Claude about Taiwan dates naturally - the skill triggers automatically.
 > ```bash
 > claude plugin install --scope user superpowers@claude-plugins-official
 > ```
+>
+> Update to the latest version:
+>
+> ```bash
+> claude plugin update superpowers@claude-plugins-official
+> ```
 
 Also ensure your `settings.json` includes `Skill(superpowers:*)` in
 `permissions.allow` (already included in the setup script above).
@@ -789,6 +807,48 @@ User: "do a code review before we finish"
 **Why it matters:**
 Without superpowers, you might get working code. With superpowers, you get **tested, verified,
 systematically-designed code** that follows proven patterns.
+
+---
+
+### 📖 grill-me Plugin - Stress-Test Plans Before Building
+
+```bash
+claude plugin install --scope user grill-me@pigfoot-marketplace
+```
+
+**What it does:**
+Runs a relentless interview to stress-test and sharpen a plan or design before you build it. Adapted
+from [Matt Pocock's `grill-me` / `grilling` skills](https://github.com/mattpocock/skills/tree/main/skills/productivity),
+consolidated into a single skill.
+
+**Benefits:**
+
+- ✅ **Surfaces hidden assumptions** - Probes goal, scope, constraints, dependencies, edge cases,
+  alternatives, and risk before any code is written
+- ✅ **One question at a time** - Never overwhelms with multiple questions at once; waits for your
+  answer before continuing
+- ✅ **Recommended answers** - Each question comes with a recommended answer to guide your thinking
+- ✅ **Codebase-first** - If a question can be answered by exploring the codebase, Claude explores it
+  instead of asking you
+- ✅ **No premature execution** - Claude will not enact the plan until you confirm a shared understanding
+
+**Usage:**
+
+```
+/grill-me <paste your plan or describe your idea>
+```
+
+Trigger phrases containing "grill" also activate it. Claude walks every branch of the design tree,
+resolving dependencies between decisions one by one, until a shared understanding is reached.
+
+**Update:**
+
+```bash
+claude plugin update grill-me@pigfoot-marketplace
+```
+
+**Attribution:** Based on [mattpocock/skills](https://github.com/mattpocock/skills) — `grill-me` and
+`grilling` skills. Original credit to Matt Pocock.
 
 ---
 
