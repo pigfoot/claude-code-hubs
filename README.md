@@ -184,8 +184,6 @@ jq "$(cat <<'EOF'
   "Bash(docker:*)", "Bash(podman:*)", "Bash(buildah:*)",
   "Bash(gh:*)", "Bash(gpg:*)", "Bash(gpgconf:*)",
   "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch",
-  "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
-  "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
   "Bash(openspec:*)",
   "mcp__plugin_context7_context7", "mcp__claude_ai_Atlassian__*", "mcp__claude_ai_Atlassian_Rovo__*",
   "Skill(commit:*)", "Skill(confluence:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
@@ -230,8 +228,6 @@ $newPermissions = @(
     "Bash(docker:*)", "Bash(podman:*)", "Bash(buildah:*)",
     "Bash(gh:*)", "Bash(gpg:*)", "Bash(gpgconf:*)",
     "Read", "Edit", "NotebookEdit", "Update", "Write", "WebFetch", "WebSearch",
-    "Bash(.specify/scripts/bash/check-prerequisites.sh:*)", "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
-    "Bash(.specify/scripts/bash/setup-plan.sh:*)", "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
     "Bash(openspec:*)",
     "mcp__plugin_context7_context7", "mcp__claude_ai_Atlassian__*", "mcp__claude_ai_Atlassian_Rovo__*",
     "Skill(commit:*)", "Skill(confluence:*)", "Skill(nano-banana:*)", "Skill(superpowers:*)", "Skill(secure-container-build:*)", "Skill(github-actions-container-build:*)"
