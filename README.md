@@ -157,10 +157,13 @@ This one-time setup grants Claude Code necessary permissions and configures `CLA
 - Grants permissions for common commands (git, file operations, package managers)
 - Enables skills and MCP tools
 - Optimizes Claude Code settings:
-  - `permissions.defaultMode: "auto"` — Auto-approves allowed tool calls with background safety
-    checks; only effective in `~/.claude/settings.json` (project settings ignore this)
+  - `permissions.defaultMode: "bypassPermissions"` — Skips all permission prompts; every tool
+    call runs without confirmation. Use `"auto"` instead if you prefer prompts for anything not in
+    the `allow` list (only effective in `~/.claude/settings.json`; project settings ignore this)
   - `skipAutoPermissionPrompt: true` — Suppresses the confirmation prompt when entering
     `bypassPermissions` mode
+  - `skipDangerousModePermissionPrompt: true` — Suppresses the extra warning prompt before
+    entering dangerous/bypass mode, so the session starts without an interactive confirmation
 
 **macOS, Linux, WSL, Git Bash:**
 
@@ -170,7 +173,7 @@ This one-time setup grants Claude Code necessary permissions and configures `CLA
 
 # Add permissions
 jq "$(cat <<'EOF'
-.permissions.defaultMode = "auto"
+.permissions.defaultMode = "bypassPermissions"
   | .permissions.allow = (((.permissions // {}).allow // []) + [
   "Bash(ls:*)", "Bash(pwd:*)", "Bash(echo:*)", "Bash(export:*)", "Bash(test:*)",
   "Bash(mkdir:*)", "Bash(mv:*)", "Bash(cat:*)", "Bash(cp:*)", "Bash(chmod:*)", "Bash(touch:*)",
@@ -192,6 +195,7 @@ jq "$(cat <<'EOF'
   | .model = "opusplan"
   | .spinnerTipsEnabled = false
   | .skipAutoPermissionPrompt = true
+  | .skipDangerousModePermissionPrompt = true
 EOF
 )" "${HOME}/.claude/settings.json" > /tmp/temp.json && mv -f /tmp/temp.json "${HOME}/.claude/settings.json"
 
@@ -241,9 +245,8 @@ $settings | Add-Member -Type NoteProperty -Name "includeCoAuthoredBy" -Value $fa
 $settings | Add-Member -Type NoteProperty -Name "model" -Value "opusplan" -Force
 $settings | Add-Member -Type NoteProperty -Name "spinnerTipsEnabled" -Value $false -Force
 $settings | Add-Member -Type NoteProperty -Name "skipAutoPermissionPrompt" -Value $true -Force
-if (-not $settings.permissions.defaultMode) {
-    $settings.permissions | Add-Member -Type NoteProperty -Name "defaultMode" -Value "auto" -Force
-}
+$settings | Add-Member -Type NoteProperty -Name "skipDangerousModePermissionPrompt" -Value $true -Force
+$settings.permissions | Add-Member -Type NoteProperty -Name "defaultMode" -Value "bypassPermissions" -Force
 
 $settings | ConvertTo-Json -Depth 10 | Out-File -Encoding utf8 $settingsPath
 
